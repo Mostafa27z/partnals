@@ -69,38 +69,39 @@
     </div>
 </form>
 
+<input type="hidden" id="start-date" value="{{ $startDate->format('Y-m-d') }}">
+
 @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const monthlyPrice = parseFloat(document.getElementById('monthly-price').value) || 0;
-            const monthsInput = document.getElementById('months-count');
-            const totalPrice = document.getElementById('total-price');
-            const periodRange = document.getElementById('period-range');
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const monthlyPrice = parseFloat(document.getElementById('monthly-price').value) || 0;
+    const monthsInput = document.getElementById('months-count');
+    const totalPrice = document.getElementById('total-price');
+    const periodRange = document.getElementById('period-range');
+    const startDateInput = document.getElementById('start-date').value;
 
-            monthsInput.addEventListener('input', function() {
-                const months = parseInt(monthsInput.value) || 0;
-                totalPrice.value = (months * monthlyPrice).toFixed(2);
+    monthsInput.addEventListener('input', function() {
+        const months = parseInt(monthsInput.value) || 0;
+        totalPrice.value = (months * monthlyPrice).toFixed(2);
 
-                if (months > 0) {
-                    const start = new Date();
-                    const end = new Date(start);
-                    end.setMonth(start.getMonth() + months - 1);
+        if (months > 0) {
+            const start = new Date(startDateInput);
+            const end = new Date(start);
+            end.setMonth(start.getMonth() + months - 1);
 
-                    const options = {
-                        year: 'numeric',
-                        month: 'long'
-                    };
-                    const from = start.toLocaleDateString('ar-EG', options);
-                    const to = end.toLocaleDateString('ar-EG', options);
+            const options = { year: 'numeric', month: 'long' };
+            const from = start.toLocaleDateString('ar-EG', options);
+            const to = end.toLocaleDateString('ar-EG', options);
 
-                    periodRange.value = `من ${from} إلى ${to}`;
-                } else {
-                    periodRange.value = '';
-                }
-            });
-        });
-    </script>
+            periodRange.value = `من ${from} إلى ${to}`;
+        } else {
+            periodRange.value = '';
+        }
+    });
+});
+</script>
 @endpush
+
 
 
 </x-app-layout>

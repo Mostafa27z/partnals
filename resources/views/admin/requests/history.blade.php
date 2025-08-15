@@ -44,29 +44,34 @@
         <div class="bg-white rounded shadow overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 text-center">
                 <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-4 py-2">{{ __('messages.phone_number') }}</th>
-                        <th class="px-4 py-2">{{ __('messages.name') }}</th>
-                        <th class="px-4 py-2">{{ __('messages.national_id') }}</th>
-                        <th class="px-4 py-2">{{ __('messages.request_type') }}</th>
-                        <th class="px-4 py-2">{{ __('messages.date') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($requests as $request)
-                        <tr class="border-t hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-2">{{ $request->line->phone_number }}</td>
-                            <td class="px-4 py-2">{{ $request->line->customer?->full_name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $request->line->customer?->national_id ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ __('messages.request_type_' . $request->request_type) }}</td>
-                            <td class="px-4 py-2">{{ $request->created_at->format('Y-m-d H:i') }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="py-6 text-gray-500">{{ __('messages.no_completed_requests') }}</td>
-                        </tr>
-                    @endforelse
-                </tbody>
+    <tr>
+        <th class="px-4 py-2">{{ __('messages.phone_number') }}</th>
+        <th class="px-4 py-2">{{ __('messages.name') }}</th>
+        <th class="px-4 py-2">{{ __('messages.national_id') }}</th>
+        <th class="px-4 py-2">{{ __('messages.request_type') }}</th>
+        <th class="px-4 py-2">  {{ __('messages.request_created') }}</th>
+        <th class="px-4 py-2">  {{ __('messages.request_done') }}</th>
+        <th class="px-4 py-2">{{ __('messages.date') }}</th>
+    </tr>
+</thead>
+<tbody>
+    @forelse ($requests as $request)
+        <tr class="border-t hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-2">{{ $request->line->phone_number }}</td>
+            <td class="px-4 py-2">{{ $request->line->customer?->full_name ?? '-' }}</td>
+            <td class="px-4 py-2">{{ $request->line->customer?->national_id ?? '-' }}</td>
+            <td class="px-4 py-2">{{ __('messages.request_type_' . $request->request_type) }}</td>
+            <td class="px-4 py-2">{{ $request->requestedBy?->name ?? '-' }}</td>
+            <td class="px-4 py-2">{{ $request->doneBy?->name ?? '-' }}</td>
+            <td class="px-4 py-2">{{ $request->created_at->format('Y-m-d H:i') }}</td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="7" class="py-6 text-gray-500">{{ __('messages.no_completed_requests') }}</td>
+        </tr>
+    @endforelse
+</tbody>
+
             </table>
 
             <div class="mt-4 px-4">

@@ -141,7 +141,28 @@
                 {{ $lines->links() }}
             </div>
         </div>
+<div class="mt-6 p-4 bg-blue-50 rounded shadow break-words max-w-full text-sm sm:text-base">
+                <h3 class="font-bold mb-2 break-words max-w-full text-sm sm:text-base">📱 {{ __('messages.phone') }}: {{ $line->phone_number }}</h3>
 
+                <form method="GET" onsubmit="return redirectToCreateRequest(event)">
+                    <label for="request-type" class="block mb-1 font-medium break-words max-w-full text-sm sm:text-base">{{ __('messages.select_request_type') }}:</label>
+                    <select id="request-type" class="input input-bordered w-full max-w-xs break-words max-w-full text-sm sm:text-base" required>
+                        <option value="">-- {{ __('messages.select_type') }} --</option>
+                        <option value="resell">{{ __('messages.resell') }}</option>
+                        <option value="change-plan">{{ __('messages.change_plan') }}</option>
+                        <option value="change-chip">{{ __('messages.change_chip') }}</option>
+                        <option value="pause">{{ __('messages.pause') }}</option>
+                        <option value="resume">{{ __('messages.resume') }}</option>
+                        <option value="change-date">{{ __('messages.change_date') }}</option>
+                        <option value="change-distributor">{{ __('messages.change_distributor') }}</option>
+                        <option value="stop-line">{{ __('messages.stop_line') }}</option>
+                    </select>
+
+                    <button type="submit" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded break-words max-w-full text-sm sm:text-base">
+                        ➕ {{ __('messages.create_request') }}
+                    </button>
+                </form>
+            </div>
         @php
             $forms = [
                 ['route' => 'requests.stop.import', 'label' => __('messages.import_stop_requests')],
@@ -174,28 +195,7 @@
                 $line = $lines->first();
             @endphp
 
-            <div class="mt-6 p-4 bg-blue-50 rounded shadow break-words max-w-full text-sm sm:text-base">
-                <h3 class="font-bold mb-2 break-words max-w-full text-sm sm:text-base">📱 {{ __('messages.phone') }}: {{ $line->phone_number }}</h3>
-
-                <form method="GET" onsubmit="return redirectToCreateRequest(event)">
-                    <label for="request-type" class="block mb-1 font-medium break-words max-w-full text-sm sm:text-base">{{ __('messages.select_request_type') }}:</label>
-                    <select id="request-type" class="input input-bordered w-full max-w-xs break-words max-w-full text-sm sm:text-base" required>
-                        <option value="">-- {{ __('messages.select_type') }} --</option>
-                        <option value="resell">{{ __('messages.resell') }}</option>
-                        <option value="change-plan">{{ __('messages.change_plan') }}</option>
-                        <option value="change-chip">{{ __('messages.change_chip') }}</option>
-                        <option value="pause">{{ __('messages.pause') }}</option>
-                        <option value="resume">{{ __('messages.resume') }}</option>
-                        <option value="change-date">{{ __('messages.change_date') }}</option>
-                        <option value="change-distributor">{{ __('messages.change_distributor') }}</option>
-                        <option value="stop-line">{{ __('messages.stop_line') }}</option>
-                    </select>
-
-                    <button type="submit" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded break-words max-w-full text-sm sm:text-base">
-                        ➕ {{ __('messages.create_request') }}
-                    </button>
-                </form>
-            </div>
+            
 
             @push('scripts')
             <script>

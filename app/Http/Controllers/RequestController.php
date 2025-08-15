@@ -1148,8 +1148,9 @@ public function storeChangeDistributor(HttpRequest $request)
 
 public function history(HttpRequest $request)
 {
-    $query = \App\Models\Request::with('line.customer')
-        ->where('status', 'done'); // ✅ عرض الطلبات المنتهية فقط
+    $query = \App\Models\Request::with(['line.customer', 'requestedBy', 'doneBy'])
+    ->where('status', 'done');
+
 
     // فلترة بالرقم
     if ($request->filled('phone')) {

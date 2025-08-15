@@ -32,6 +32,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/permissions/update', [PermissionController::class, 'update'])->name('permissions.update');
 });
 
+Route::get('home', function () {
+    return view('welcome');
+});
+
 Route::get('/', function () {
     return view('welcome');
 });

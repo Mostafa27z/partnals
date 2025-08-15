@@ -507,4 +507,6 @@ return [
     'request_type' => 'نوع الطلب',
     'date' => 'التاريخ',
     'no_completed_requests' => 'لا توجد طلبات منتهية حالياً.',
+    'request_done'=> 'تم بواسطة',
+    "request_created" => 'طلب بواسطة'
 ];

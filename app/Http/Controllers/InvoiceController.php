@@ -15,10 +15,20 @@ class InvoiceController extends Controller
    
 
     public function create(Line $line)
-    {
-        $line->load('plan', 'customer');
-        return view('admin.invoices.create', compact('line'));
-    }
+{
+    $line->load('plan', 'customer');
+
+    // جلب آخر فاتورة للخط
+    $lastInvoice = $line->last_invoice_date;
+
+    // لو فيه فاتورة، نبدأ من الشهر التالي لتاريخها، لو مفيش نبدأ من الشهر الحالي
+    $startDate = $lastInvoice
+        ? \Carbon\Carbon::parse($lastInvoice)->addMonth()->startOfMonth()
+        : now()->startOfMonth();
+
+    return view('admin.invoices.create', compact('line', 'startDate'));
+}
+
 
    public function store(Request $request, Line $line)
 {

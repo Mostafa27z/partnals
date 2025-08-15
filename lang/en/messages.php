@@ -507,4 +507,6 @@ return [
 'request_type' => 'Request Type',
 'date' => 'Date',
 'no_completed_requests' => 'No completed requests at this time.',
+'request_done'=> 'Done By ',
+"request_created" => 'Requested By '
 ];

@@ -7,24 +7,45 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class PlanController extends Controller
 {
-    public function index(Request $request)
-    {
-        $plans = Plan::query();
+   public function index(Request $request)
+{
+    $plans = Plan::query();
 
-        if ($request->filled('search')) {
-            $plans->where(function ($q) use ($request) {
-                $q->where('name', 'like', "%{$request->search}%")
-                ->orWhere('provider', 'like', "%{$request->search}%")
-                ->orWhere('plan_code', 'like', "%{$request->search}%")
-                ->orWhere('type', 'like', "%{$request->search}%");
-            });
-
-        }
-
-        $plans = $plans->paginate(10);
-
-        return view('admin.plans.index', compact('plans'));
+    // البحث العام
+    if ($request->filled('search')) {
+        $plans->where(function ($q) use ($request) {
+            $q->where('name', 'like', "%{$request->search}%")
+              ->orWhere('provider', 'like', "%{$request->search}%")
+              ->orWhere('plan_code', 'like', "%{$request->search}%")
+              ->orWhere('type', 'like', "%{$request->search}%");
+        });
     }
+
+    // فلترة بالمشغل
+    if ($request->filled('provider')) {
+        $plans->where('provider', $request->provider);
+    }
+
+    // فلترة بالنوع
+    if ($request->filled('type')) {
+        $plans->where('type', $request->type);
+    }
+
+    // فلترة بالسعر الأدنى
+    if ($request->filled('min_price')) {
+        $plans->where('price', '>=', $request->min_price);
+    }
+
+    // فلترة بالسعر الأقصى
+    if ($request->filled('max_price')) {
+        $plans->where('price', '<=', $request->max_price);
+    }
+
+    $plans = $plans->paginate(10)->appends($request->query());
+
+    return view('admin.plans.index', compact('plans'));
+}
+
 public function trashed()
 {
     $plans = Plan::onlyTrashed()->paginate(10);
