@@ -186,6 +186,9 @@ Route::get('/requests/history', [RequestController::class, 'history'])->name('re
 // // web.php
  Route::get('/ajax/customers/search', [CustomerController::class, 'searchByNationalId'])->name('ajax.customers.search');
 });
+use App\Http\Controllers\UserController;
+
+Route::resource('users', UserController::class);
 
 Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/requests/all', [RequestController::class, 'all'])->name('requests.all');

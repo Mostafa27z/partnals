@@ -18,10 +18,10 @@ class CustomerFactory extends Factory
     public function definition(): array
     {
         return [
-    'full_name'   => $this->faker->name(),
-    'national_id' => $this->faker->unique()->numerify('##############'), // 14 digits
-    'birth_date'  => $this->faker->date(),
-    'email'       => $this->faker->unique()->safeEmail(),
-];
+            'full_name'   => $this->faker->name(),
+            'national_id' => $this->faker->unique()->numerify('2##########3#'), // More realistic Egyptian ID
+            'birth_date'  => $this->faker->date(),
+            'email'       => $this->faker->unique()->safeEmail(),
+        ];
     }
 }

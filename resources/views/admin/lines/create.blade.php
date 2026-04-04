@@ -1,70 +1,83 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-2xl font-semibold text-gray-800 leading-tight">{{ __('messages.add_new_line') }}</h2>
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-200">{{ __('messages.add_new_line') }}</h2>
     </x-slot>
 
+    {{-- Success Message --}}
     @if(session('success'))
-        <div class="mb-4 p-4 bg-green-100 text-green-800 rounded shadow max-w-4xl mx-auto">
+        <div class="mb-6 p-4 bg-green-100 text-green-800 rounded-lg shadow max-w-4xl mx-auto">
             {{ session('success') ?? __('messages.success_message') }}
         </div>
     @endif
 
-    <div class="py-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8" dir="rtl">
+    <div class="py-8 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8" dir="rtl">
+        {{-- Error Messages --}}
         @if ($errors->any())
-            <div class="mb-4 p-4 bg-red-100 text-red-700 rounded max-w-4xl mx-auto">
+            <div class="mb-6 p-4 bg-red-100 text-red-700 rounded-lg shadow max-w-4xl mx-auto">
                 <ul class="list-disc list-inside space-y-1">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li class="font-medium">{{ $error }}</li>
                     @endforeach
                 </ul>
             </div>
         @endif
 
-        <form action="{{ route('lines.store') }}" method="POST" class="space-y-6 bg-white p-6 rounded shadow max-w-4xl mx-auto">
+        {{-- Form --}}
+        <form action="{{ route('lines.store') }}" method="POST" 
+              class="space-y-6 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md max-w-4xl mx-auto">
             @csrf
 
+            {{-- GCode --}}
             <div>
-                <label class="block mb-1 font-medium text-gray-700">مقدمة الرقم (GCode)</label>
-                <select name="gcode" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300" required>
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">مقدمة الرقم (GCode)</label>
+                <select name="gcode" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" required>
                     @foreach(['010', '011', '012', '015'] as $code)
                         <option value="{{ $code }}" {{ old('gcode') == $code ? 'selected' : '' }}>{{ $code }}</option>
                     @endforeach
                 </select>
             </div>
 
+            {{-- Phone Number --}}
             <div>
-                <label class="block mb-1 font-medium text-gray-700">رقم الهاتف</label>
-                <input type="text" name="phone_number" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300" value="{{ old('phone_number') }}" required>
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">رقم الهاتف</label>
+                <input type="text" name="phone_number" value="{{ old('phone_number') }}"
+                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" required>
             </div>
 
+            {{-- Distributor --}}
             <div>
-                <label class="block mb-1 font-medium text-gray-700">الموزع</label>
-                <input type="text" name="distributor" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300" value="{{ old('distributor', $line->distributor ?? '') }}">
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">الموزع</label>
+                <input type="text" name="distributor" value="{{ old('distributor', $line->distributor ?? '') }}"
+                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
             </div>
 
+            {{-- Provider --}}
             <div>
-                <label class="block mb-1 font-medium text-gray-700">مزود الخدمة</label>
-                <select name="provider" id="provider-select" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300" required onchange="filterPlans()">
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">مزود الخدمة</label>
+                <select name="provider" id="provider-select" onchange="filterPlans()"
+                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" required>
                     <option value="">{{ __('messages.select_provider') }}</option>
                     @foreach(['Vodafone', 'Etisalat', 'Orange', 'WE'] as $provider)
-                        <option value="{{ $provider }}" {{ old('provider') == $provider ? 'selected' : '' }}>
-                            {{ $provider }}
-                        </option>
+                        <option value="{{ $provider }}" {{ old('provider') == $provider ? 'selected' : '' }}>{{ $provider }}</option>
                     @endforeach
                 </select>
             </div>
 
+            {{-- Line Type --}}
             <div>
-                <label class="block mb-1 font-medium text-gray-700">نوع الخط</label>
-                <select name="line_type" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300" required>
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">نوع الخط</label>
+                <select name="line_type"
+                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" required>
                     <option value="prepaid" {{ old('line_type') == 'prepaid' ? 'selected' : '' }}>مدفوع مسبقاً</option>
                     <option value="postpaid" {{ old('line_type') == 'postpaid' ? 'selected' : '' }}>فاتورة</option>
                 </select>
             </div>
 
+            {{-- Plan --}}
             <div>
-                <label class="block mb-1 font-medium text-gray-700">النظام</label>
-                <select name="plan_id" id="plan-select" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300">
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">النظام</label>
+                <select name="plan_id" id="plan-select"
+                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
                     <option value="">{{ __('messages.select_plan') }}</option>
                     @foreach($plans as $plan)
                         <option value="{{ $plan->id }}" data-provider="{{ $plan->provider }}" {{ old('plan_id') == $plan->id ? 'selected' : '' }}>
@@ -74,67 +87,84 @@
                 </select>
             </div>
 
+            {{-- Package --}}
             <div>
-                <label class="block mb-1 font-medium text-gray-700">الباقة</label>
-                <input type="text" name="package" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300" value="{{ old('package') }}">
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">الباقة</label>
+                <input type="text" name="package" value="{{ old('package') }}"
+                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
             </div>
 
+            {{-- Last Invoice Date --}}
             <div>
-                <label class="block mb-1 font-medium text-gray-700">تاريخ الدفع</label>
-                <input type="date" name="last_invoice_date" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300" value="{{ old('last_invoice_date') }}">
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">تاريخ الدفع</label>
+                <input type="date" name="last_invoice_date" value="{{ old('last_invoice_date') }}"
+                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
             </div>
 
+            {{-- Notes --}}
             <div>
-                <label class="block mb-1 font-medium text-gray-700">ملاحظات</label>
-                <textarea name="notes" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300" rows="3">{{ old('notes') }}</textarea>
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">ملاحظات</label>
+                <textarea name="notes" rows="3"
+                          class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">{{ old('notes') }}</textarea>
             </div>
 
-            <hr class="my-6 border-gray-300">
+            <hr class="my-6 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
 
+            {{-- National ID --}}
             <div>
-                <label class="block mb-1 font-medium text-gray-700">الرقم القومي</label>
-                <input type="text" id="search-nid" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300" placeholder="أدخل الرقم القومي" />
-                <button type="button" onclick="loadCustomerData()" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-sm transition">
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">الرقم القومي</label>
+                <input type="text" id="search-nid" placeholder="أدخل الرقم القومي"
+                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" />
+                <button type="button" onclick="loadCustomerData()"
+                        class="mt-3 bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition">
                     {{ __('messages.load_data') }}
                 </button>
             </div>
 
-            <div id="customer-data-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 hidden">
+            {{-- Customer Data --}}
+            <div id="customer-data-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4 hidden">
                 <div>
-                    <label class="block mb-1 font-medium text-gray-700">اسم العميل</label>
-                    <input type="text" name="full_name" id="full_name" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300">
+                    <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">اسم العميل</label>
+                    <input type="text" name="full_name" id="full_name"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div>
-                    <label class="block mb-1 font-medium text-gray-700">البريد الإلكتروني</label>
-                    <input type="email" name="email" id="email" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300">
+                    <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">البريد الإلكتروني</label>
+                    <input type="email" name="email" id="email"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div>
-                    <label class="block mb-1 font-medium text-gray-700">تاريخ الميلاد</label>
-                    <input type="date" name="birth_date" id="birth_date" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300">
+                    <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">تاريخ الميلاد</label>
+                    <input type="date" name="birth_date" id="birth_date"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div>
-                    <label class="block mb-1 font-medium text-gray-700">العنوان</label>
-                    <input type="text" name="address" id="address" class="input input-bordered w-full rounded border-gray-300 focus:ring focus:ring-blue-300">
+                    <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">العنوان</label>
+                    <input type="text" name="address" id="address"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <input type="hidden" name="existing_customer_id" id="existing_customer_id" />
 
                 <div class="col-span-1 sm:col-span-2">
                     <label class="inline-flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="update_customer_data" class="form-checkbox h-5 w-5 text-blue-600">
-                        {{ __('messages.update_customer_data') }}
+                        <input type="checkbox" name="update_customer_data" class="h-5 w-5 text-blue-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-blue-500">
+                        <span class="font-medium">{{ __('messages.update_customer_data') }}</span>
                     </label>
                 </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6">
-                <button type="submit" name="save_and_add_more" value="1" class="btn btn-secondary w-full sm:w-auto">
+            {{-- Buttons --}}
+            <div class="flex flex-col sm:flex-row justify-end gap-4 mt-8">
+                <button type="submit" name="save_and_add_more" value="1"
+                        class="bg-gray-500 text-white font-semibold px-6 py-3 rounded-lg hover:bg-gray-600 transition w-full sm:w-auto">
                     💾 {{ __('messages.save_and_add_more') }}
                 </button>
-                <button type="submit" class="btn btn-primary w-full sm:w-auto">
+                <button type="submit"
+                        class="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition w-full sm:w-auto">
                     ➕ {{ __('messages.add_line') }}
                 </button>
             </div>
@@ -174,12 +204,7 @@
             for (let i = 0; i < options.length; i++) {
                 const opt = options[i];
                 const planProvider = opt.getAttribute('data-provider');
-
-                if (!planProvider || planProvider === selectedProvider || opt.value === '') {
-                    opt.style.display = 'block';
-                } else {
-                    opt.style.display = 'none';
-                }
+                opt.style.display = (!planProvider || planProvider === selectedProvider || opt.value === '') ? 'block' : 'none';
             }
 
             planSelect.value = '';

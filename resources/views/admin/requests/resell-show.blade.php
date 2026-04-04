@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="max-w-4xl mx-auto py-6">
-        <div class="bg-white shadow p-6 rounded space-y-3">
+        <div class="bg-white dark:bg-gray-800 shadow p-6 rounded space-y-3">
             <p><strong>العميل:</strong> {{ $requestModel->line->customer->full_name ?? '-' }}</p>
             <p><strong>الرقم القومي:</strong> {{ $requestModel->line->customer->national_id ?? '-' }}</p>
             <p><strong>رقم الخط:</strong> {{ $requestModel->line->phone_number }}</p>

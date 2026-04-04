@@ -515,10 +515,7 @@ public function restore($id)
     public function forSaleList()
 {
       // ->whereNull('deleted_at')
-    $lines = Line::with('customer')
-        ->latest()
-        ->take(50)
-        ->get();
+    $lines = Line::with('customer')->paginate(10);
 
     return view('admin.lines.for-sale', compact('lines'));
 }

@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-bold text-gray-800">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200">
             🗑️ {{ __('messages.Deleted Customers') }}
         </h2>
     </x-slot>
@@ -12,9 +12,9 @@
             </div>
         @endif
 
-        <div class="bg-white shadow rounded p-4 overflow-x-auto">
+        <div class="bg-white dark:bg-gray-800 shadow rounded p-4 overflow-x-auto">
             <table class="min-w-full table-auto text-sm text-center divide-y divide-gray-200">
-                <thead class="bg-gray-100 text-gray-700">
+                <thead class="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
                     <tr>
                         <th class="px-4 py-2">{{ __('messages.Full Name') }}</th>
                         <th class="px-4 py-2">{{ __('messages.National ID') }}</th>
@@ -22,7 +22,7 @@
                         <th class="px-4 py-2">{{ __('messages.Actions') }}</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-100">
                     @forelse($customers as $customer)
                         <tr>
                             <td class="px-4 py-2">{{ $customer->full_name }}</td>
@@ -51,7 +51,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="py-4 text-gray-500">
+                            <td colspan="4" class="py-4 text-gray-500 dark:text-gray-400">
                                 {{ __('messages.No Deleted Customers') }}
                             </td>
                         </tr>

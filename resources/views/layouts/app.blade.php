@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Fonts -->
@@ -13,35 +12,39 @@
     <!-- Select2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-    <!-- Vite CSS/JS -->
+    <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
 
     <style>
         body {
-            background-color: #f9fafb;
             font-family: 'Figtree', sans-serif;
         }
 
-        /* تحسين مظهر Scroll */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 4px;
-        }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+        html.dark ::-webkit-scrollbar-thumb { background: #4b5563; }
     </style>
 </head>
-<body class="font-sans antialiased bg-gray-100 text-gray-800">
+<body class="font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-900 duration-300">
 
     <div class="min-h-screen flex flex-col">
+        <!-- Navigation -->
         @include('layouts.navigation')
 
         <!-- Header -->
         @isset($header)
-            <header class="bg-white shadow-sm">
-                <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-                    <h1 class="text-lg font-semibold text-gray-900">
+            <header class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700">
+                <div class="max-w-7xl mx-auto py-5 px-6 flex justify-center">
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white text-center">
                         {{ $header }}
                     </h1>
                 </div>
@@ -49,8 +52,12 @@
         @endisset
 
         <!-- Main Content -->
-        <main class="flex-1 px-4 sm:px-6 lg:px-8 py-6">
-            {{ $slot }}
+        <main class="flex-1 py-8 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto">
+                <div class="bg-white/90 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 transition-all duration-300">
+                    {{ $slot }}
+                </div>
+            </div>
         </main>
     </div>
 

@@ -1,13 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-gray-800 leading-tight">اختر خط لإعادة البيع</h2>
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 leading-tight">اختر خط لإعادة البيع</h2>
     </x-slot>
 
     <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white p-6 rounded shadow">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
             @if($lines->count())
                 <table class="min-w-full text-center border divide-y divide-gray-200">
-                    <thead class="bg-gray-100">
+                    <thead class="bg-gray-100 dark:bg-gray-900">
                         <tr>
                             <th class="px-4 py-2">رقم الهاتف</th>
                             <th class="px-4 py-2">العميل</th>
@@ -39,7 +39,7 @@
                     {{ $lines->links() }}
                 </div>
             @else
-                <p class="text-gray-500">لا توجد خطوط متاحة حالياً.</p>
+                <p class="text-gray-500 dark:text-gray-400">لا توجد خطوط متاحة حالياً.</p>
             @endif
         </div>
     </div>

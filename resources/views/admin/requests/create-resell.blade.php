@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-gray-800 leading-tight">طلب إعادة بيع</h2>
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 leading-tight">طلب إعادة بيع</h2>
     </x-slot>
 
     <div class="py-6 max-w-4xl mx-auto sm:px-6 lg:px-8">
@@ -14,7 +14,7 @@
             </div>
         @endif
 
-        <form action="{{ route('requests.resell.store') }}" method="POST" class="bg-white p-6 rounded shadow space-y-4">
+        <form action="{{ route('requests.resell.store') }}" method="POST" class="bg-white dark:bg-gray-800 p-6 rounded shadow space-y-4">
             @csrf
 <input type="hidden" name="line_id" value="{{ $line->id }}">
 

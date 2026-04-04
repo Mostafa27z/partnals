@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-bold text-gray-800">⛔ طلب إيقاف نهائي للخط</h2>
+        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200">⛔ طلب إيقاف نهائي للخط</h2>
     </x-slot>
 
-    <div class="max-w-2xl mx-auto mt-6 bg-white p-6 rounded shadow space-y-6">
+    <div class="max-w-2xl mx-auto mt-6 bg-white dark:bg-gray-800 p-6 rounded shadow space-y-6">
 
-        <div class="bg-gray-100 p-4 rounded border">
+        <div class="bg-gray-100 dark:bg-gray-900 p-4 rounded border">
             <h3 class="font-semibold mb-2">📱 بيانات الخط</h3>
             <div><strong>رقم الهاتف:</strong> {{ $line->phone_number }}</div>
             <div><strong>العميل:</strong> {{ $line->customer?->full_name ?? '-' }}</div>

@@ -3,7 +3,7 @@
         <h2 class="text-xl font-bold">تفاصيل الطلب رقم {{ $request->id }}</h2>
     </x-slot>
 
-    <div class="max-w-4xl mx-auto mt-6 bg-white p-6 rounded shadow space-y-4">
+    <div class="max-w-4xl mx-auto mt-6 bg-white dark:bg-gray-800 p-6 rounded shadow space-y-4">
 
         <div class="grid grid-cols-2 gap-4">
             <div><strong>رقم الخط:</strong> {{ $request->line->phone_number }}</div>

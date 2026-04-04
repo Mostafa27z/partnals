@@ -3,7 +3,7 @@
         <h2 class="text-xl font-bold">طلب إيقاف مؤقت - {{ $line->phone_number }}</h2>
     </x-slot>
 
-    <div class="max-w-xl mx-auto bg-white p-6 mt-6 rounded shadow">
+    <div class="max-w-xl mx-auto bg-white dark:bg-gray-800 p-6 mt-6 rounded shadow">
         <form method="POST" action="{{ route('requests.pause.store') }}">
             @csrf
             <input type="hidden" name="line_id" value="{{ $line->id }}">

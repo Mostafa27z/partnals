@@ -1,107 +1,124 @@
-<x-app-layout> 
-    <x-slot name="header"> 
-        <h2 class="text-xl font-semibold">💳 دفع فواتير - {{ $line->customer->full_name ?? 'غير مربوط بعميل' }}</h2> 
-        {{-- <h2><div class="mt-4 text-right text-green-700 font-bold text-lg">
-    💰 إجمالي الفواتير: {{ number_format($total, 2) }} ج.م
-</div>
-</h2> --}}
-    </x-slot> 
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200">
+            💳 دفع فواتير - {{ $line->customer->full_name ?? 'غير مربوط بعميل' }}
+        </h2>
+    </x-slot>
 
-   <form action="{{ route('invoices.store', $line) }}" method="POST"
-    class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow mt-6 sm:px-8 sm:py-8">
-    @csrf
+    <form action="{{ route('invoices.store', $line) }}" method="POST"
+        class="max-w-lg mx-auto bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg mt-8 space-y-6">
+        @csrf
 
-    @php
-        $plan = $line->plan;
-        $monthlyPrice = $plan?->price ?? 0;
-    @endphp
+        @php
+            $plan = $line->plan;
+            $monthlyPrice = $plan?->price ?? 0;
+        @endphp
 
-    <div class="mb-5">
-        <label for="phone_number" class="block font-semibold mb-2 text-gray-700">{{ __('messages.Phone Number') }}</label>
-        <input type="text" id="phone_number" disabled
-            class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2"
-            value="{{ $line->phone_number }}">
-    </div>
+        {{-- رقم الهاتف --}}
+        <div>
+            <label for="phone_number" class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {{ __('messages.Phone Number') }}
+            </label>
+            <input type="text" id="phone_number" disabled
+                class="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 text-gray-800 dark:text-gray-200"
+                value="{{ $line->phone_number }}">
+        </div>
 
-    <div class="mb-5">
-        <label for="plan_name" class="block font-semibold mb-2 text-gray-700">{{ __('messages.Line Plan') }}</label>
-        <input type="text" id="plan_name" disabled
-            class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2"
-            value="{{ $plan?->name ?? __('messages.No Plan') }}">
-    </div>
+        {{-- الخطة --}}
+        <div>
+            <label for="plan_name" class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {{ __('messages.Line Plan') }}
+            </label>
+            <input type="text" id="plan_name" disabled
+                class="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 text-gray-800 dark:text-gray-200"
+                value="{{ $plan?->name ?? __('messages.No Plan') }}">
+        </div>
 
-    <div class="mb-5">
-        <label for="monthly-price" class="block font-semibold mb-2 text-gray-700">{{ __('messages.Monthly Price') }}</label>
-        <input type="text" id="monthly-price" disabled
-            class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 font-mono"
-            value="{{ $monthlyPrice }}">
-    </div>
+        {{-- السعر الشهري --}}
+        <div>
+            <label for="monthly-price" class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {{ __('messages.Monthly Price') }}
+            </label>
+            <input type="text" id="monthly-price" disabled
+                class="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 font-mono text-gray-800 dark:text-gray-200"
+                value="{{ $monthlyPrice }}">
+        </div>
 
-    <div class="mb-5">
-        <label for="months-count" class="block font-semibold mb-2 text-gray-700">{{ __('messages.Months to Pay') }}</label>
-        <input type="number" name="months_count" id="months-count" min="1" required
-            class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
+        {{-- عدد الأشهر --}}
+        <div>
+            <label for="months-count" class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {{ __('messages.Months to Pay') }}
+            </label>
+            <input type="number" name="months_count" id="months-count" min="1" required
+                class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
 
-    <div class="mb-5">
-        <label for="total-price" class="block font-semibold mb-2 text-gray-700">{{ __('messages.Total Price') }}</label>
-        <input type="text" id="total-price" readonly
-            class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 font-mono cursor-not-allowed">
-    </div>
+        {{-- الإجمالي --}}
+        <div>
+            <label for="total-price" class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {{ __('messages.Total Price') }}
+            </label>
+            <input type="text" id="total-price" readonly
+                class="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 font-mono text-gray-800 dark:text-gray-200 cursor-not-allowed">
+        </div>
 
-    <div class="mb-5">
-        <label for="period-range" class="block font-semibold mb-2 text-gray-700">{{ __('messages.Payment Period') }}</label>
-        <input type="text" id="period-range" readonly
-            class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 cursor-not-allowed">
-    </div>
+        {{-- الفترة --}}
+        <div>
+            <label for="period-range" class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {{ __('messages.Payment Period') }}
+            </label>
+            <input type="text" id="period-range" readonly
+                class="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 text-gray-800 dark:text-gray-200 cursor-not-allowed">
+        </div>
 
-    <div class="mb-5">
-        <label for="notes" class="block font-semibold mb-2 text-gray-700">{{ __('messages.Notes') }}</label>
-        <textarea name="notes" id="notes" rows="3"
-            class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('notes') }}</textarea>
-    </div>
+        {{-- الملاحظات --}}
+        <div>
+            <label for="notes" class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {{ __('messages.Notes') }}
+            </label>
+            <textarea name="notes" id="notes" rows="3"
+                class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('notes') }}</textarea>
+        </div>
 
-    <div class="text-end">
-        <button type="submit"
-            class="bg-blue-600 text-white font-semibold px-6 py-2 rounded-md hover:bg-blue-700 transition duration-200">
-            {{ __('messages.Pay') }}
-        </button>
-    </div>
-</form>
+        {{-- زر الدفع --}}
+        <div class="text-end">
+            <button type="submit"
+                class="bg-blue-600 text-white font-semibold text-lg px-8 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                {{ __('messages.Pay') }}
+            </button>
+        </div>
+    </form>
 
-<input type="hidden" id="start-date" value="{{ $startDate->format('Y-m-d') }}">
+    <input type="hidden" id="start-date" value="{{ $startDate->format('Y-m-d') }}">
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const monthlyPrice = parseFloat(document.getElementById('monthly-price').value) || 0;
-    const monthsInput = document.getElementById('months-count');
-    const totalPrice = document.getElementById('total-price');
-    const periodRange = document.getElementById('period-range');
-    const startDateInput = document.getElementById('start-date').value;
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const monthlyPrice = parseFloat(document.getElementById('monthly-price').value) || 0;
+        const monthsInput = document.getElementById('months-count');
+        const totalPrice = document.getElementById('total-price');
+        const periodRange = document.getElementById('period-range');
+        const startDateInput = document.getElementById('start-date').value;
 
-    monthsInput.addEventListener('input', function() {
-        const months = parseInt(monthsInput.value) || 0;
-        totalPrice.value = (months * monthlyPrice).toFixed(2);
+        monthsInput.addEventListener('input', function() {
+            const months = parseInt(monthsInput.value) || 0;
+            totalPrice.value = (months * monthlyPrice).toFixed(2);
 
-        if (months > 0) {
-            const start = new Date(startDateInput);
-            const end = new Date(start);
-            end.setMonth(start.getMonth() + months - 1);
+            if (months > 0) {
+                const start = new Date(startDateInput);
+                const end = new Date(start);
+                end.setMonth(start.getMonth() + months - 1);
 
-            const options = { year: 'numeric', month: 'long' };
-            const from = start.toLocaleDateString('ar-EG', options);
-            const to = end.toLocaleDateString('ar-EG', options);
+                const options = { year: 'numeric', month: 'long' };
+                const from = start.toLocaleDateString('ar-EG', options);
+                const to = end.toLocaleDateString('ar-EG', options);
 
-            periodRange.value = `من ${from} إلى ${to}`;
-        } else {
-            periodRange.value = '';
-        }
+                periodRange.value = `من ${from} إلى ${to}`;
+            } else {
+                periodRange.value = '';
+            }
+        });
     });
-});
-</script>
-@endpush
-
-
-
+    </script>
+    @endpush
 </x-app-layout>

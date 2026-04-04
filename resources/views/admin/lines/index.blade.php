@@ -1,7 +1,7 @@
 <!-- resources/views/admin/lines/index.blade.php --> 
 <x-app-layout> 
     <x-slot name="header"> 
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight"> 
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight"> 
             {{ __('messages.customer_lines_for', ['name' => $customer->full_name]) }}
         </h2> 
     </x-slot> 
@@ -14,10 +14,10 @@
             </a> 
         </div> 
  
-        <div class="bg-white p-6 rounded shadow overflow-x-auto"> 
+        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow overflow-x-auto"> 
             @if ($customer->lines->count()) 
                 <table class="min-w-full divide-y divide-gray-200 text-center"> 
-                    <thead class="bg-gray-100"> 
+                    <thead class="bg-gray-100 dark:bg-gray-900"> 
                         <tr> 
                             <th class="px-4 py-2">{{ __('messages.phone_number') }}</th> 
                             <th class="px-4 py-2">{{ __('messages.line_type') }}</th> 
@@ -28,7 +28,7 @@
                             <th class="px-4 py-2">{{ __('messages.actions') }}</th> 
                         </tr> 
                     </thead> 
-                    <tbody class="bg-white divide-y divide-gray-200"> 
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200"> 
                         @foreach($customer->lines as $line) 
                             <tr> 
                                 <td class="px-4 py-2 whitespace-nowrap">{{ $line->phone_number }}</td> 
@@ -61,7 +61,7 @@
                     </tbody> 
                 </table> 
             @else 
-                <p class="text-gray-500 text-center py-10">{{ __('messages.no_lines_for_customer') }}</p> 
+                <p class="text-gray-500 dark:text-gray-400 text-center py-10">{{ __('messages.no_lines_for_customer') }}</p> 
             @endif 
         </div> 
     </div> 

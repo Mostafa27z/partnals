@@ -1,15 +1,16 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-gray-800 leading-tight">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('messages.Edit Customer') }}
         </h2>
     </x-slot>
 
-    <div class="py-6 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white p-6 rounded shadow-sm">
+    <div class="py-8 max-w-6xl mx-auto px-6 lg:px-8">
+        <!-- بيانات العميل -->
+        <div class="bg-white dark:bg-gray-800/80 backdrop-blur-sm p-8 rounded-xl shadow-lg">
             @if ($errors->any())
-                <div class="mb-4 p-4 bg-red-100 text-red-700 rounded shadow">
-                    <ul class="list-disc list-inside text-sm">
+                <div class="mb-6 p-4 bg-red-100 text-red-700 rounded-lg shadow">
+                    <ul class="list-disc list-inside text-base space-y-1">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
@@ -17,39 +18,39 @@
                 </div>
             @endif
 
-            <form action="{{ route('customers.update', $customer) }}" method="POST" class="space-y-6">
+            <form action="{{ route('customers.update', $customer) }}" method="POST" class="space-y-8">
                 @csrf
                 @method('PUT')
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ __('messages.Full Name') }}</label>
-                        <input type="text" name="full_name" class="form-input mt-1 block w-full rounded-md border-gray-300" value="{{ old('full_name', $customer->full_name) }}" required>
+                        <label class="block font-medium text-gray-700 dark:text-gray-300 text-base">{{ __('messages.Full Name') }}</label>
+                        <input type="text" name="full_name" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" value="{{ old('full_name', $customer->full_name) }}" required>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ __('messages.National ID') }}</label>
-                        <input type="text" name="national_id" class="form-input mt-1 block w-full rounded-md border-gray-300" value="{{ old('national_id', $customer->national_id) }}" required>
+                        <label class="block font-medium text-gray-700 dark:text-gray-300 text-base">{{ __('messages.National ID') }}</label>
+                        <input type="text" name="national_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" value="{{ old('national_id', $customer->national_id) }}" required>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ __('messages.Birth Date') }}</label>
-                        <input type="date" name="birth_date" class="form-input mt-1 block w-full rounded-md border-gray-300" value="{{ old('birth_date', $customer->birth_date) }}">
+                        <label class="block font-medium text-gray-700 dark:text-gray-300 text-base">{{ __('messages.Birth Date') }}</label>
+                        <input type="date" name="birth_date" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" value="{{ old('birth_date', $customer->birth_date) }}">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ __('messages.Email') }}</label>
-                        <input type="email" name="email" class="form-input mt-1 block w-full rounded-md border-gray-300" value="{{ old('email', $customer->email) }}">
+                        <label class="block font-medium text-gray-700 dark:text-gray-300 text-base">{{ __('messages.Email') }}</label>
+                        <input type="email" name="email" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" value="{{ old('email', $customer->email) }}">
                     </div>
 
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700">{{ __('messages.Address') }}</label>
-                        <input type="text" name="address" class="form-input mt-1 block w-full rounded-md border-gray-300" value="{{ old('address', $customer->address) }}">
+                        <label class="block font-medium text-gray-700 dark:text-gray-300 text-base">{{ __('messages.Address') }}</label>
+                        <input type="text" name="address" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" value="{{ old('address', $customer->address) }}">
                     </div>
                 </div>
 
                 <div class="flex justify-end">
-                    <button class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                    <button class="px-8 py-3 bg-blue-600 text-white text-lg rounded-lg hover:bg-blue-700 transition">
                         {{ __('messages.Update') }}
                     </button>
                 </div>
@@ -57,31 +58,30 @@
         </div>
 
         <!-- خطوط العميل -->
-        <div class="bg-white mt-8 p-6 rounded shadow-sm">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">{{ __('messages.Customer Lines') }}</h3>
+        <div class="bg-white dark:bg-gray-800/80 backdrop-blur-sm mt-10 p-8 rounded-xl shadow-lg">
+            <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-6">{{ __('messages.Customer Lines') }}</h3>
 
             @if($customer->lines->count())
                 <div class="overflow-x-auto">
-                    <table class="w-full table-auto border border-gray-200 text-sm">
-                        <thead class="bg-gray-100 text-gray-700">
+                    <table class="w-full table-auto border border-gray-200 dark:border-gray-700 text-base">
+                        <thead class="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
                             <tr class="text-center">
-                                <th class="px-4 py-2 border">{{ __('messages.Phone Number') }}</th>
-                                <th class="px-4 py-2 border">{{ __('messages.Line Type') }}</th>
-                                <th class="px-4 py-2 border">{{ __('messages.Provider') }}</th>
-                                <th class="px-4 py-2 border">{{ __('messages.Plan') }}</th>
-                                <th class="px-4 py-2 border">{{ __('messages.Actions') }}</th>
+                                <th class="px-4 py-3 border">{{ __('messages.Phone Number') }}</th>
+                                <th class="px-4 py-3 border">{{ __('messages.Line Type') }}</th>
+                                <th class="px-4 py-3 border">{{ __('messages.Provider') }}</th>
+                                <th class="px-4 py-3 border">{{ __('messages.Plan') }}</th>
+                                <th class="px-4 py-3 border">{{ __('messages.Actions') }}</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-100">
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-100">
                             @foreach($customer->lines as $line)
-                                <tr class="text-center hover:bg-gray-50">
-                                    <td class="px-4 py-2 border">{{ $line->phone_number }}</td>
-                                    <td class="px-4 py-2 border">{{ $line->line_type == 'prepaid' ? __('messages.Prepaid') : __('messages.Postpaid') }}</td>
-                                    <td class="px-4 py-2 border">{{ $line->provider }}</td>
-                                    <td class="px-4 py-2 border">{{ $line->plan->name ?? '-' }}</td>
-                                    <td class="px-4 py-2 border">
+                                <tr class="text-center hover:bg-gray-50 dark:bg-gray-700/50">
+                                    <td class="px-4 py-3 border">{{ $line->phone_number }}</td>
+                                    <td class="px-4 py-3 border">{{ $line->line_type == 'prepaid' ? __('messages.Prepaid') : __('messages.Postpaid') }}</td>
+                                    <td class="px-4 py-3 border">{{ $line->provider }}</td>
+                                    <td class="px-4 py-3 border">{{ $line->plan->name ?? '-' }}</td>
+                                    <td class="px-4 py-3 border space-x-2">
                                         <a href="{{ route('customers.lines.edit', [$customer, $line]) }}" class="text-blue-600 hover:underline">{{ __('messages.Edit') }}</a>
-                                        |
                                         <form action="{{ route('customers.lines.destroy', [$customer, $line]) }}" method="POST" class="inline">
                                             @csrf
                                             @method('DELETE')
@@ -94,11 +94,11 @@
                     </table>
                 </div>
             @else
-                <p class="text-gray-600">{{ __('messages.No lines found for this customer.') }}</p>
+                <p class="text-gray-600 dark:text-gray-400 text-lg">{{ __('messages.No lines found for this customer.') }}</p>
             @endif
 
-            <div class="mt-4">
-                <a href="{{ route('customers.lines.create', $customer) }}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+            <div class="mt-6">
+                <a href="{{ route('customers.lines.create', $customer) }}" class="bg-green-600 text-white px-6 py-3 text-lg rounded-lg hover:bg-green-700 transition">
                     + {{ __('messages.Add New Line') }}
                 </a>
             </div>

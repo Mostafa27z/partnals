@@ -1,6 +1,6 @@
 <x-app-layout> 
     <x-slot name="header"> 
-        <h2 class="font-semibold text-xl text-gray-800">{{ __('messages.upload_excel_lines') }}</h2> 
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200">{{ __('messages.upload_excel_lines') }}</h2> 
     </x-slot> 
 
     <div class="py-6 max-w-md sm:max-w-lg md:max-w-3xl mx-auto px-4"> 
@@ -20,17 +20,17 @@
             </div> 
         @endif 
 
-        <form action="{{ route('lines.import.process') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded shadow max-w-full"> 
+        <form action="{{ route('lines.import.process') }}" method="POST" enctype="multipart/form-data" class="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-full"> 
             @csrf 
             <div class="mb-5"> 
-                <label for="file" class="block font-semibold mb-2 text-gray-700">{{ __('messages.excel_file') }}</label> 
+                <label for="file" class="block font-semibold mb-2 text-gray-700 dark:text-gray-300">{{ __('messages.excel_file') }}</label> 
                 <input 
                     type="file" 
                     name="file" 
                     id="file" 
                     accept=".xlsx" 
                     required 
-                    class="w-full border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-3 py-2 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 > 
             </div> 
             <button 

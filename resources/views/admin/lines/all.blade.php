@@ -1,146 +1,149 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-6 w-full">
-            <h2 class="font-semibold text-lg sm:text-xl text-gray-800 leading-tight text-center sm:text-right">
-                {{ __('messages.all_lines') }}
-            </h2>
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-6">
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+        📱 {{ __('messages.all_lines') }}
+    </h2>
 
-            <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-                <a href="{{ route('lines.for-sale') }}"
-                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow text-sm sm:text-base text-center">
-                    📦 {{ __('messages.for_sale') }}
-                </a>
+    <div class="flex gap-2 md:gap-4">
+        <a href="{{ route('lines.for-sale') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+            📦 {{ __('messages.for_sale') }}
+        </a>
+        <a href="{{ route('lines.trashed') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow">
+            🗑️ {{ __('messages.trashed') }}
+        </a>
+    </div>
+</div>
 
-                <a href="{{ route('lines.trashed') }}"
-                   class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow text-sm sm:text-base text-center">
-                    🗑️ {{ __('messages.trashed') }}
-                </a>
-            </div>
-        </div>
     </x-slot>
 
     <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8 break-words max-w-full text-sm sm:text-base" dir="rtl">
         @if(session('success'))
-            <div class="mb-4 p-4 bg-green-100 text-green-800 rounded shadow break-words max-w-full text-sm sm:text-base">
+            <div class="mb-4 p-4 bg-green-100 text-green-800 rounded shadow">
                 {{ session('success') }}
             </div>
         @endif
 
-        {{-- Search Form --}}
-        <div class="mb-4 flex flex-wrap gap-4 items-center break-words max-w-full text-sm sm:text-base">
-            <a href="{{ route('lines.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow break-words max-w-full text-sm sm:text-base">
-                ➕ {{ __('messages.new_line') }}
-            </a>
-            <a href="{{ route('lines.import.form') }}" class="btn btn-secondary break-words max-w-full text-sm sm:text-base">
-                📥 {{ __('messages.upload_excel') }}
-            </a>
-            <a href="{{ route('lines.export') }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded shadow break-words max-w-full text-sm sm:text-base">
-                ⬇️ {{ __('messages.export_all') }}
-            </a>
 
-            <form method="GET" action="{{ route('lines.all') }}" class="flex flex-wrap gap-4 mt-2 sm:mt-0 break-words max-w-full text-sm sm:text-base">
-                <input type="text" name="phone" value="{{ request('phone') }}" placeholder="{{ __('messages.phone_number') }}" class="input input-bordered w-full sm:w-40 break-words max-w-full text-sm sm:text-base" />
-                <input type="text" name="nid" value="{{ request('nid') }}" placeholder="{{ __('messages.national_id') }}" class="input input-bordered w-full sm:w-40 break-words max-w-full text-sm sm:text-base" />
-                <input type="text" name="provider" value="{{ request('provider') }}" placeholder="{{ __('messages.provider') }}" class="input input-bordered w-full sm:w-40 break-words max-w-full text-sm sm:text-base" />
-                <input type="text" name="distributor" value="{{ request('distributor') }}" placeholder="{{ __('messages.distributor') }}" class="input input-bordered w-full sm:w-40 break-words max-w-full text-sm sm:text-base" />
-                <select name="plan_id" class="input input-bordered w-full sm:w-40 break-words max-w-full text-sm sm:text-base">
-                    <option value="">-- {{ __('messages.plan') }} --</option>
-                    @foreach($plans as $plan)
-                        <option value="{{ $plan->id }}" {{ request('plan_id') == $plan->id ? 'selected' : '' }}>
-                            {{ $plan->name }}
-                        </option>
-                    @endforeach
-                </select>
-                <button class="btn btn-primary break-words max-w-full text-sm sm:text-base">🔍 {{ __('messages.search') }}</button>
-            </form>
-        </div>
+        {{-- Search Form --}}
+        <div class="mb-4 flex flex-wrap gap-4 items-center">
+    <a href="{{ route('lines.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+        ➕ {{ __('messages.new_line') }}
+    </a>
+    <a href="{{ route('lines.import.form') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow">
+        📥 {{ __('messages.upload_excel') }}
+    </a>
+    <a href="{{ route('lines.export') }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">
+        ⬇️ {{ __('messages.export_all') }}
+    </a>
+
+    <form method="GET" action="{{ route('lines.all') }}" class="flex flex-wrap gap-4">
+        <input type="text" name="phone" value="{{ request('phone') }}" placeholder="{{ __('messages.phone_number') }}" class="input input-bordered w-full sm:w-40" />
+        <input type="text" name="nid" value="{{ request('nid') }}" placeholder="{{ __('messages.national_id') }}" class="input input-bordered w-full sm:w-40" />
+        <input type="text" name="provider" value="{{ request('provider') }}" placeholder="{{ __('messages.provider') }}" class="input input-bordered w-full sm:w-40" />
+        <input type="text" name="distributor" value="{{ request('distributor') }}" placeholder="{{ __('messages.distributor') }}" class="input input-bordered w-full sm:w-40" />
+        <select name="plan_id" class="input input-bordered w-full sm:w-40">
+            <option value="">-- {{ __('messages.plan') }} --</option>
+            @foreach($plans as $plan)
+                <option value="{{ $plan->id }}" {{ request('plan_id') == $plan->id ? 'selected' : '' }}>
+                    {{ $plan->name }}
+                </option>
+            @endforeach
+        </select>
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+            🔍 {{ __('messages.search') }}
+        </button>
+    </form>
+</div>
+
 
         {{-- Export Form --}}
-        <div class="bg-white overflow-x-auto w-full rounded-lg shadow border border-gray-200 text-sm sm:text-base">
-            <form method="POST" action="{{ route('lines.export.selected') }}">
-                @csrf
+        <div class="bg-white dark:bg-gray-800 overflow-x-auto w-full rounded-lg shadow border border-gray-200 dark:border-gray-700">
+    <form method="POST" action="{{ route('lines.export.selected') }}">
+        @csrf
+       <div class="overflow-x-auto">
+    <table class="min-w-full text-center text-sm sm:text-base">
+        <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 text-base sm:text-lg">
+            <tr>
+                <th class="px-4 py-2 text-center"><input type="checkbox" id="select-all"></th>
+                <th class="px-4 py-2 text-center">{{ __('messages.phone_number') }}</th>
+                <th class="px-4 py-2 text-center">{{ __('messages.national_id') }}</th>
+                <th class="px-4 py-2 text-center">{{ __('messages.customer_name') }}</th>
+                <th class="px-4 py-2 text-center">{{ __('messages.status') }}</th>
+                <th colspan="4" class="px-4 py-2 text-center">{{ __('messages.actions') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($lines as $line)
+                <tr class="hover:bg-gray-50 dark:bg-gray-700/50 transition-colors">
+                    <td class="px-4 py-2">
+                        <input type="checkbox" name="selected_lines[]" value="{{ $line->id }}" class="line-checkbox">
+                    </td>
+                    <td class="px-4 py-2 font-medium">{{ $line->phone_number }}</td>
+                    <td class="px-4 py-2">{{ $line->customer->national_id ?? '-' }}</td>
+                    <td class="px-4 py-2">{{ $line->customer->full_name ?? '-' }}</td>
+                    <td class="px-4 py-2">
+                        <span class="px-2 py-1 rounded font-semibold {{ $line->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                            {{ $line->status === 'active' ? __('messages.active') : __('messages.inactive') }}
+                        </span>
+                    </td>
+                    <td class="px-2 py-2 whitespace-nowrap">
+                        <a href="{{ route('lines.show', $line->id) }}" 
+                           class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold px-2 sm:px-3 py-1 rounded transition inline-block text-sm sm:text-base">
+                            👁️ {{ __('messages.view') }}
+                        </a>
+                    </td>
+                    <td class="px-2 py-2 whitespace-nowrap">
+                        <a href="{{ route('lines.edit', $line->id) }}" 
+                           class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-semibold px-2 sm:px-3 py-1 rounded transition inline-block text-sm sm:text-base">
+                            ✏️ {{ __('messages.edit') }}
+                        </a>
+                    </td>
+                    <td class="px-2 py-2 whitespace-nowrap">
+                        <button type="button" 
+                                class="bg-red-100 hover:bg-red-200 text-red-800 font-semibold px-2 sm:px-3 py-1 rounded transition inline-block text-sm sm:text-base"
+                                onclick="confirmDelete({{ $line->id }})">
+                            🗑 {{ __('messages.delete') }}
+                        </button>
+                    </td>
+                    <td class="px-2 py-2 whitespace-nowrap">
+                        @if($line->plan)
+                            <a href="{{ route('invoices.create', $line) }}" 
+                               class="bg-green-100 hover:bg-green-200 text-green-800 font-semibold px-2 sm:px-3 py-1 rounded transition inline-block text-sm sm:text-base">
+                                💳 {{ __('messages.pay') }}
+                            </a>
+                        @endif
+                    </td>
+                </tr>
 
-                <table class="min-w-full divide-y divide-gray-200 text-center break-words max-w-full text-sm sm:text-base min-w-full text-sm text-gray-800 whitespace-nowrap" dir="rtl">
-                    <thead class="bg-gray-50 break-words max-w-full text-sm sm:text-base">
-                        <tr>
-                            <th><input type="checkbox" id="select-all"></th>
-                            <th class="px-4 py-2 break-words max-w-full text-sm sm:text-base">{{ __('messages.phone_number') }}</th>
-                            <th class="px-4 py-2 break-words max-w-full text-sm sm:text-base">{{ __('messages.national_id') }}</th>
-                            <th class="px-4 py-2 break-words max-w-full text-sm sm:text-base">{{ __('messages.customer_name') }}</th>
-                            <th class="px-4 py-2 break-words max-w-full text-sm sm:text-base">{{ __('messages.status') }}</th>
-                            <th class="px-4 py-2 break-words max-w-full text-sm sm:text-base">{{ __('messages.actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200 break-words max-w-full text-sm sm:text-base">
-                        @foreach($lines as $line)
-                            <tr>
-                                <td>
-                                    <input type="checkbox" name="selected_lines[]" value="{{ $line->id }}" class="line-checkbox break-words max-w-full text-sm sm:text-base">
-                                </td>
-                                <td class="px-4 py-2 break-words max-w-full text-sm sm:text-base">{{ $line->phone_number }}</td>
-                                <td class="px-4 py-2 break-words max-w-full text-sm sm:text-base">{{ $line->customer->national_id ?? '-' }}</td>
-                                <td class="px-4 py-2 break-words max-w-full text-sm sm:text-base">{{ $line->customer->full_name ?? '-' }}</td>
-                                <td class="px-4 py-2 break-words max-w-full text-sm sm:text-base">
-                                    {{ $line->status === 'active' ? __('messages.active') : __('messages.inactive') }}
-                                </td>
-                                <td class="px-4 py-2 space-x-2 flex justify-center gap-2 flex-wrap break-words max-w-full text-sm sm:text-base">
-                                    <button type="button" class="text-blue-600 hover:underline break-words max-w-full text-sm sm:text-base" onclick="toggleDetails({{ $line->id }})">
-                                        👁️ {{ __('messages.view') }}
-                                    </button>
-                                    <a href="{{ route('lines.edit', $line->id) }}" class="text-yellow-600 hover:underline break-words max-w-full text-sm sm:text-base">
-                                        ✏️ {{ __('messages.edit') }}
-                                    </a>
-                                    <button type="button" class="text-red-600 hover:underline break-words max-w-full text-sm sm:text-base" onclick="confirmDelete({{ $line->id }})">
-                                        🗑 {{ __('messages.delete') }}
-                                    </button>
-                                    @if($line->plan)
-                                        <a href="{{ route('invoices.create', $line) }}" class="text-green-600 hover:underline break-words max-w-full text-sm sm:text-base">
-                                            💳 {{ __('messages.pay') }}
-                                        </a>
-                                    @endif
-                                </td>
-                            </tr>
+                <!-- تفاصيل الخط -->
+                <tr id="line-details-{{ $line->id }}" style="display: none;" class="bg-gray-100 dark:bg-gray-900 text-sm sm:text-base">
+                    <td colspan="9" class="p-4 text-start space-y-1">
+                        <div><strong>{{ __('messages.provider') }}:</strong> {{ $line->provider }}</div>
+                        <div><strong>{{ __('messages.line_type') }}:</strong> {{ $line->line_type === 'prepaid' ? __('messages.prepaid') : __('messages.postpaid') }}</div>
+                        <div><strong>{{ __('messages.plan') }}:</strong> {{ $line->plan->name ?? '-' }}</div>
+                        <div><strong>{{ __('messages.distributor') }}:</strong> {{ $line->distributor ?? '-' }}</div>
+                        <div><strong>GCode:</strong> {{ $line->gcode }}</div>
+                        <div><strong>{{ __('messages.attached_at') }}:</strong> {{ \Carbon\Carbon::parse($line->attached_at)->format('Y-m-d') }}</div>
+                        <div><strong>{{ __('messages.last_invoice') }}:</strong> {{ \Carbon\Carbon::parse($line->last_invoice_date)->format('Y-m-d') }}</div>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
 
-                            <!-- Details -->
-                            <tr id="line-details-{{ $line->id }}" style="display: none;" class="bg-gray-100 text-lg break-words max-w-full text-sm sm:text-base">
-                                <td colspan="6" class="p-4 text-start break-words max-w-full text-sm sm:text-base">
-                                    <div><strong>{{ __('messages.provider') }}:</strong> {{ $line->provider }}</div>
-                                    <div><strong>{{ __('messages.line_type') }}:</strong> {{ $line->line_type === 'prepaid' ? __('messages.prepaid') : __('messages.postpaid') }}</div>
-                                    <div><strong>{{ __('messages.plan') }}:</strong> {{ $line->plan->name ?? '-' }}</div>
-                                    <div><strong>{{ __('messages.distributor') }}:</strong> {{ $line->distributor ?? '-' }}</div>
-                                    <div><strong>GCode:</strong> {{ $line->gcode }}</div>
-                                    <div><strong>{{ __('messages.attached_at') }}:</strong>{{ \Carbon\Carbon::parse($line->attached_at)->format('Y-m-d') }} </div>
-                                    <div><strong>{{ __('messages.last_invoice') }}:</strong> {{ \Carbon\Carbon::parse($line->last_invoice_date)->format('Y-m-d') }}</div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
 
-                @push('scripts')
-                <script>
-                    function toggleDetails(id) {
-                        const row = document.getElementById('line-details-' + id);
-                        if (row.style.display === 'none') {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    }
-                </script>
-                @endpush
-
-                <div class="mt-4 px-4 text-end break-words max-w-full text-sm sm:text-base">
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow break-words max-w-full text-sm sm:text-base">
-                        ⬇️ {{ __('messages.export_selected') }}
-                    </button>
-                </div>
-            </form>
-
-            <div class="mt-4 px-4 break-words max-w-full text-sm sm:text-base">
-                {{ $lines->links() }}
-            </div>
+        <div class="mt-4 text-end">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">⬇️ {{ __('messages.export_selected') }}</button>
         </div>
+    </form>
+
+    <div class="mt-4">
+        {{ $lines->links() }}
+    </div>
+</div>
+
 <div class="mt-6 p-4 bg-blue-50 rounded shadow break-words max-w-full text-sm sm:text-base">
                 <h3 class="font-bold mb-2 break-words max-w-full text-sm sm:text-base">📱 {{ __('messages.phone') }}: {{ $line->phone_number }}</h3>
 
@@ -178,10 +181,10 @@
 
         @foreach ($forms as $form)
             <form action="{{ route($form['route']) }}" method="POST" enctype="multipart/form-data"
-                  class="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-white p-4 rounded shadow w-full">
+                  class="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-white dark:bg-gray-800 p-4 rounded shadow w-full">
                 @csrf
                 <input type="file" name="file" accept=".xlsx" required
-                       class="border border-gray-300 rounded p-2 w-full sm:w-auto text-sm sm:text-base" />
+                       class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 w-full sm:w-auto text-sm sm:text-base" />
 
                 <button type="submit"
                         class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full sm:w-auto text-sm sm:text-base text-center">
@@ -225,6 +228,23 @@
                         alert("❌ {{ __('messages.request_type_not_supported') }}");
                     }
                 }
+                function toggleDetails(id) {
+    const row = document.getElementById('line-details-' + id);
+    row.style.display = row.style.display === 'none' ? '' : 'none';
+}
+
+document.getElementById('select-all').addEventListener('change', function () {
+    document.querySelectorAll('.line-checkbox').forEach(cb => cb.checked = this.checked);
+});
+
+function confirmDelete(lineId) {
+    if (confirm('{{ __('messages.delete_line_confirmation') }}')) {
+        const form = document.getElementById('delete-form');
+        form.action = `/admin/lines/${lineId}`;
+        form.submit();
+    }
+}
+
             </script>
             @endpush
         @endif
@@ -241,13 +261,13 @@
                     document.querySelectorAll('.line-checkbox').forEach(cb => cb.checked = this.checked);
                 });
 
-                function confirmDelete(lineId) {
-                    if (confirm('{{ __('messages.delete_line_confirmation') }}')) {
-                        const form = document.getElementById('delete-form');
-                        form.action = `/admin/lines/${lineId}`;
-                        form.submit();
-                    }
-                }
+                // function confirmDelete(lineId) {
+                //     if (confirm('{{ __('messages.delete_line_confirmation') }}')) {
+                //         const form = document.getElementById('delete-form');
+                //         form.action = `/admin/lines/${lineId}`;
+                //         form.submit();
+                //     }
+                // }
             </script>
         @endpush
     </div>

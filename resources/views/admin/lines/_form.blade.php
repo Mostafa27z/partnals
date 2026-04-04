@@ -1,7 +1,7 @@
 <form 
     action="{{ isset($line) ? route('lines.update', $line) : route('lines.store') }}" 
     method="POST" 
-    class="space-y-4 bg-white p-6 rounded shadow"
+    class="space-y-4 bg-white dark:bg-gray-800 p-6 rounded shadow"
 > 
     @csrf
     @if(isset($line))

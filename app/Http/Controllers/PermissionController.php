@@ -25,7 +25,7 @@ class PermissionController extends Controller
             $permission->roles()->sync($roleIds); // تحديث الصلاحيات
         }
 
-        return redirect()->route('permissions.index')->with('success', 'تم تحديث الصلاحيات بنجاح.');
+        return redirect()->route('permissions.index')->with('success', __('تم تحديث الصلاحيات بنجاح.'));
     }
 }
 

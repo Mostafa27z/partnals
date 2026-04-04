@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             معلومات الشركة
         </h2>
     </x-slot>
@@ -14,7 +14,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('company.update', $company->id) }}" enctype="multipart/form-data" class="bg-white p-6 rounded shadow">
+            <form method="POST" action="{{ route('company.update', $company->id) }}" enctype="multipart/form-data" class="bg-white dark:bg-gray-800 p-6 rounded shadow">
                 @csrf
                 @method('PUT')
 

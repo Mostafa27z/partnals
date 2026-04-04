@@ -4,7 +4,7 @@
         <h2 class="text-xl font-bold">طلب إعادة تشغيل - {{ $line->phone_number }}</h2>
     </x-slot>
 
-    <div class="max-w-xl mx-auto bg-white p-6 rounded shadow mt-6">
+    <div class="max-w-xl mx-auto bg-white dark:bg-gray-800 p-6 rounded shadow mt-6">
         <form action="{{ route('requests.resume.store') }}" method="POST">
             @csrf
             <input type="hidden" name="line_id" value="{{ $line->id }}">

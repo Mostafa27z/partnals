@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolesTableSeeder::class,
             PermissionsTableSeeder::class,
-            CustomerSeeder::class,
+            RealArabicDataSeeder::class,
         ]);
 
         // إنشاء Admin فقط إذا لم يكن موجوداً

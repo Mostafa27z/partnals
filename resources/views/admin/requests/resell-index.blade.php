@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-gray-800">طلبات إعادة البيع</h2>
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">طلبات إعادة البيع</h2>
     </x-slot>
 
     <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -31,10 +31,10 @@
 </form>
 
 
-        <div class="bg-white p-6 rounded shadow">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
             @if($requests->count())
                 <table class="min-w-full text-center border divide-y divide-gray-200">
-                    <thead class="bg-gray-100">
+                    <thead class="bg-gray-100 dark:bg-gray-900">
                         <tr>
                             <th>رقم الخط</th>
                             <th>العميل</th>
@@ -88,7 +88,7 @@
                     {{ $requests->appends(request()->query())->links() }}
                 </div>
             @else
-                <p class="text-gray-600">لا توجد طلبات حالياً.</p>
+                <p class="text-gray-600 dark:text-gray-400">لا توجد طلبات حالياً.</p>
             @endif
         </div>
     </div>

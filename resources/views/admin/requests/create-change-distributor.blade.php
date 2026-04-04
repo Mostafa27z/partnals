@@ -3,14 +3,14 @@
         <h2 class="text-xl font-bold">طلب تغيير موزع - {{ $line->phone_number }}</h2>
     </x-slot>
 
-    <div class="max-w-xl mx-auto mt-6 bg-white p-6 rounded shadow">
+    <div class="max-w-xl mx-auto mt-6 bg-white dark:bg-gray-800 p-6 rounded shadow">
         <form method="POST" action="{{ route('requests.change-distributor.store') }}">
             @csrf
             <input type="hidden" name="line_id" value="{{ $line->id }}">
 
             <div class="mb-4">
                 <label class="block font-bold mb-1">الموزع الحالي</label>
-                <input type="text" class="w-full bg-gray-100 border p-2 rounded" value="{{ $line->distributor }}" disabled>
+                <input type="text" class="w-full bg-gray-100 dark:bg-gray-900 border p-2 rounded" value="{{ $line->distributor }}" disabled>
             </div>
 
             <div class="mb-4">

@@ -103,17 +103,17 @@ class CustomerController extends Controller
         ]);
 
         // تحديث أول خط (بافتراض خط واحد هنا - يمكنك تعديل هذا لاحقًا لدعم أكثر من خط)
-        if ($customer->lines()->exists()) {
-            $line = $customer->lines()->first();
-            $line->update([
-                'phone_number' => $request->phone_number,
-                'provider' => $request->provider,
-                'status' => $request->status,
-                'plan_id' => $request->plan_id,
-                'line_type' => $request->line_type,
-                'payment_date' => $request->payment_date,
-            ]);
-        }
+        // if ($customer->lines()->exists()) {
+        //     $line = $customer->lines()->first();
+        //     $line->update([
+        //         'phone_number' => $request->phone_number,
+        //         'provider' => $request->provider,
+        //         'status' => $request->status,
+        //         'plan_id' => $request->plan_id,
+        //         'line_type' => $request->line_type,
+        //         'payment_date' => $request->payment_date,
+        //     ]);
+        // }
 
         return redirect()->route('customers.index')->with('success', 'تم التحديث بنجاح');
     }
