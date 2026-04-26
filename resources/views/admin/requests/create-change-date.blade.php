@@ -1,31 +1,73 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-bold">طلب تغيير التاريخ - {{ $line->phone_number }}</h2>
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">📅</span>
+            <h2 class="text-xl font-black text-gray-800 dark:text-gray-200 leading-tight">
+                {{ __('messages.request_type_change_date') }} - {{ $line->phone_number }}
+            </h2>
+        </div>
     </x-slot>
 
-    <div class="max-w-xl mx-auto mt-6 bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <form method="POST" action="{{ route('requests.change-date.store') }}">
-            @csrf
-            <input type="hidden" name="line_id" value="{{ $line->id }}">
+    <div class="py-12 px-4">
+        <div class="max-w-xl mx-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl shadow-amber-500/10 border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <!-- Decorative Header -->
+                <div class="h-24 bg-gradient-to-r from-amber-500 to-orange-600 relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-20">
+                        <svg class="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white"></path>
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white text-2xl animate-pulse">
+                            📅
+                        </div>
+                    </div>
+                </div>
 
-            <div class="mb-4">
-                <label class="block font-bold mb-1">التاريخ الحالي</label>
-                <input type="text" class="w-full bg-gray-100 dark:bg-gray-900 border p-2 rounded" disabled value="{{ $line->last_invoice_date }}">
-            </div>
+                <div class="p-8 sm:p-10">
+                    <form method="POST" action="{{ route('requests.change-date.store') }}" class="space-y-6">
+                        @csrf
+                        <input type="hidden" name="line_id" value="{{ $line->id }}">
 
-            <div class="mb-4">
-                <label class="block font-bold mb-1">التاريخ الجديد</label>
-                <input type="date" name="new_date" class="w-full border p-2 rounded" required>
-            </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] px-1">
+                                {{ __('messages.current_date') }}
+                            </label>
+                            <input type="text" 
+                                   class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 font-black px-5 py-4 cursor-not-allowed" 
+                                   disabled 
+                                   value="{{ $line->last_invoice_date }}">
+                        </div>
 
-            <div class="mb-4">
-                <label class="block font-bold mb-1">السبب</label>
-                <textarea name="reason" class="w-full border p-2 rounded" rows="3">{{ old('reason') }}</textarea>
-            </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] px-1">
+                                {{ __('messages.new_date_label') }}
+                            </label>
+                            <input type="date" 
+                                   name="new_date" 
+                                   class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all" 
+                                   required>
+                        </div>
 
-            <div class="text-end">
-                <button class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700">💾 حفظ الطلب</button>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] px-1">
+                                {{ __('messages.reason_optional') }}
+                            </label>
+                            <textarea name="reason" 
+                                      class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all" 
+                                      rows="3">{{ old('reason') }}</textarea>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+                                <span>💾</span>
+                                <span>{{ __('messages.confirm_save_request') }}</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
 </x-app-layout>

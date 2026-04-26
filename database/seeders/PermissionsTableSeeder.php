@@ -10,13 +10,17 @@ class PermissionsTableSeeder extends Seeder
     public function run()
     {
         $permissions = [
-            'PAYMENT',
-            'SellRouter',
-            'Solve Problem',
-            'Send Request',
-            'Update Adv',
-            'Edit',
-            'Distributors',
+            'manage dashboard',
+            'manage permissions',
+            'edit company details',
+            'manage customers',
+            'manage plans',
+            'manage lines',
+            'manage invoices',
+            'manage requests',
+            'manage users',
+            'manage accounting',
+            'manage hr',
         ];
 
         foreach ($permissions as $permission) {

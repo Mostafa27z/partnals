@@ -7,7 +7,9 @@
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Fonts -->
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     
     <!-- Select2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -25,38 +27,42 @@
 
     <style>
         body {
-            font-family: 'Figtree', sans-serif;
+            font-family: 'Inter', 'Cairo', sans-serif;
+        }
+
+        [dir="rtl"] body {
+            font-family: 'Cairo', 'Inter', sans-serif;
         }
 
         /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
         html.dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; }
     </style>
 </head>
-<body class="font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-900 duration-300">
+<body class="font-sans antialiased text-gray-800 dark:text-gray-200 bg-[#f8fafc] dark:bg-[#0f172a] duration-300">
 
-    <div class="min-h-screen flex flex-col">
+    <div class="min-h-screen">
         <!-- Navigation -->
         @include('layouts.navigation')
 
-        <!-- Header -->
+        <!-- Header Area -->
         @isset($header)
-            <header class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700">
-                <div class="max-w-7xl mx-auto py-5 px-6 flex justify-center">
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white text-center">
-                        {{ $header }}
-                    </h1>
+            <div class="bg-white/40 dark:bg-gray-900/40 border-b border-gray-200/50 dark:border-gray-800/50 backdrop-blur-xl">
+                <div class="max-w-7xl mx-auto py-10 px-6 sm:px-8">
+                    {{ $header }}
                 </div>
-            </header>
+            </div>
         @endisset
 
-        <!-- Main Content -->
-        <main class="flex-1 py-8 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-7xl mx-auto">
-                <div class="bg-white/90 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 transition-all duration-300">
-                    {{ $slot }}
-                </div>
+        <!-- Main Content Section -->
+        <main class="py-12">
+            <div class="max-w-7xl mx-auto px-6 sm:px-8">
+                {{ $slot }}
             </div>
         </main>
     </div>

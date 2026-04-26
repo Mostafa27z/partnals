@@ -44,11 +44,25 @@
                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" required>
             </div>
 
+            {{-- Serial Number --}}
+            <div>
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">{{ __('messages.serial_number') }}</label>
+                <input type="text" name="serial_number" value="{{ old('serial_number') }}"
+                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500 font-mono tracking-wider"
+                       placeholder="مثال: 8920012345678901234">
+            </div>
+
             {{-- Distributor --}}
             <div>
-                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">الموزع</label>
-                <input type="text" name="distributor" value="{{ old('distributor', $line->distributor ?? '') }}"
-                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">{{ __('messages.distributor') }}</label>
+                <select name="distributor_id" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- {{ __('messages.select_distributor') ?? 'اختر الموزع' }} --</option>
+                    @foreach($distributors as $distributor)
+                        <option value="{{ $distributor->id }}" {{ old('distributor_id') == $distributor->id ? 'selected' : '' }}>
+                            {{ $distributor->name }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
 
             {{-- Provider --}}
@@ -57,8 +71,8 @@
                 <select name="provider" id="provider-select" onchange="filterPlans()"
                         class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" required>
                     <option value="">{{ __('messages.select_provider') }}</option>
-                    @foreach(['Vodafone', 'Etisalat', 'Orange', 'WE'] as $provider)
-                        <option value="{{ $provider }}" {{ old('provider') == $provider ? 'selected' : '' }}>{{ $provider }}</option>
+                    @foreach($providers as $provider)
+                        <option value="{{ $provider->name }}" {{ old('provider') == $provider->name ? 'selected' : '' }}>{{ $provider->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -96,8 +110,31 @@
 
             {{-- Last Invoice Date --}}
             <div>
-                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">تاريخ الدفع</label>
-                <input type="date" name="last_invoice_date" value="{{ old('last_invoice_date') }}"
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">{{ __('messages.last_invoice_date') ?? 'تاريخ آخر فاتورة' }}</label>
+                <input type="date" name="last_invoice_date" id="last_invoice_date" value="{{ old('last_invoice_date') }}"
+                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {{-- Buy Price --}}
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">{{ __('messages.buy_price') ?? 'سعر الشراء' }}</label>
+                    <input type="number" step="0.01" name="buy_price" value="{{ old('buy_price') }}"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                {{-- Sale Price --}}
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">{{ __('messages.sale_price') ?? 'سعر البيع' }}</label>
+                    <input type="number" step="0.01" name="sale_price" value="{{ old('sale_price') }}"
+                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            {{-- Payment Date --}}
+            <div>
+                <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">{{ __('messages.payment_date') ?? 'تاريخ الدفع' }}</label>
+                <input type="date" name="payment_date" id="payment_date" value="{{ old('payment_date') }}"
                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
             </div>
 
@@ -113,7 +150,8 @@
             {{-- National ID --}}
             <div>
                 <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">الرقم القومي</label>
-                <input type="text" id="search-nid" placeholder="أدخل الرقم القومي"
+                <input type="text" id="search-nid" name="national_id" placeholder="أدخل الرقم القومي"
+                       oninput="document.getElementById('customer-data-fields').classList.remove('hidden')"
                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" />
                 <button type="button" onclick="loadCustomerData()"
                         class="mt-3 bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition">
@@ -182,7 +220,7 @@
             fetch(`/admin/ajax/customer-by-nid?q=${nid}`)
                 .then(res => res.json())
                 .then(data => {
-                    if (data) {
+                    if (data && data.id) {
                         document.getElementById('full_name').value = data.full_name || '';
                         document.getElementById('email').value = data.email || '';
                         document.getElementById('birth_date').value = data.birth_date || '';
@@ -191,24 +229,68 @@
                         document.getElementById('customer-data-fields').classList.remove('hidden');
                     } else {
                         alert('{{ __("messages.customer_not_found") }}');
+                        document.getElementById('existing_customer_id').value = '';
                     }
                 })
-                .catch(() => alert('{{ __("messages.error_occurred") }}'));
+                .catch(() => {
+                    alert('{{ __("messages.error_occurred") }}');
+                    document.getElementById('existing_customer_id').value = '';
+                });
         }
 
+        // Clear existing_customer_id if NID changes
+        document.getElementById('search-nid').addEventListener('input', function() {
+            document.getElementById('existing_customer_id').value = '';
+        });
+
         function filterPlans() {
-            const selectedProvider = document.getElementById('provider-select').value;
+            const selectedProviderName = document.getElementById('provider-select').value;
             const planSelect = document.getElementById('plan-select');
             const options = planSelect.options;
+
+            // Sync dates with provider day
+            const providers = @json($providers);
+            const selectedProvider = providers.find(p => p.name === selectedProviderName);
+            
+            if (selectedProvider) {
+                const day = selectedProvider.invoice_day.toString().padStart(2, '0');
+                const lastInvoiceInput = document.getElementById('last_invoice_date');
+                const paymentInput = document.getElementById('payment_date');
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = (today.getMonth() + 1).toString().padStart(2, '0');
+                
+                const dateStr = `${yyyy}-${mm}-${day}`;
+                lastInvoiceInput.value = dateStr;
+                paymentInput.value = dateStr;
+            }
 
             for (let i = 0; i < options.length; i++) {
                 const opt = options[i];
                 const planProvider = opt.getAttribute('data-provider');
-                opt.style.display = (!planProvider || planProvider === selectedProvider || opt.value === '') ? 'block' : 'none';
+                opt.style.display = (!planProvider || planProvider === selectedProviderName || opt.value === '') ? 'block' : 'none';
             }
 
             planSelect.value = '';
         }
+
+        // Enforce provider day on manual date change
+        function enforceProviderDay(input) {
+            const providers = @json($providers);
+            const selectedProviderName = document.getElementById('provider-select').value;
+            const selectedProvider = providers.find(p => p.name === selectedProviderName);
+            
+            if (selectedProvider && input.value) {
+                const day = selectedProvider.invoice_day.toString().padStart(2, '0');
+                let [yyyy, mm, dd] = input.value.split('-');
+                if (dd !== day) {
+                    input.value = `${yyyy}-${mm}-${day}`;
+                }
+            }
+        }
+
+        document.getElementById('last_invoice_date').addEventListener('change', function() { enforceProviderDay(this); });
+        document.getElementById('payment_date').addEventListener('change', function() { enforceProviderDay(this); });
     </script>
     @endpush
 </x-app-layout>

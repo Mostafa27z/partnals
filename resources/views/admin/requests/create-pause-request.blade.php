@@ -1,28 +1,64 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-bold">طلب إيقاف مؤقت - {{ $line->phone_number }}</h2>
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">⏸️</span>
+            <h2 class="text-xl font-black text-gray-800 dark:text-gray-200 leading-tight">
+                {{ __('messages.request_type_pause') }} - {{ $line->phone_number }}
+            </h2>
+        </div>
     </x-slot>
 
-    <div class="max-w-xl mx-auto bg-white dark:bg-gray-800 p-6 mt-6 rounded shadow">
-        <form method="POST" action="{{ route('requests.pause.store') }}">
-            @csrf
-            <input type="hidden" name="line_id" value="{{ $line->id }}">
+    <div class="py-12 px-4">
+        <div class="max-w-xl mx-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl shadow-rose-500/10 border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <!-- Decorative Header -->
+                <div class="h-24 bg-gradient-to-r from-rose-500 to-pink-600 relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-20">
+                        <svg class="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <path d="M0 0 C 40 100 60 100 100 0 Z" fill="white"></path>
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white text-2xl animate-pulse">
+                            ⏸️
+                        </div>
+                    </div>
+                </div>
 
-            <div class="mb-4">
-                <label class="block font-bold mb-1">السبب</label>
-                <input type="text" name="reason" class="w-full border p-2 rounded" required>
-            </div>
+                <div class="p-8 sm:p-10">
+                    <form method="POST" action="{{ route('requests.pause.store') }}" class="space-y-6">
+                        @csrf
+                        <input type="hidden" name="line_id" value="{{ $line->id }}">
 
-            <div class="mb-4">
-                <label class="block font-bold mb-1">تعليق (اختياري)</label>
-                <textarea name="comment" rows="3" class="w-full border p-2 rounded"></textarea>
-            </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] px-1">
+                                {{ __('messages.reason_optional') }}
+                            </label>
+                            <input type="text" 
+                                   name="reason" 
+                                   class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500 transition-all font-sans" 
+                                   required
+                                   value="{{ old('reason') }}">
+                        </div>
 
-            <div class="text-end">
-                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700">
-                    💾 حفظ الطلب
-                </button>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] px-1">
+                                {{ __('messages.notes_optional') }}
+                            </label>
+                            <textarea name="comment" 
+                                      class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500 transition-all font-sans" 
+                                      rows="3">{{ old('comment') }}</textarea>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-rose-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+                                <span>💾</span>
+                                <span>{{ __('messages.confirm_save_request') }}</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
 </x-app-layout>

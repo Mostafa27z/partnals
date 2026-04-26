@@ -19,7 +19,6 @@ use App\Models\RequestPauseLine;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\RequestsExport;
 use App\Models\RequestStopLine;
-use App\Models\RequestResellLine;
 use App\Models\RequestChangeDate;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -52,13 +51,21 @@ class RequestController extends Controller
     
 
 
-public function importPauseRequests(Request $request)
+public function importPauseRequests(HttpRequest $request)
 {
     $request->validate([
         'file' => 'required|file|mimes:xlsx',
     ]);
 
     $rows = Excel::toCollection(null, $request->file('file'))->first();
+    
+    // 1. Template Validation
+    $expectedHeaders = ['رقم الهاتف', 'السبب', 'ملاحظات'];
+    $actualHeaders = isset($rows[0]) ? $rows[0]->toArray() : [];
+    if (array_slice($actualHeaders, 0, 3) !== $expectedHeaders) {
+        return redirect()->back()->withErrors(['file' => '❌ خطأ في تنسيق الملف: بعض الأعمدة مفقودة أو غير مرتبة بشكل صحيح. يرجى استخدام النموذج المعتمد.']);
+    }
+
     $imported = 0;
     $errors = [];
 
@@ -69,14 +76,21 @@ public function importPauseRequests(Request $request)
         $reason = trim($row[1] ?? '');
         $comment = trim($row[2] ?? '');
 
-        $line = Line::where('phone_number', $phone)->first();
+        if (!$phone) continue;
+
+        // 2. Query with Distributor Scoping
+        $query = Line::where('phone_number', $phone);
+        if (auth()->user()->role?->name === 'موزع') {
+            $query->where('distributor_id', auth()->id());
+        }
+        $line = $query->first();
 
         if (!$line) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": رقم الهاتف $phone غير موجود.";
+            $errors[] = [$phone, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
             continue;
         }
 
-        $mainRequest = LineRequest::create([
+        $mainRequest = RequestModel::create([
             'line_id'      => $line->id,
             'customer_id'  => $line->customer_id,
             'request_type' => 'pause',
@@ -93,26 +107,33 @@ public function importPauseRequests(Request $request)
         $imported++;
     }
 
+    // 3. Row-by-Row Error Excel
     if (count($errors)) {
-    $filename = 'import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        $filename = 'pause_import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(
+            new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
+            $filename
+        );
+    }
 
-    return Excel::download(
-        new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
-        $filename
-    );
+    return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 }
 
-return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
-
-}
-
-public function importResumeRequests(Request $request)
+public function importResumeRequests(HttpRequest $request)
 {
     $request->validate([
         'file' => 'required|file|mimes:xlsx',
     ]);
 
     $rows = Excel::toCollection(null, $request->file('file'))->first();
+    
+    // 1. Template Validation
+    $expectedHeaders = ['رقم الهاتف', 'السبب', 'ملاحظات'];
+    $actualHeaders = isset($rows[0]) ? $rows[0]->toArray() : [];
+    if (array_slice($actualHeaders, 0, 3) !== $expectedHeaders) {
+        return redirect()->back()->withErrors(['file' => 'الجدول غير مطابق للنموذج المعتمد. يرجى تحميل النموذج الصحيح.']);
+    }
+
     $imported = 0;
     $errors = [];
 
@@ -123,14 +144,21 @@ public function importResumeRequests(Request $request)
         $reason = trim($row[1] ?? '');
         $comment = trim($row[2] ?? '');
 
-        $line = Line::where('phone_number', $phone)->first();
+        if (!$phone) continue;
+
+        // 2. Query with Distributor Scoping
+        $query = Line::where('phone_number', $phone);
+        if (auth()->user()->role?->name === 'موزع') {
+            $query->where('distributor_id', auth()->id());
+        }
+        $line = $query->first();
 
         if (!$line) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": رقم الهاتف $phone غير موجود.";
+            $errors[] = [$phone, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
             continue;
         }
 
-        $mainRequest = LineRequest::create([
+        $mainRequest = RequestModel::create([
             'line_id'      => $line->id,
             'customer_id'  => $line->customer_id,
             'request_type' => 'resume',
@@ -147,27 +175,34 @@ public function importResumeRequests(Request $request)
         $imported++;
     }
 
+    // 3. Row-by-Row Error Excel
     if (count($errors)) {
-    $filename = 'import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        $filename = 'resume_import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(
+            new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
+            $filename
+        );
+    }
 
-    return Excel::download(
-        new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
-        $filename
-    );
+    return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 }
 
-return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 
-}
-
-
-public function importChangeDateRequests(Request $request)
+public function importChangeDateRequests(HttpRequest $request)
 {
     $request->validate([
         'file' => 'required|file|mimes:xlsx',
     ]);
 
     $rows = Excel::toCollection(null, $request->file('file'))->first();
+    
+    // 1. Template Validation
+    $expectedHeaders = ['رقم الهاتف', 'التاريخ الجديد YYYY-MM-DD', 'السبب', 'ملاحظات'];
+    $actualHeaders = isset($rows[0]) ? $rows[0]->toArray() : [];
+    if (array_slice($actualHeaders, 0, 4) !== $expectedHeaders) {
+        return redirect()->back()->withErrors(['file' => '❌ خطأ في تنسيق الملف: بعض الأعمدة مفقودة أو غير مرتبة بشكل صحيح. يرجى استخدام النموذج المعتمد.']);
+    }
+
     $imported = 0;
     $errors = [];
 
@@ -179,19 +214,26 @@ public function importChangeDateRequests(Request $request)
         $reason = trim($row[2] ?? '');
         $comment = trim($row[3] ?? '');
 
-        $line = Line::where('phone_number', $phone)->first();
+        if (!$phone) continue;
+
+        // 2. Query with Distributor Scoping
+        $query = Line::where('phone_number', $phone);
+        if (auth()->user()->role?->name === 'موزع') {
+            $query->where('distributor_id', auth()->id());
+        }
+        $line = $query->first();
 
         if (!$line) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": رقم الهاتف $phone غير موجود.";
+            $errors[] = [$phone, $newDate, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
             continue;
         }
 
         if (!$newDate || !\Carbon\Carbon::canBeCreatedFromFormat($newDate, 'Y-m-d')) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": التاريخ غير صالح.";
+            $errors[] = [$phone, $newDate, $reason, $comment, "❌ التاريخ غير صالح (يجب أن يكون YYYY-MM-DD)"];
             continue;
         }
 
-        $mainRequest = LineRequest::create([
+        $mainRequest = RequestModel::create([
             'line_id'      => $line->id,
             'customer_id'  => $line->customer_id,
             'request_type' => 'change_date',
@@ -201,35 +243,41 @@ public function importChangeDateRequests(Request $request)
 
         RequestChangeDate::create([
             'request_id'   => $mainRequest->id,
+            'current_date' => $line->last_invoice_date ?? now()->toDateString(), // Mandatory field
             'new_date'     => $newDate,
-            'reason'       => $reason,
-            'comment'      => $comment,
+            'reason'       => "{$reason} | {$comment}",
         ]);
 
         $imported++;
     }
 
     if (count($errors)) {
-    $filename = 'import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        $filename = 'change_date_import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(
+            new ErrorExport($errors, ['رقم الهاتف', 'التاريخ الجديد', 'السبب', 'ملاحظات', 'الخطأ']),
+            $filename
+        );
+    }
 
-    return Excel::download(
-        new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
-        $filename
-    );
+    return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 }
 
-return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 
-}
-
-
-public function importChangeDistributorRequests(Request $request)
+public function importChangeDistributorRequests(HttpRequest $request)
 {
     $request->validate([
         'file' => 'required|file|mimes:xlsx',
     ]);
 
     $rows = Excel::toCollection(null, $request->file('file'))->first();
+    
+    // 1. Template Validation
+    $expectedHeaders = ['رقم الهاتف', 'اسم الموزع الجديد', 'السبب', 'ملاحظات'];
+    $actualHeaders = isset($rows[0]) ? $rows[0]->toArray() : [];
+    if (array_slice($actualHeaders, 0, 4) !== $expectedHeaders) {
+        return redirect()->back()->withErrors(['file' => '❌ خطأ في تنسيق الملف: بعض الأعمدة مفقودة أو غير مرتبة بشكل صحيح. يرجى استخدام النموذج المعتمد.']);
+    }
+
     $imported = 0;
     $errors = [];
 
@@ -241,19 +289,33 @@ public function importChangeDistributorRequests(Request $request)
         $reason = trim($row[2] ?? '');
         $comment = trim($row[3] ?? '');
 
-        $line = Line::where('phone_number', $phone)->first();
+        if (!$phone) continue;
+
+        // 2. Query with Distributor Scoping
+        $query = Line::where('phone_number', $phone);
+        if (auth()->user()->role?->name === 'موزع') {
+            $query->where('distributor_id', auth()->id());
+        }
+        $line = $query->first();
 
         if (!$line) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": رقم الهاتف $phone غير موجود.";
+            $errors[] = [$phone, $newDistributor, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
             continue;
         }
 
         if (!$newDistributor) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": اسم الموزع الجديد مفقود.";
+            $errors[] = [$phone, $newDistributor, $reason, $comment, "❌ اسم الموزع الجديد مفقود"];
             continue;
         }
 
-        $mainRequest = LineRequest::create([
+        // Validate the new distributor exists in the system
+        $exists = User::where('name', $newDistributor)->whereHas('role', function($q){ $q->where('name', 'موزع'); })->exists();
+        if (!$exists) {
+            $errors[] = [$phone, $newDistributor, $reason, $comment, "❌ الموزع المذكور غير موجود بنظامنا"];
+            continue;
+        }
+
+        $mainRequest = RequestModel::create([
             'line_id'      => $line->id,
             'customer_id'  => $line->customer_id,
             'request_type' => 'change_distributor',
@@ -263,35 +325,41 @@ public function importChangeDistributorRequests(Request $request)
 
         RequestChangeDistributor::create([
             'request_id'       => $mainRequest->id,
+            'old_distributor'  => $line->distributor?->name,
             'new_distributor'  => $newDistributor,
-            'reason'           => $reason,
-            'comment'          => $comment,
+            'reason'           => "{$reason} | {$comment}",
         ]);
 
         $imported++;
     }
 
     if (count($errors)) {
-    $filename = 'import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        $filename = 'change_distributor_errors_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(
+            new ErrorExport($errors, ['رقم الهاتف', 'الموزع الجديد', 'السبب', 'ملاحظات', 'الخطأ']),
+            $filename
+        );
+    }
 
-    return Excel::download(
-        new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
-        $filename
-    );
+    return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 }
 
-return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 
-}
-
-
-public function importChangeChipRequests(Request $request)
+public function importChangeChipRequests(HttpRequest $request)
 {
     $request->validate([
         'file' => 'required|file|mimes:xlsx',
     ]);
 
     $rows = Excel::toCollection(null, $request->file('file'))->first();
+    
+    // 1. Template Validation
+    $expectedHeaders = ['رقم الهاتف', 'السيريال الجديد', 'السبب', 'ملاحظات'];
+    $actualHeaders = isset($rows[0]) ? $rows[0]->toArray() : [];
+    if (array_slice($actualHeaders, 0, 4) !== $expectedHeaders) {
+        return redirect()->back()->withErrors(['file' => '❌ خطأ في تنسيق الملف: بعض الأعمدة مفقودة أو غير مرتبة بشكل صحيح. يرجى استخدام النموذج المعتمد.']);
+    }
+
     $imported = 0;
     $errors = [];
 
@@ -303,19 +371,26 @@ public function importChangeChipRequests(Request $request)
         $reason = trim($row[2] ?? '');
         $comment = trim($row[3] ?? '');
 
-        $line = Line::where('phone_number', $phone)->first();
+        if (!$phone) continue;
+
+        // 2. Query with Distributor Scoping
+        $query = Line::where('phone_number', $phone);
+        if (auth()->user()->role?->name === 'موزع') {
+            $query->where('distributor_id', auth()->id());
+        }
+        $line = $query->first();
 
         if (!$line) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": رقم الهاتف $phone غير موجود.";
+            $errors[] = [$phone, $newSerial, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
             continue;
         }
 
         if (!$newSerial) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": رقم الشريحة الجديدة غير موجود.";
+            $errors[] = [$phone, $newSerial, $reason, $comment, "❌ رقم الشريحة الجديدة مفقود"];
             continue;
         }
 
-        $mainRequest = LineRequest::create([
+        $mainRequest = RequestModel::create([
             'line_id' => $line->id,
             'customer_id' => $line->customer_id,
             'request_type' => 'change_chip',
@@ -324,63 +399,77 @@ public function importChangeChipRequests(Request $request)
         ]);
 
         RequestChangeChip::create([
-            'request_id' => $mainRequest->id,
-            'new_serial' => $newSerial,
-            'reason' => $reason,
-            'comment' => $comment,
+            'request_id'   => $mainRequest->id,
+            'change_type'  => 'chip', // Default type for bulk imports
+            'new_serial'   => $newSerial,
+            'old_serial'   => $line->serial_number, // Pass current serial
+            'request_date' => now(), // Mandatory field
+            'comment'      => "{$reason} | {$comment}",
         ]);
 
         $imported++;
     }
 
-if (count($errors)) {
-    $filename = 'import_errors_' . now()->format('Ymd_His') . '.xlsx';
+    if (count($errors)) {
+        $filename = 'change_chip_import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(
+            new ErrorExport($errors, ['رقم الهاتف', 'السيريال الجديد', 'السبب', 'ملاحظات', 'الخطأ']),
+            $filename
+        );
+    }
 
-    return Excel::download(
-        new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
-        $filename
-    );
+    return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 }
 
-return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
-}
 
 
-
-public function importChangePlanRequests(Request $request)
+public function importChangePlanRequests(HttpRequest $request)
 {
     $request->validate([
         'file' => 'required|file|mimes:xlsx',
     ]);
 
     $rows = Excel::toCollection(null, $request->file('file'))->first();
+    
+    // 1. Template Validation
+    $expectedHeaders = ['رقم الهاتف', 'اسم النظام الجديد', 'السبب', 'ملاحظات'];
+    $actualHeaders = isset($rows[0]) ? $rows[0]->toArray() : [];
+    if (array_slice($actualHeaders, 0, 4) !== $expectedHeaders) {
+        return redirect()->back()->withErrors(['file' => '❌ خطأ في تنسيق الملف: بعض الأعمدة مفقودة أو غير مرتبة بشكل صحيح. يرجى استخدام النموذج المعتمد.']);
+    }
+
     $imported = 0;
     $errors = [];
 
     foreach ($rows as $index => $row) {
-        if ($index === 0) continue; // Skip header row
+        if ($index === 0) continue;
 
         $phone = trim($row[0] ?? '');
         $newPlanName = trim($row[1] ?? '');
         $reason = trim($row[2] ?? '');
         $comment = trim($row[3] ?? '');
 
-        $line = Line::where('phone_number', $phone)->first();
+        if (!$phone) continue;
+
+        // 2. Query with Distributor Scoping
+        $query = Line::where('phone_number', $phone);
+        if (auth()->user()->role?->name === 'موزع') {
+            $query->where('distributor_id', auth()->id());
+        }
+        $line = $query->first();
 
         if (!$line) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": رقم الهاتف $phone غير موجود.";
+            $errors[] = [$phone, $newPlanName, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
             continue;
         }
 
         $newPlan = Plan::where('name', $newPlanName)->first();
-
         if (!$newPlan) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": النظام $newPlanName غير موجود.";
+            $errors[] = [$phone, $newPlanName, $reason, $comment, "❌ النظام المذكور ($newPlanName) غير موجود"];
             continue;
         }
 
-        // إنشاء الطلب
-        $mainRequest = LineRequest::create([
+        $mainRequest = RequestModel::create([
             'line_id' => $line->id,
             'customer_id' => $line->customer_id,
             'request_type' => 'change_plan',
@@ -388,57 +477,70 @@ public function importChangePlanRequests(Request $request)
             'requested_by' => auth()->id(),
         ]);
 
-        // التفاصيل
         RequestChangePlan::create([
-            'request_id' => $mainRequest->id,
-            'new_plan_id' => $newPlan->id,
-            'reason' => $reason,
-            'comment' => $comment,
+            'request_id'    => $mainRequest->id,
+            'old_plan_name' => $line->plan?->name ?? 'بدون نظام',
+            'new_plan_id'   => $newPlan->id,
+            'reason'        => $reason,
+            'comment'       => $comment,
         ]);
 
         $imported++;
     }
 
-if (count($errors)) {
-    $filename = 'import_errors_' . now()->format('Ymd_His') . '.xlsx';
+    if (count($errors)) {
+        $filename = 'change_plan_import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(
+            new ErrorExport($errors, ['رقم الهاتف', 'النظام الجديد', 'السبب', 'ملاحظات', 'الخطأ']),
+            $filename
+        );
+    }
 
-    return Excel::download(
-        new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
-        $filename
-    );
+    return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 }
 
-return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
-}
 
 
-
-public function importStopRequests(Request $request)
+public function importStopRequests(HttpRequest $request)
 {
     $request->validate([
         'file' => 'required|file|mimes:xlsx'
     ]);
 
     $rows = Excel::toCollection(null, $request->file('file'))->first();
+    
+    // 1. Template Validation
+    $expectedHeaders = ['رقم الهاتف', 'السبب', 'ملاحظات'];
+    $actualHeaders = isset($rows[0]) ? $rows[0]->toArray() : [];
+    if (array_slice($actualHeaders, 0, 3) !== $expectedHeaders) {
+        return redirect()->back()->withErrors(['file' => '❌ خطأ في تنسيق الملف: بعض الأعمدة مفقودة أو غير مرتبة بشكل صحيح. يرجى استخدام النموذج المعتمد.']);
+    }
+
     $imported = 0;
     $errors = [];
 
     foreach ($rows as $index => $row) {
-        if ($index === 0) continue; // skip header
+        if ($index === 0) continue;
 
         $phone = trim($row[0] ?? '');
         $reason = trim($row[1] ?? '');
         $comment = trim($row[2] ?? '');
 
-        $line = Line::where('phone_number', $phone)->first();
+        if (!$phone) continue;
+
+        // 2. Query with Distributor Scoping
+        $query = Line::where('phone_number', $phone);
+        if (auth()->user()->role?->name === 'موزع') {
+            $query->where('distributor_id', auth()->id());
+        }
+        $line = $query->first();
 
         if (!$line) {
-            $errors[] = "الصف " . ($index + 1) . " - رقم الخط غير موجود: $phone";
+            $errors[] = [$phone, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
             continue;
         }
 
-        // أنشئ الطلب الرئيسي
-        $mainRequest = LineRequest::create([
+        $mainRequest = RequestModel::create([
             'line_id'      => $line->id,
             'customer_id'  => $line->customer_id,
             'request_type' => 'stop',
@@ -446,7 +548,6 @@ public function importStopRequests(Request $request)
             'requested_by' => auth()->id(),
         ]);
 
-        // أنشئ تفاصيل الطلب
         RequestStopLine::create([
             'request_id' => $mainRequest->id,
             'reason'     => $reason,
@@ -456,59 +557,67 @@ public function importStopRequests(Request $request)
         $imported++;
     }
 
-if (count($errors)) {
-    $filename = 'import_errors_' . now()->format('Ymd_His') . '.xlsx';
+    if (count($errors)) {
+        $filename = 'stop_import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(
+            new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
+            $filename
+        );
+    }
 
-    return Excel::download(
-        new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
-        $filename
-    );
+    return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 }
 
-return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
-}
 
 
 
-
-public function importResellRequests(Request $request)
+public function importResellRequests(HttpRequest $request)
 {
     $request->validate([
         'file' => 'required|file|mimes:xlsx',
     ]);
 
     $rows = Excel::toCollection(null, $request->file('file'))->first();
+    
+    // 1. Template Validation
+    $expectedHeaders = ['رقم الهاتف', 'النوع', 'السيريال القديم', 'السيريال الجديد', 'ملاحظات'];
+    $actualHeaders = isset($rows[0]) ? $rows[0]->toArray() : [];
+    if (array_slice($actualHeaders, 0, 5) !== $expectedHeaders) {
+        return redirect()->back()->withErrors(['file' => '❌ خطأ في تنسيق الملف: بعض الأعمدة مفقودة أو غير مرتبة بشكل صحيح. يرجى استخدام النموذج المعتمد.']);
+    }
+
     $imported = 0;
     $errors = [];
 
     foreach ($rows as $index => $row) {
-        if ($index === 0) continue; // skip header row
+        if ($index === 0) continue;
 
         $phone = trim($row[0] ?? '');
-        $type = trim($row[1] ?? '');
+        $type = trim($row[1] ?? ''); // chip or branch
         $oldSerial = trim($row[2] ?? '');
         $newSerial = trim($row[3] ?? '');
         $comment = trim($row[4] ?? '');
 
-        $line = Line::where('phone_number', $phone)->first();
+        if (!$phone) continue;
+
+        // 2. Query with Distributor Scoping
+        $query = Line::where('phone_number', $phone);
+        if (auth()->user()->role?->name === 'موزع') {
+            $query->where('distributor_id', auth()->id());
+        }
+        $line = $query->first();
 
         if (!$line) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": الرقم $phone غير موجود";
+            $errors[] = [$phone, $type, $oldSerial, $newSerial, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
             continue;
         }
 
         if (!in_array($type, ['chip', 'branch'])) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": نوع غير صحيح: $type";
+            $errors[] = [$phone, $type, $oldSerial, $newSerial, $comment, "❌ نوع غير صحيح (يجب أن يكون chip أو branch)"];
             continue;
         }
 
-        if ($type === 'chip' && !$newSerial) {
-            $errors[] = "❌ الصف " . ($index + 1) . ": يجب إدخال الرقم التسلسلي الجديد";
-            continue;
-        }
-
-        // إنشاء الطلب
-        $mainRequest = LineRequest::create([
+        $mainRequest = RequestModel::create([
             'line_id' => $line->id,
             'customer_id' => $line->customer_id,
             'request_type' => 'resell',
@@ -516,28 +625,27 @@ public function importResellRequests(Request $request)
             'requested_by' => auth()->id(),
         ]);
 
-        // التفاصيل
-        RequestResellLine::create([
-            'request_id' => $mainRequest->id,
-            'type' => $type,
-            'old_serial' => $oldSerial,
-            'new_serial' => $newSerial,
-            'comment' => $comment,
+        RequestResell::create([
+            'request_id'   => $mainRequest->id,
+            'resell_type'  => $type, // already checked to be chip or branch
+            'old_serial'   => $line->serial_number,
+            'new_serial'   => $newSerial,
+            'request_date' => now(),
+            'comment'      => $comment,
         ]);
 
         $imported++;
     }
 
-if (count($errors)) {
-    $filename = 'import_errors_' . now()->format('Ymd_His') . '.xlsx';
+    if (count($errors)) {
+        $filename = 'resell_import_errors_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(
+            new ErrorExport($errors, ['رقم الهاتف', 'النوع', 'السيريال القديم', 'السيريال الجديد', 'ملاحظات', 'الخطأ']),
+            $filename
+        );
+    }
 
-    return Excel::download(
-        new ErrorExport($errors, ['رقم الهاتف', 'السبب', 'ملاحظات', 'الخطأ']),
-        $filename
-    );
-}
-
-return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
+    return redirect()->back()->with('success', "✅ تم استيراد $imported طلب بنجاح.");
 }
 
     /**
@@ -673,7 +781,7 @@ public function storeChangeDate(HttpRequest $request)
         'reason'       => $validated['reason'],
     ]);
 
-    return back()->with('success', '✅ تم عمل الطلب بنجاح.');
+    return redirect()->route('requests.all')->with('success', '✅ تم عمل الطلب بنجاح.');
 }
 
     /**
@@ -709,6 +817,31 @@ public function storeChangeDate(HttpRequest $request)
     }
     
 
+private function applyRequestEffects(RequestModel $request)
+{
+    match ($request->request_type) {
+        'change_plan' => $this->applyChangePlan($request),
+        'change_chip' => $this->applyChangeChip($request),
+        'change_distributor' => $this->applyChangeDistributor($request),
+        'stop' => $this->applyStopLine($request),
+        'pause' => $this->applyPauseLine($request),
+        'resume' => $this->applyResumeLine($request),
+        'resell' => $this->applyResell($request),
+        'change_date' => $this->applyChangeDate($request),
+        default => null
+    };
+}
+
+private function handleTargetRelease(RequestModel $request)
+{
+    if ($request->requested_by) {
+        $user = User::find($request->requested_by);
+        if ($user) {
+            $user->checkAndReleaseTargets($request->updated_at->month, $request->updated_at->year);
+        }
+    }
+}
+
 public function updateStatus(HttpRequest $httpRequest, RequestModel $request) 
 {
     $newStatus = $httpRequest->status;
@@ -721,18 +854,8 @@ public function updateStatus(HttpRequest $httpRequest, RequestModel $request)
     }
 
     // ✅ لو الحالة الجديدة "done" نفذ التأثير الخاص بالطلب
-    if ($newStatus === 'done') {
-        match ($request->request_type) {
-            'change_plan' => $this->applyChangePlan($request),
-            'change_chip' => $this->applyChangeChip($request),
-            'change_distributor' => $this->applyChangeDistributor($request),
-            'stop' => $this->applyStopLine($request),
-            'pause' => $this->applyPauseLine($request),
-            'resume' => $this->applyResumeLine($request),
-            'resell' => $this->applyResell($request),
-            'change_date' => $this->applyChangeDate($request),
-            default => null
-        };
+    if ($newStatus === 'done' && $request->status !== 'done') {
+        $this->applyRequestEffects($request);
     }
 
     $request->update([
@@ -740,32 +863,29 @@ public function updateStatus(HttpRequest $httpRequest, RequestModel $request)
         'done_by' => auth()->id(),
     ]);
 
+    // إذا تم تحديث الحالة إلى "done"، نتحقق من مكافآت المستهدفات للموظف الذي أنشأ الطلب
+    if ($newStatus === 'done') {
+        $this->handleTargetRelease($request);
+    }
+
     return back()->with('success', '✅ تم تحديث حالة الطلب بنجاح.');
 }
 protected function applyChangePlan(RequestModel $request)
 {
     $data = RequestChangePlan::where('request_id', $request->id)->first();
     if ($data && $data->new_plan_id) {
-        $data->line->update([
+        $request->line()->update([
             'plan_id' => $data->new_plan_id,
         ]);
     }
 }
-protected function applyChangeDistributor(RequestModel $request)
-{
-    $data = RequestChangeDistributor::where('request_id', $request->id)->first();
-    if ($data && $data->new_distributor) {
-        $data->line->update([
-            'distributor' => $data->new_distributor,
-        ]);
-    }
-}
+
 protected function applyStopLine(RequestModel $request) 
 {
     $data = RequestStopLine::where('request_id', $request->id)->first(); 
 
     if ($data) {
-        $data->line->update([
+        $request->line->update([
             'status' => 'inactive',
         ]);
     }
@@ -775,7 +895,7 @@ protected function applyPauseLine(RequestModel $request)
 {
     $data = RequestPauseLine::where('request_id', $request->id)->first();
     if ($data) {
-        $data->line->update([
+        $request->line->update([
             'status' => 'inactive',
         ]);
     }
@@ -784,7 +904,7 @@ protected function applyResumeLine(RequestModel $request)
 {
     $data = RequestResumeLine::where('request_id', $request->id)->first();
     if ($data) {
-        $data->line->update([
+        $request->line->update([
             'status' => 'active',
         ]);
     }
@@ -807,19 +927,18 @@ protected function applyResell(RequestModel $request)
     }
 
     // تحديث الخط
-    $data->line->update([
+    $request->line->update([
         'customer_id' => $customer?->id,
-        'phone_number' => $data->new_serial ?? $data->line->phone_number,
-        'gcode' => $data->new_serial ? substr($data->new_serial, 0, 3) : $data->line->gcode,
+        'phone_number' => $data->new_serial ?? $request->line->phone_number,
+        'gcode' => $data->new_serial ? substr($data->new_serial, 0, 3) : $request->line->gcode,
         'attached_at' => now(),
     ]);
 }
 protected function applyChangeDate(RequestModel $request)
 {
-    $data = RequestChangeDate::where('request_id', $request->id)->first();
-    if ($data && $data->new_date) {
-        $data->line->update([
-            'last_invoice_date' => $data->new_date,
+    if ($request->changeDate && $request->changeDate->new_date) {
+        $request->line->update([
+            'last_invoice_date' => $request->changeDate->new_date,
         ]);
     }
 }
@@ -827,9 +946,8 @@ protected function applyChangeChip(RequestModel $request)
 {
     $data = RequestChangeChip::where('request_id', $request->id)->first();
     if ($data && $data->new_serial) {
-        $data->line->update([
-            'phone_number' => $data->new_serial,
-            'gcode' => substr($data->new_serial, 0, 3), // تحديث المقدمة تلقائياً
+        $request->line->update([
+            'serial_number' => $data->new_serial,
         ]);
     }
 }
@@ -859,6 +977,7 @@ public function storeResell(HttpRequest $request)
     'comment'      => 'nullable|string|max:1000',
     'full_name'    => 'nullable|required_if:resell_type,branch|string|max:255',
     'national_id'  => 'nullable|required_if:resell_type,branch|digits:14',
+    'sale_price'   => 'nullable|numeric|min:0',
 ], [
     'resell_type.required'     => 'يجب اختيار نوع إعادة البيع.',
     'new_serial.required_if'   => 'يجب إدخال المسلسل الجديد عند اختيار نوع الشريحة.',
@@ -870,10 +989,12 @@ public function storeResell(HttpRequest $request)
 ]);
 
 
+    $line = \App\Models\Line::find($validated['line_id']);
+
     // 🧩 إنشاء الطلب الأساسي
     $requestRecord = RequestModel::create([
         'line_id'      => $validated['line_id'],
-        'customer_id'  => \App\Models\Line::find($validated['line_id'])->customer_id,
+        'customer_id'  => $line->customer_id,
         'request_type' => 'resell',
         'status'       => 'pending',
         'requested_by' => Auth::id(),
@@ -889,9 +1010,16 @@ public function storeResell(HttpRequest $request)
         'full_name'    => $validated['full_name'] ?? null,
         'national_id'  => $validated['national_id'] ?? null,
         'comment'      => $validated['comment'],
+        'buy_price'    => $line->buy_price,
+        'sale_price'   => $request->sale_price,
     ]);
 
-     redirect()->route('requests.stop-lines')->with('success', '✅ تم إنشاء طلب إعادة البيع بنجاح');
+    // Update line sale price if provided
+    if ($request->filled('sale_price')) {
+        $line->update(['sale_price' => $request->sale_price]);
+    }
+
+    return redirect()->route('requests.all')->with('success', '✅ تم إنشاء طلب إعادة البيع بنجاح');
 }
 public function resellRequests(HttpRequest $request)
 {
@@ -927,7 +1055,7 @@ public function resellRequests(HttpRequest $request)
             $q->where('national_id', 'like', '%' . $request->nid . '%'));
     }
 
-    if ($request->filled('provider')) {return
+    if ($request->filled('provider')) {
         $query->whereHas('line', fn($q) =>
             $q->where('provider', 'like', '%' . $request->provider . '%'));
     }
@@ -941,6 +1069,39 @@ public function resellDetails(RequestModel $request)
     $request->load(['line.customer', 'resellDetails', 'requestedBy', 'doneBy']);
 
     return view('admin.requests.resell-show', ['requestModel' => $request]);
+}
+
+public function completeResellSale(HttpRequest $httpRequest, RequestModel $request)
+{
+    if ($request->request_type !== 'resell') {
+        return back()->with('error', '❌ هذا الطلب ليس طلب إعادة بيع.');
+    }
+
+    $line = $request->line;
+    if (!$line) {
+        return back()->with('error', '❌ الخط المرتبط بهذا الطلب غير موجود.');
+    }
+
+    $salePrice = (float)($request->resellDetails->sale_price ?? 0);
+
+    // تحديث بيانات الطلب (سنا بشوت للأسعار) لضمان عدم تأثرها بتعديل الخط مستقبلاً
+    if ($request->resellDetails) {
+        $request->resellDetails->update([
+            'buy_price'  => (float)$line->buy_price, // حفظ سعر الشراء الحالي كنسخة غير قابلة للتغيير
+            'is_sold'    => true,
+        ]);
+    }
+
+    // تحديث بيانات الخط وتعيينه كمباع
+    $line->update([
+        'sale_price' => $salePrice,
+        'is_sold'    => true,
+    ]);
+    
+    // تحديث التاريخ لضمان ظهوره في محاسبة الشهر الحالي
+    $line->touch();
+
+    return back()->with('success', '✅ تم إتمام البيعة وتسجيل الإيراد بنجاح.');
 }
 
 
@@ -987,11 +1148,12 @@ public function storeChangePlan(HttpRequest $request)
 
     RequestChangePlan::create([
         'request_id' => $mainRequest->id,
+        'old_plan_name' => $line->plan?->name ?? 'بدون نظام',
         'new_plan_id' => $validated['new_plan_id'],
         'comment' => $validated['comment'] ?? null,
     ]);
 
-    return back()->with('success', '✅ تم عمل الطلب بنجاح.');
+    return redirect()->route('requests.all')->with('success', '✅ تم عمل الطلب بنجاح.');
 }
 // In RequestController.php
 
@@ -1044,7 +1206,7 @@ public function storeChangeChip(HttpRequest $request)
         'comment'      => $validated['comment'] ?? null,
     ]);
 
-    return redirect()->route('requests.stop-lines')->with('success', '✅ تم إنشاء طلب تغيير الشريحة بنجاح');
+    return redirect()->route('requests.all')->with('success', '✅ تم إنشاء طلب تغيير الشريحة بنجاح');
 }
 public function createPause($lineId)
 {
@@ -1075,7 +1237,7 @@ public function storePause(HttpRequest $request)
         'comment'    => $validated['comment'],
     ]);
 
-    return back()->with('success', '✅ تم عمل الطلب بنجاح.');
+    return redirect()->route('requests.all')->with('success', '✅ تم عمل الطلب بنجاح.');
 }
 public function createResume($lineId)
 {
@@ -1107,22 +1269,26 @@ public function storeResume(HttpRequest $request)
         'comment' => $validated['comment'],
     ]);
 
-     return back()->with('success', '✅ تم عمل الطلب بنجاح.');
+     return redirect()->route('requests.all')->with('success', '✅ تم عمل الطلب بنجاح.');
 }
 
 
 
 public function createChangeDistributor(Line $line)
 {
-    return view('admin.requests.create-change-distributor', compact('line'));
+    $distributors = \App\Models\User::whereHas('roles', function ($query) {
+        $query->where('name', 'موزع');
+    })->get();
+    
+    return view('admin.requests.create-change-distributor', compact('line', 'distributors'));
 }
 
 public function storeChangeDistributor(HttpRequest $request)
 {
     $validated = $request->validate([
-        'line_id'         => 'required|exists:lines,id',
-        'new_distributor' => 'required|string|max:255',
-        'reason'          => 'nullable|string|max:1000',
+        'line_id'            => 'required|exists:lines,id',
+        'new_distributor_id' => 'required|exists:users,id',
+        'reason'             => 'nullable|string|max:1000',
     ]);
 
     $line = Line::findOrFail($validated['line_id']);
@@ -1136,19 +1302,28 @@ public function storeChangeDistributor(HttpRequest $request)
     ]);
 
     RequestChangeDistributor::create([
-        'request_id'      => $requestModel->id,
-        'old_distributor' => $line->distributor,
-        'new_distributor' => $validated['new_distributor'],
-        'reason'          => $validated['reason'],
+        'request_id'         => $requestModel->id,
+        'old_distributor_id' => $line->distributor_id,
+        'new_distributor_id' => $validated['new_distributor_id'],
+        'reason'             => $validated['reason'],
     ]);
 
-    return back()->with('success', '✅ تم عمل الطلب بنجاح.');
+    return redirect()->route('requests.all')->with('success', '✅ تم عمل الطلب بنجاح.');
+}
+
+protected function applyChangeDistributor(RequestModel $request)
+{
+    if ($request->changeDistributor && $request->changeDistributor->new_distributor_id) {
+        $request->line->update([
+            'distributor_id' => $request->changeDistributor->new_distributor_id,
+        ]);
+    }
 }
 
 
 public function history(HttpRequest $request)
 {
-    $query = \App\Models\Request::with(['line.customer', 'requestedBy', 'doneBy'])
+    $query = \App\Models\Request::with(['line.customer', 'requestedBy', 'doneBy', 'resellDetails'])
     ->where('status', 'done');
 
 
@@ -1187,7 +1362,7 @@ public function history(HttpRequest $request)
 
 public function all(HttpRequest $request)
 {
-    $query = \App\Models\Request::with('line.customer')->where('status', '!=', 'done');
+    $query = \App\Models\Request::with(['line.customer', 'stopDetails', 'resellDetails', 'changePlan', 'changeChip', 'pause', 'resume', 'changeDistributor', 'changeDate'])->where('status', '!=', 'done');
 
     // فلترة بالرقم
     if ($request->filled('phone')) {
@@ -1218,8 +1393,37 @@ public function all(HttpRequest $request)
     }
 
     $requests = $query->latest()->paginate(20);
+    $plans = \App\Models\Plan::all();
+    $distributors = \App\Models\User::whereHas('role', function($q) {
+        $q->where('name', 'موزع');
+    })->select('id', 'name')->get();
 
-    return view('admin.requests.all', compact('requests'));
+    return view('admin.requests.all', compact('requests', 'plans', 'distributors'));
+}
+
+public function updateDetails(HttpRequest $httpRequest, RequestModel $request)
+{
+    $type = $request->request_type;
+
+    if ($type === 'stop') {
+        $request->stopDetails()->update($httpRequest->only(['reason', 'comment']));
+    } elseif ($type === 'resell') {
+        $request->resellDetails()->update($httpRequest->only(['resell_type', 'old_serial', 'new_serial', 'request_date', 'full_name', 'national_id', 'comment', 'sale_price']));
+    } elseif ($type === 'change_plan') {
+        $request->changePlan()->update($httpRequest->only(['new_plan_id', 'comment']));
+    } elseif ($type === 'change_chip') {
+        $request->changeChip()->update($httpRequest->only(['change_type', 'old_serial', 'new_serial', 'full_name', 'national_id', 'request_date', 'comment']));
+    } elseif ($type === 'pause') {
+        $request->pause()->update($httpRequest->only(['reason', 'comment']));
+    } elseif ($type === 'resume') {
+        $request->resume()->update($httpRequest->only(['reason', 'comment']));
+    } elseif ($type === 'change_distributor') {
+        $request->changeDistributor()->update($httpRequest->only(['new_distributor_id', 'reason', 'comment']));
+    } elseif ($type === 'change_date') {
+        $request->changeDate()->update($httpRequest->only(['new_date', 'reason', 'comment']));
+    }
+
+    return back()->with('success', '✅ تم تحديث بيانات الطلب بنجاح.');
 }
 
 public function bulkUpdate(HttpRequest $request)
@@ -1229,11 +1433,18 @@ public function bulkUpdate(HttpRequest $request)
         'status' => 'required|in:pending,inprogress,done,cancelled',
     ]);
 
-    \App\Models\Request::whereIn('id', $request->selected_requests)
-        ->update([
+    $requests = RequestModel::whereIn('id', $request->selected_requests)->get();
+    foreach ($requests as $req) {
+        if ($request->status === 'done' && $req->status !== 'done') {
+            $this->applyRequestEffects($req);
+            $this->handleTargetRelease($req);
+        }
+
+        $req->update([
             'status' => $request->status,
             'done_by' => auth()->id(),
         ]);
+    }
 
     return back()->with('success', '✅ تم تحديث حالة الطلبات المحددة بنجاح.');
 }
@@ -1247,10 +1458,14 @@ public function bulkAction(HttpRequest $request)
         'action' => 'required|in:change_status,export,change_and_export',
     ]);
 
-    $requests = \App\Models\Request::whereIn('id', $request->selected_requests)->get();
+    $requests = RequestModel::whereIn('id', $request->selected_requests)->get();
 
     if ($request->action === 'change_status' || $request->action === 'change_and_export') {
         foreach ($requests as $r) {
+            if ($request->new_status === 'done' && $r->status !== 'done') {
+                $this->applyRequestEffects($r);
+                $this->handleTargetRelease($r);
+            }
             $r->update([
                 'status' => $request->new_status,
                 'done_by' => auth()->id()

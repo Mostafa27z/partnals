@@ -8,7 +8,7 @@ class RequestResell extends Model
 {
     protected $fillable = [
     'request_id', 'resell_type', 'old_serial', 'new_serial', 'request_date',
-    'full_name', 'national_id', 'comment'
+    'full_name', 'national_id', 'comment', 'buy_price', 'sale_price', 'is_sold'
 ];
 
 public function request()

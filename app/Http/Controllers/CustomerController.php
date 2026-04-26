@@ -13,28 +13,7 @@ class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Customer::with('lines');
-
-        if ($request->filled('name')) {
-            $query->where('full_name', 'like', '%' . $request->name . '%');
-        }
-
-        if ($request->filled('national_id')) {
-            $query->where('national_id', 'like', '%' . $request->national_id . '%');
-        }
-
-        if ($request->filled('phone_number')) {
-            $query->whereHas('lines', function ($q) use ($request) {
-                $q->where('phone_number', 'like', '%' . $request->phone_number . '%');
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->whereHas('lines', function ($q) use ($request) {
-                $q->where('status', $request->status);
-            });
-        }
-        $customers = $query->paginate(10);
+        $customers = Customer::with('lines')->filter($request)->paginate(10);
         // $customers = $query->latest()->get(); // Consider paginate() in production
 
         return view('admin.customers.index', compact('customers'));
@@ -124,9 +103,9 @@ class CustomerController extends Controller
         return redirect()->route('customers.index')->with('success', 'تم حذف العميل بنجاح');
     }
 
-    public function export()
+    public function export(Request $request)
     {
-        return Excel::download(new CustomersExport, 'customers.xlsx');
+        return Excel::download(new CustomersExport($request), 'customers.xlsx');
     }
     public function search(Request $request)
 {

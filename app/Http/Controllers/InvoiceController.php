@@ -37,6 +37,9 @@ class InvoiceController extends Controller
     ]);
 
     $planPrice = optional($line->plan)->price ?? 0;
+    $providerPrice = optional($line->plan)->provider_price ?? 0;
+    $calculatedProfit = $planPrice - $providerPrice;
+    
     $months = $request->months_count;
 
     // نأخذ اليوم من التاريخ الأخير أو اليوم الحالي
@@ -56,13 +59,14 @@ class InvoiceController extends Controller
         }
 
         Invoice::create([
-            'line_id'       => $line->id,
-            'amount'        => $planPrice,
-            'invoice_month' => $invoiceDate,
-            'is_paid'       => true,
-            'payment_date'  => now(),
-            'paid_by'       => Auth::id(),
-            'notes'         => $request->notes,
+            'line_id'           => $line->id,
+            'amount'            => $planPrice,
+            'calculated_profit' => $calculatedProfit,
+            'invoice_month'     => $invoiceDate,
+            'is_paid'           => true,
+            'payment_date'      => now(),
+            'paid_by'           => Auth::id(),
+            'notes'             => $request->notes,
         ]);
 
         $lastInvoiceMonth = $invoiceDate;
@@ -71,6 +75,8 @@ class InvoiceController extends Controller
     if ($lastInvoiceMonth) {
         $line->update([
             'last_invoice_date' => $lastInvoiceMonth,
+            'payment_date'      => now(),
+            'for_sale'          => 0,
         ]);
     }
 
@@ -134,12 +140,17 @@ if ($request->filled('to')) {
     $query->whereDate('invoice_month', '<=', $request->to);
 }
 
+if ($request->filled('paid_by')) {
+    $query->whereIn('paid_by', $request->paid_by);
+}
+
     $invoices = $query->latest('invoice_month')->paginate(20);
     $total = $query->sum('amount');
 
-    $plans = Plan::all(); // للفلترة بنظام
+    $plans = Plan::all();
+    $users = \App\Models\User::all();
 
-    return view('admin.invoices.index', compact('invoices', 'total', 'plans'));
+    return view('admin.invoices.index', compact('invoices', 'total', 'plans', 'users'));
 }
 
 
@@ -218,4 +229,39 @@ public function lineInvoices(Request $request, Line $line)
 }
 
 
+    public function downloadSample()
+    {
+        $sampleData = [
+            ['رقم الهاتف', 'شهر البداية', 'السنة', 'عدد الشهور', 'المبلغ المدفوع الكلي', 'التكلفة الكلية'],
+            ['25899911', '04', '2026', '4', '624.00', '499.20']
+        ];
+        
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\InvoiceErrorsExport($sampleData), 
+            'invoices_import_sample.xlsx'
+        );
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|mimes:xlsx,csv,xls|max:5120',
+        ]);
+
+        $import = new \App\Imports\InvoicesImport();
+        \Maatwebsite\Excel\Facades\Excel::import($import, $request->file('excel_file'));
+
+        if (count($import->errorsList) > 0) {
+            array_unshift($import->errorsList, [
+                'رقم الهاتف', 'شهر البداية', 'السنة', 'عدد الشهور', 'المبلغ المدفوع الكلي', 'التكلفة الكلية', 'الخطأ (Errors)'
+            ]);
+            
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\InvoiceErrorsExport($import->errorsList), 
+                'invoices_import_errors_'.now()->format('Ymd_His').'.xlsx'
+            );
+        }
+
+        return back()->with('success', 'تم استيراد ودفع الفواتير بنجاح!');
+    }
 }

@@ -44,7 +44,7 @@
                 <tbody class="divide-y divide-gray-200">
                     @foreach($permissions as $permission)
                     <tr class="hover:bg-gray-50 dark:bg-gray-700/50 transition">
-                        <td class="px-6 py-3 font-medium text-gray-800 dark:text-gray-200">{{ $permission->name }}</td>
+                        <td class="px-6 py-3 font-medium text-gray-800 dark:text-gray-200">{{ __($permission->name) }}</td>
                         <td class="px-6 py-3">
                             <input type="checkbox" name="permissions[]" value="{{ $permission->name }}" 
                                 {{ $permission->is_active ? 'checked' : '' }}

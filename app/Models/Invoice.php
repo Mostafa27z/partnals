@@ -12,7 +12,7 @@ class Invoice extends Model
 use LogsChanges;
 
     protected $fillable = [
-        'line_id', 'amount', 'is_paid', 'invoice_month', 'payment_date', 'paid_by', 'notes'
+        'line_id', 'amount', 'calculated_profit', 'is_paid', 'invoice_month', 'payment_date', 'paid_by', 'notes'
     ];
 public function user()
 {

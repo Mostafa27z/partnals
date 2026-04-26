@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RequestChangePlan extends Model
 {
-    protected $fillable = ['request_id', 'new_plan_id', 'comment'];
+    protected $fillable = ['request_id', 'old_plan_name', 'new_plan_id', 'comment'];
 
     public function request()
     {

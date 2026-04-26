@@ -274,5 +274,16 @@
     "لوحة التحكم": "Dashboard",
     "متابعة الطلبات وحالتها بسهولة.": "Track requests and their status easily.",
     "هنا يمكنك متابعة وإدارة كل جوانب النظام بسهولة، بما في ذلك المستخدمين، الطلبات، الفواتير، والصلاحيات.": "Here you can monitor and manage the system with ease, including users, requests, invoices, and permissions.",
-    "💡 نصيحة: استخدم القائمة الجانبية للتنقل بين أقسام النظام.": "💡 Tip: Use the side menu to navigate between system sections."
+    "💡 نصيحة: استخدم القائمة الجانبية للتنقل بين أقسام النظام.": "💡 Tip: Use the side menu to navigate between system sections.",
+    "manage dashboard": "Manage Dashboard",
+    "manage permissions": "Manage Permissions",
+    "edit company details": "Edit Company Details",
+    "manage customers": "Manage Customers",
+    "manage plans": "Manage Plans",
+    "manage lines": "Manage Lines",
+    "manage invoices": "Manage Invoices",
+    "manage requests": "Manage Requests",
+    "manage users": "Manage Users",
+    "manage accounting": "Manage Accounting",
+    "manage hr": "Manage HR"
 }

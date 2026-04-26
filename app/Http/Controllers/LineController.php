@@ -1,10 +1,10 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Line;
 use App\Models\Plan;
+use App\Models\Provider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Exports\LinesExport;
@@ -38,6 +38,19 @@ public function exportSelected(Request $request)
     return Excel::download(new SelectedLinesExport($lines), 'selected_lines.xlsx');
 }
 
+public function bulkDelete(Request $request)
+{
+    $ids = $request->input('selected_lines', []);
+
+    if (empty($ids)) {
+        return back()->with('error', '❌ لم يتم تحديد أي خطوط للحذف.');
+    }
+
+    \App\Models\Line::whereIn('id', $ids)->delete(); // Soft delete
+
+    return back()->with('success', '✅ تم حذف الخطوط المحددة بنجاح.');
+}
+
 public function importProcess(Request $request)
 {
     $request->validate([
@@ -49,7 +62,8 @@ public function importProcess(Request $request)
     $errors = [];
     $failedRows = [];
 
-    $validProviders = ['Vodafone', 'Etisalat', 'Orange', 'WE'];
+    $validProviders = Provider::pluck('name')->toArray();
+    $providersMap   = Provider::pluck('invoice_day', 'name')->toArray();
 
     foreach ($rows as $index => $row) {
         if ($index === 0) continue;
@@ -108,15 +122,10 @@ public function importProcess(Request $request)
             $customerId = $customer?->id;
         }
 
-        // Determine last_invoice_date based on provider
+        // Determine last_invoice_date based on provider from database
         $today = now();
-        $day = match ($provider) {
-            'Vodafone' => 10,
-            'Etisalat', 'WE' => 1,
-            'Orange' => 15,
-            default => 1,
-        };
-        $lastInvoiceDate = $today->copy()->day($day)->startOfDay();
+        $invoiceDay = $providersMap[$provider] ?? 1;
+        $lastInvoiceDate = $today->copy()->day($invoiceDay)->startOfDay();
 
         // Create the line
         Line::create([
@@ -165,14 +174,65 @@ public function importProcess(Request $request)
 
     public function all(Request $request) 
 { 
-    $query = Line::with(['customer', 'plan']);
+    $plans = \App\Models\Plan::select('id', 'name')->get();
+    $distributors = \App\Models\User::whereHas('role', function($q) {
+        $q->where('name', 'موزع');
+    })->select('id', 'name')->get();
 
+    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid']);
+
+    if (!$hasSearch) {
+        $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+        return view('admin.lines.all', compact('lines', 'plans', 'distributors', 'hasSearch'));
+    }
+
+    $query = Line::with(['customer', 'plan', 'distributor']);
+    $query = $this->applyFilters($query, $request);
+
+    $totalCount = $query->count();
+    $lines = $query->latest()->paginate(20);
+
+    return view('admin.lines.all', compact('lines', 'plans', 'distributors', 'hasSearch', 'totalCount'));
+}
+
+public function bulkUpdateDistributor(Request $request)
+{
+    $ids = $request->input('selected_lines', []);
+    $distributor_id = $request->input('bulk_distributor_id');
+    $applyToAll = $request->has('apply_to_all');
+    $action = $request->input('bulk_action'); // 'assign' or 'remove'
+
+    if ($action === 'remove') {
+        $distributor_id = null;
+    } elseif ($action === 'assign' && !$distributor_id) {
+        return back()->with('error', '❌ يرجى اختيار موزع للتعيين.');
+    }
+
+    $query = Line::query();
+
+    if ($applyToAll) {
+        $query = $this->applyFilters($query, $request);
+    } else {
+        if (empty($ids)) {
+            return back()->with('error', '❌ لم يتم تحديد أي خطوط.');
+        }
+        $query->whereIn('id', $ids);
+    }
+
+    $count = $query->count();
+    $query->update(['distributor_id' => $distributor_id]);
+
+    return back()->with('success', "✅ تم تحديث الموزع لـ $count خط بنجاح.");
+}
+
+private function applyFilters($query, Request $request)
+{
     if ($request->filled('phone')) {
         $query->where('phone_number', 'like', '%' . $request->phone . '%');
     }
 
-    if ($request->filled('distributor')) {
-        $query->where('distributor', 'like', '%' . $request->distributor . '%');
+    if ($request->filled('distributor_id')) {
+        $query->where('distributor_id', $request->distributor_id);
     }
 
     if ($request->filled('provider')) {
@@ -193,10 +253,7 @@ public function importProcess(Request $request)
         });
     }
 
-    $lines = $query->latest()->paginate(20);
-    $plans = \App\Models\Plan::select('id', 'name')->get();
-
-    return view('admin.lines.all', compact('lines', 'plans'));
+    return $query;
 }
 
 
@@ -208,9 +265,12 @@ public function importProcess(Request $request)
 
     public function create(Customer $customer)
 {
-    $providers = ['Vodafone', 'Etisalat', 'Orange', 'WE'];
+    $providers = Provider::all();
     $plans = Plan::all(); // كل الخطط مبدئيًا
-    return view('admin.lines.create', compact('customer', 'plans', 'providers'));
+    $distributors = \App\Models\User::whereHas('role', function($q) {
+        $q->where('name', 'موزع');
+    })->select('id', 'name')->get();
+    return view('admin.lines.create', compact('customer', 'plans', 'providers', 'distributors'));
 }
 
 
@@ -225,18 +285,12 @@ public function importProcess(Request $request)
         return back()->withErrors(['phone_number' => 'رقم الهاتف هذا مستخدم بالفعل'])->withInput();
     }
 
-    // ✅ تحديد تاريخ آخر فاتورة حسب مزود الخدمة
-    $provider = $validated['provider'];
+    // ✅ تحديد تاريخ آخر فاتورة حسب مزود الخدمة من القاعدة
+    $dbProvider = \App\Models\Provider::where('name', $validated['provider'])->first();
+    $invoiceDay = $dbProvider ? $dbProvider->invoice_day : 1;
+    
     $now = now();
-    $currentMonth = $now->month;
-    $currentYear = $now->year;
-
-    $invoiceDate = match ($provider) {
-        'Vodafone' => now()->setDay(10)->setMonth($currentMonth)->setYear($currentYear),
-        'Etisalat', 'WE' => now()->setDay(1)->setMonth($currentMonth)->setYear($currentYear),
-        'Orange' => now()->setDay(15)->setMonth($currentMonth)->setYear($currentYear),
-        default => null
-    };
+    $invoiceDate = now()->setDay($invoiceDay)->setMonth($now->month)->setYear($now->year)->startOfDay();
 
     $lineData = array_merge($validated, [
         'added_by' => Auth::id(),
@@ -256,8 +310,12 @@ public function importProcess(Request $request)
 
     public function edit(Customer $customer, Line $line)
 {
-    $plans = Plan::where('provider', $line->provider)->get();
-    return view('admin.lines.edit', compact('customer', 'line', 'plans'));
+    $providers = Provider::all();
+    $plans = Plan::all(); // Send all plans to allow dynamic switching
+    $distributors = \App\Models\User::whereHas('role', function($q) {
+        $q->where('name', 'موزع');
+    })->select('id', 'name')->get();
+    return view('admin.lines.edit', compact('customer', 'line', 'plans', 'providers', 'distributors'));
 }
 
 
@@ -294,48 +352,59 @@ public function importProcess(Request $request)
 {
     $customers = Customer::all();
     $plans = Plan::all(); // كل الخطط مبدئيًا
-    $providers = ['Vodafone', 'Etisalat', 'Orange', 'WE'];
-    return view('admin.lines.create', compact('plans', 'customers', 'providers'));
+    $providers = Provider::all();
+    $distributors = \App\Models\User::whereHas('role', function($q) {
+        $q->where('name', 'موزع');
+    })->select('id', 'name')->get();
+    return view('admin.lines.create', compact('plans', 'customers', 'providers', 'distributors'));
 }
 
     public function storeStandalone(Request $request)
 {
+    $validProvidersStr = Provider::pluck('name')->implode(',');
     $validated = $request->validate(array_merge($this->rules(), [
         'phone_number'      => 'required|unique:lines|size:11',
         'plan_id'           => 'required|exists:plans,id',
         'gcode'             => 'required|in:010,011,012,015',
-        'provider'          => 'required|in:Vodafone,Etisalat,Orange,WE',
+        'provider'          => 'required|in:' . $validProvidersStr,
         'line_type'         => 'required|in:prepaid,postpaid',
     ]));
 
     // تحديد أو إنشاء العميل
     $customerId = null;
-    if ($request->filled('existing_customer_id')) {
-        $customer = Customer::find($request->existing_customer_id);
-        if ($request->has('update_customer_data')) {
-            $customer->update([
-                'full_name'  => $request->full_name,
-                'email'      => $request->email,
-                'birth_date' => $request->birth_date,
-                'address'    => $request->address,
-            ]);
-        }
+    $hasExistingId = $request->filled('existing_customer_id') && is_numeric($request->existing_customer_id);
 
-        $customerId = $customer->id;
-    } elseif ($request->filled(['new_full_name', 'new_national_id'])) {
+    if ($hasExistingId) {
+        $customer = Customer::find($request->existing_customer_id);
+        if ($customer) {
+            if ($request->has('update_customer_data')) {
+                $customer->update([
+                    'full_name'  => $request->full_name,
+                    'email'      => $request->email,
+                    'birth_date' => $request->birth_date,
+                    'address'    => $request->address,
+                ]);
+            }
+            $customerId = $customer->id;
+        }
+    } 
+    
+    // If no existing customer found or provided, try creating a new one if data is present
+    if (!$customerId && $request->filled(['full_name', 'national_id'])) {
         $customer = Customer::create([
-    'full_name'   => $request->new_full_name,
-    'national_id' => $request->new_national_id,
-    'email'       => $request->email,
-    'birth_date'  => $request->birth_date,
-    'address'     => $request->address,
-]);
+            'full_name'   => $request->full_name,
+            'national_id' => $request->national_id,
+            'email'       => $request->email,
+            'birth_date'  => $request->birth_date,
+            'address'     => $request->address,
+        ]);
 
         $customerId = $customer->id;
     }
 
     Line::create([
         'phone_number'       => $validated['phone_number'],
+        'serial_number'      => $request->serial_number,
         'gcode'              => $validated['gcode'],
         'provider'           => $validated['provider'],
         'line_type'          => $validated['line_type'],
@@ -346,7 +415,9 @@ public function importProcess(Request $request)
         'last_invoice_date'       => $request->last_invoice_date,
         'package'            => $request->package,
         'notes'              => $request->notes,
-        'distributor'        => $request->distributor,
+        'distributor_id'     => $request->distributor_id,
+        'buy_price'          => $request->buy_price,
+        'sale_price'         => $request->sale_price,
     ]);
 
     return redirect()->route('lines.all')->with('success', '✅ تم إضافة الخط بنجاح.');
@@ -361,13 +432,18 @@ public function show(Line $line)
     public function editStandalone(Line $line)
 {
     $customers = Customer::all();
-    $plans = Plan::where('provider', $line->provider)->get();
+    $providers = Provider::all();
+    $plans = Plan::all(); // Send all plans to allow dynamic switching
 
     return view('admin.lines.edit', [
         'line' => $line,
         'plans' => $plans,
         'customers' => $customers,
         'customer' => $line->customer,
+        'providers' => $providers,
+        'distributors' => \App\Models\User::whereHas('role', function($q) {
+            $q->where('name', 'موزع');
+        })->select('id', 'name')->get(),
     ]);
 }
 
@@ -386,14 +462,17 @@ public function show(Line $line)
 // }
 public function updateStandalone(Request $request, Line $line)
 {
+    $validProvidersStr = Provider::pluck('name')->implode(',');
     $validated = $request->validate([
         'gcode' => 'required|in:010,011,012,015',
-        'distributor' => 'nullable|string|max:255',
-        'provider' => 'required|in:Vodafone,Etisalat,Orange,WE',
+        'serial_number' => 'nullable|string|max:255',
+        'distributor_id' => 'nullable|exists:users,id',
+        'provider' => 'required|in:' . $validProvidersStr,
         'line_type' => 'required|in:prepaid,postpaid',
         'plan_id' => 'nullable|exists:plans,id',
         'package' => 'nullable|string|max:255',
         'last_invoice_date' => 'nullable|date',
+        'payment_date' => 'nullable|date',
         'notes' => 'nullable|string',
         'national_id' => 'nullable|string|size:14',
         'full_name' => 'nullable|string|max:255',
@@ -438,18 +517,30 @@ public function updateStandalone(Request $request, Line $line)
         }
     }
 
-    $line->update([
+    $isAdmin = auth()->user()->role && auth()->user()->role->name === 'admin';
+    
+    $updateData = [
         'gcode' => $validated['gcode'],
-        'distributor' => $validated['distributor'],
+        'serial_number' => $validated['serial_number'] ?? null,
         'provider' => $validated['provider'],
         'line_type' => $validated['line_type'],
         'plan_id' => $validated['plan_id'],
         'package' => $validated['package'],
-        'last_invoice_date' => $validated['last_invoice_date'],
+        'payment_date' => $validated['payment_date'] ?? null,
         'notes' => $validated['notes'],
+        'buy_price' => $request->buy_price,
+        'sale_price' => $request->sale_price,
         'customer_id' => $customerId,
         'attached_at' => $line->customer_id != $customerId ? now() : $line->attached_at
-    ]);
+    ];
+
+    // Only allow admins to update these specific fields
+    if ($isAdmin) {
+        $updateData['distributor_id'] = $validated['distributor_id'] ?? null;
+        $updateData['last_invoice_date'] = $validated['last_invoice_date'];
+    }
+
+    $line->update($updateData);
 
     return redirect()->route('lines.all')->with('success', 'تم تحديث بيانات الخط بنجاح');
 }
@@ -491,15 +582,21 @@ public function restore($id)
             $uniqueRule .= "," . $id;
         }
 
+        $validProvidersStr = Provider::pluck('name')->implode(',');
+
         return [
             'gcode'        => 'required|in:010,011,012,015',
             'phone_number' => ['required', 'digits:11', 'regex:/^[0-9]/', $uniqueRule],
-            'provider'     => 'required|in:Vodafone,Etisalat,Orange,WE',
+            'provider'     => 'required|in:' . $validProvidersStr,
             'line_type'    => 'required|in:prepaid,postpaid',
             'plan_id'      => 'nullable|exists:plans,id',
             'last_invoice_date' => 'nullable|date',
+            'payment_date'      => 'nullable|date',
             'package'      => 'nullable|string|max:100',
             'notes'        => 'nullable|string|max:255',
+            'distributor_id' => 'nullable|exists:users,id',
+            'buy_price'    => 'nullable|numeric|min:0',
+            'sale_price'   => 'nullable|numeric|min:0',
         ];
     }
 
@@ -512,36 +609,56 @@ public function restore($id)
             '012' => 'Vodafone',
         ];
     }
-    public function forSaleList()
+    public function forSaleList(Request $request)
 {
-      // ->whereNull('deleted_at')
-    $lines = Line::with('customer')->paginate(10);
+    $query = Line::with('customer');
+    
+    // البحث برقم الهاتف
+    if ($request->filled('search')) {
+        $search = $request->input('search');
+        $query->where('phone_number', 'LIKE', "%{$search}%");
+    }
+
+    $lines = $query->paginate(20)->withQueryString();
 
     return view('admin.lines.for-sale', compact('lines'));
 }
 
-public function markForSale(Request $request)
-{
-    foreach ($request->input('lines', []) as $lineId => $data) {
-        $line = Line::find($lineId);
+    public function markForSale(Request $request)
+    {
+        foreach ($request->input('lines', []) as $lineId => $data) {
+            $line = Line::find($lineId);
 
-        if (!$line) continue;
+            if (!$line) continue;
 
-        $isSelected = isset($data['selected']);
+            $isSellDone = isset($data['sell_done']);
+            $isSelected = isset($data['selected']);
 
-        $line->for_sale = $isSelected;
+            if ($isSellDone) {
+                // بيع نهائي
+                $line->is_sold = true;
+                $line->for_sale = false; // يخرج من وضع العرض للبيع نظراً لبيعه
+                $line->buy_price = $data['buy_price'] ?? 0;
+                $line->sale_price = $data['sale_price'] ?? 0;
+            } else {
+                // إزالة البيع النهائي لو كان موجود خطأ
+                $line->is_sold = false;
+                $line->for_sale = $isSelected;
+                
+                if ($isSelected) {
+                    $line->buy_price = $data['buy_price'] ?? null;
+                    $line->sale_price = $data['sale_price'] ?? null;
+                } else {
+                    $line->buy_price = null;
+                    $line->sale_price = null;
+                }
+            }
 
-        if ($isSelected) {
-            $line->sale_price = $data['sale_price'] ?? null;
-        } else {
-            $line->sale_price = null;
+            $line->save();
         }
 
-        $line->save();
+        return back()->with('success', '✅ تم تحديث حالة البيع للخطوط بنجاح.');
     }
-
-    return back()->with('success', '✅ تم تحديث حالة البيع للخطوط بنجاح.');
-}
 
 
 }

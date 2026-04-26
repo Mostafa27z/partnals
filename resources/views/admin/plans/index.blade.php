@@ -48,7 +48,7 @@
                         <button class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition">
                             {{ __('messages.Search') }}
                         </button>
-                        <a href="{{ route('plans.export') }}"
+                        <a href="{{ route('plans.export', request()->query()) }}"
                            class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition">
                             📤 {{ __('messages.Export to Excel') }}
                         </a>

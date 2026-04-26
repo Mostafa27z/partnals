@@ -9,6 +9,8 @@ class RequestStopLine extends Model
     protected $fillable = [
         'request_id',
         'last_invoice_date',
+        'reason',
+        'comment',
     ];
 
     public function request()

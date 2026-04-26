@@ -1,42 +1,77 @@
-<x-app-layout> 
-    <x-slot name="header"> 
-        <h2 class="text-xl font-bold">طلب تغيير النظام لرقم {{ $line->phone_number }}</h2> 
-    </x-slot> 
- 
-    <div class="max-w-xl mx-auto bg-white dark:bg-gray-800 p-6 rounded shadow mt-6"> 
-        <form method="POST" action="{{ route('requests.change-plan.store') }}"> 
-            @csrf 
-            <input type="hidden" name="line_id" value="{{ $line->id }}"> 
- 
-            <!-- النظام الحالي -->
-            <div class="mb-4 bg-gray-100 dark:bg-gray-900 p-4 rounded">
-                <h3 class="font-semibold text-gray-800 dark:text-gray-200 mb-1">🔁 النظام الحالي</h3>
-                <p>
-                    {{ $line->plan?->name ?? 'لا يوجد نظام حالي' }} -
-                    {{ $line->plan ? number_format($line->plan->price, 2) . ' ج.م' : '-' }}
-                </p>
-            </div>
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">📶</span>
+            <h2 class="text-xl font-black text-gray-800 dark:text-gray-200 leading-tight">
+                {{ __('messages.request_type_change_plan') }} - {{ $line->phone_number }}
+            </h2>
+        </div>
+    </x-slot>
 
-            <!-- النظام الجديد -->
-            <div class="mb-4"> 
-                <label class="block font-bold mb-1">النظام الجديد ({{ $line->provider }})</label> 
-                <select name="new_plan_id" class="w-full border p-2 rounded" required> 
-                    <option value="">-- اختر النظام --</option> 
-                    @foreach ($plans as $plan) 
-                        <option value="{{ $plan->id }}">{{ $plan->name }} ({{ number_format($plan->price, 2) }} ج.م)</option> 
-                    @endforeach 
-                </select> 
-            </div> 
- 
-            <!-- ملاحظات -->
-            <div class="mb-4"> 
-                <label class="block font-bold mb-1">ملاحظات (اختياري)</label> 
-                <textarea name="comment" class="w-full border p-2 rounded">{{ old('comment') }}</textarea> 
-            </div> 
- 
-            <div class="text-end"> 
-                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">💾 حفظ الطلب</button> 
-            </div> 
-        </form> 
-    </div> 
+    <div class="py-12 px-4">
+        <div class="max-w-xl mx-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl shadow-emerald-500/10 border border-gray-100 dark:border-gray-700 overflow-hidden text-center sm:text-start">
+                <!-- Decorative Header -->
+                <div class="h-24 bg-gradient-to-r from-emerald-500 to-teal-600 relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-20">
+                        <svg class="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <path d="M0 100 C 30 0 70 0 100 100 Z" fill="white"></path>
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white text-2xl animate-pulse">
+                            📶
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-8 sm:p-10">
+                    <form method="POST" action="{{ route('requests.change-plan.store') }}" class="space-y-6">
+                        @csrf
+                        <input type="hidden" name="line_id" value="{{ $line->id }}">
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] px-1">
+                                {{ __('messages.current_plan') }}
+                            </label>
+                            <div class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-800 dark:text-gray-200 font-extrabold px-5 py-4 flex items-center justify-between">
+                                <span>{{ $line->plan?->name ?? __('messages.not_specified') }}</span>
+                                <span class="text-xs opacity-60 font-mono">{{ $line->plan ? number_format($line->plan->price, 2) . ' ' . __('messages.currency') : '-' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] px-1">
+                                {{ __('messages.new_plan') }} ({{ $line->provider }})
+                            </label>
+                            <select name="new_plan_id" 
+                                    class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
+                                    required>
+                                <option value="">-- {{ __('messages.select_plan') }} --</option>
+                                @foreach ($plans as $plan)
+                                    <option value="{{ $plan->id }}">{{ $plan->name }} ({{ number_format($plan->price, 2) }} {{ __('messages.currency') }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] px-1">
+                                {{ __('messages.notes_optional') }}
+                            </label>
+                            <textarea name="comment" 
+                                      class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-sans" 
+                                      rows="3">{{ old('comment') }}</textarea>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-emerald-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3 tracking-widest uppercase text-sm">
+                                <span>💾</span>
+                                <span>{{ __('messages.confirm_save_request') }}</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </x-app-layout>

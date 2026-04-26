@@ -14,6 +14,7 @@ class Request extends Model
     'status',
     'requested_by',
     'done_by',
+    'notes',
 ];
 
 

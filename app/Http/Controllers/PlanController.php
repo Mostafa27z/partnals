@@ -9,39 +9,7 @@ class PlanController extends Controller
 {
    public function index(Request $request)
 {
-    $plans = Plan::query();
-
-    // البحث العام
-    if ($request->filled('search')) {
-        $plans->where(function ($q) use ($request) {
-            $q->where('name', 'like', "%{$request->search}%")
-              ->orWhere('provider', 'like', "%{$request->search}%")
-              ->orWhere('plan_code', 'like', "%{$request->search}%")
-              ->orWhere('type', 'like', "%{$request->search}%");
-        });
-    }
-
-    // فلترة بالمشغل
-    if ($request->filled('provider')) {
-        $plans->where('provider', $request->provider);
-    }
-
-    // فلترة بالنوع
-    if ($request->filled('type')) {
-        $plans->where('type', $request->type);
-    }
-
-    // فلترة بالسعر الأدنى
-    if ($request->filled('min_price')) {
-        $plans->where('price', '>=', $request->min_price);
-    }
-
-    // فلترة بالسعر الأقصى
-    if ($request->filled('max_price')) {
-        $plans->where('price', '<=', $request->max_price);
-    }
-
-    $plans = $plans->paginate(10)->appends($request->query());
+    $plans = Plan::filter($request)->paginate(10)->appends($request->query());
 
     return view('admin.plans.index', compact('plans'));
 }
@@ -66,9 +34,9 @@ public function forceDelete($id)
     return redirect()->route('plans.trashed')->with('success', 'تم حذف النظام نهائيًا');
 }
 
-    public function export()
+    public function export(Request $request)
     {
-        return Excel::download(new PlansExport, 'plans.xlsx');
+        return Excel::download(new PlansExport($request), 'plans.xlsx');
     }
 
     public function create()

@@ -29,7 +29,7 @@
                         <tbody> 
                             @foreach($permissions as $permission) 
                                 <tr class="hover:bg-gray-50 dark:bg-gray-700/50 dark:hover:bg-gray-700/50 transition-colors"> 
-                                    <td class="p-2 border dark:border-gray-700 font-medium">{{ $permission->name }}</td> 
+                                    <td class="p-2 border dark:border-gray-700 font-medium">{{ __($permission->name) }}</td> 
                                     @foreach($roles->where('id', '!=', 1) as $role) 
                                         <td class="p-2 border dark:border-gray-700 text-center"> 
                                             <input type="checkbox" 

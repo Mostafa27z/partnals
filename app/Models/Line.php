@@ -3,78 +3,114 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Traits\LogsChanges;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Line extends Model
 {
-    
+    use HasFactory, SoftDeletes;
 
-
-    
-    use SoftDeletes;
-
-    use HasFactory;
-    use LogsChanges;
-
-    // تحديد الحقول التي يُسمح بتعبئتها
     protected $fillable = [
-        'customer_id',
-        'phone_number',
-        'second_phone',
-        'provider',
-        'status',
-        'offer_name',
-        'branch_name',
-        'employee_name',
-        'gcode',
-        'line_type',
-        'plan_id',
-        'package',
-        'payment_date',
-        'last_invoice_date',
-        'notes',
-        'added_by',
-        'distributor',
-        'attached_at','for_sale', 'sale_price','deleted_at'
+        'phone_number', 'provider', 'serial_number', 'plan_id', 'customer_id',
+        'attached_at', 'distributor_id', 'status', 'sale_price', 'buy_price',
+        'is_sold', 'system_type', 'second_phone', 'offer_name', 'branch_name', 
+        'employee_name', 'gcode', 'line_type', 'package', 'payment_date', 
+        'last_invoice_date', 'notes', 'added_by'
     ];
-// protected $dates = ['attached_at'];
-// أو في Laravel 10+ يمكن استخدام:
-// protected $casts = [
-//     'attached_at' => 'date',
-// ];
 
-protected $dates = ['attached_at'];
-    /**
-     * العلاقة مع العميل
-     */
-    public function customer(): BelongsTo
-    {
-        return $this->belongsTo(Customer::class);
-    }
+    protected $casts = [
+        'is_sold' => 'boolean',
+        'attached_at' => 'datetime',
+    ];
 
-    /**
-     * العلاقة مع الخطة
-     */
-    public function plan(): BelongsTo
+    public function plan()
     {
         return $this->belongsTo(Plan::class);
     }
 
-    /**
-     * العلاقة مع المستخدم الذي أضاف الخط
-     */
-    public function addedBy(): BelongsTo
+    public function customer()
     {
-        return $this->belongsTo(User::class, 'added_by');
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function distributor()
+    {
+        return $this->belongsTo(User::class, 'distributor_id');
+    }
+
+    public function requests()
+    {
+        return $this->hasMany(Request::class);
     }
 
     /**
-     * العلاقة مع الفواتير
+     * Get number of days in a given month/year
      */
-    public function invoices()
+    private function getDaysInMonth($month, $year)
     {
-        return $this->hasMany(Invoice::class);
+        return Carbon::create($year, $month, 1)->daysInMonth;
+    }
+
+    /**
+     * Get starting date of line attachment for a specific month
+     */
+    private function getAttachmentStartInMonth($month, $year)
+    {
+        if (!$this->attached_at) return null;
+
+        $attachedAt = Carbon::parse($this->attached_at);
+        $monthStart = Carbon::create($year, $month, 1)->startOfMonth();
+        $monthEnd = Carbon::create($year, $month, 1)->endOfMonth();
+
+        if ($attachedAt->gt($monthEnd)) return null;
+
+        return $attachedAt->gt($monthStart) ? $attachedAt : $monthStart;
+    }
+
+    /**
+     * Get daily cost in a given month
+     */
+    public function getDailyCost($month = null, $year = null)
+    {
+        if (!$this->plan) return 0;
+        
+        $month = $month ?: now()->month;
+        $year = $year ?: now()->year;
+        
+        $providerPrice = $this->plan->provider_price;
+
+        return $providerPrice / $this->getDaysInMonth($month, $year);
+    }
+
+    /**
+     * حساب الربح التقديري (المتكرر فقط) لشهر معين
+     * تمت إزالة الأرباح لمرة واحدة (البيع/إعادة البيع) لتتم معالجتها عبر التراكم التاريخي في التقارير
+     */
+    public function calculateProfit($month, $year)
+    {
+        // إذا تم بيع الخط كبيع نهائي، لا توجد أرباح متكررة له (الربح كان لمرة واحدة عند البيع)
+        if ($this->is_sold) {
+            return 0;
+        }
+
+        $daysInMonth = $this->getDaysInMonth($month, $year);
+        
+        // إذا لم يكن الخط مربوطاً أصلاً بعميل
+        if (!$this->attached_at) return 0;
+
+        $attachedAt = Carbon::parse($this->attached_at);
+        $currentCalcDate = Carbon::create($year, $month, 1)->startOfMonth();
+        $attachedMonth   = $attachedAt->copy()->startOfMonth();
+        
+        // لا يحسب ربح للخط في شهور تسبق تاريخ ربطه بالعميل
+        if ($currentCalcDate->lt($attachedMonth)) {
+            return 0;
+        }
+        
+        // الربح الشهري المتكرر = الفرق بين ما يدفعه العميل والفاتورة
+        $revenue = $this->plan ? $this->plan->price : 0;
+        $cost = $this->plan ? $this->plan->provider_price : 0;
+
+        return $revenue - $cost;
     }
 }

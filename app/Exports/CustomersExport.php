@@ -8,9 +8,16 @@ use Maatwebsite\Excel\Concerns\WithHeadings; // لو تريد رؤوس الأع�
 
 class CustomersExport implements FromCollection, WithHeadings
 {
+    protected $request;
+
+    public function __construct($request)
+    {
+        $this->request = $request;
+    }
+
     public function collection()
     {
-        return Customer::all();
+        return Customer::filter($this->request)->get();
     }
 
     public function headings(): array

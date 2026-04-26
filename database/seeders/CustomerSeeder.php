@@ -16,7 +16,7 @@ class CustomerSeeder extends Seeder
     {
         // تأكد من وجود مستخدم واحد على الأقل لإسناده في خطوط العملاء
         $user = User::firstOrCreate(
-            ['email' => 'demo@user.com'],
+            ['email' => ''],
             [
                 'name' => 'Demo User',
                 'password' => bcrypt('password'),

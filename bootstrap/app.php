@@ -11,6 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // ✅ Register middleware alias
+        $middleware->alias([
+            'condition.is.active' => \App\Http\Middleware\ConditionIsActive::class,
+        ]);
+
         // ✅ Append the SetLocale middleware to the web group
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
