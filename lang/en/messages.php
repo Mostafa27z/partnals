@@ -2,6 +2,7 @@
 
 return [
     'all_lines' => 'All Lines',
+    'delete_lines' => 'Delete Lines',
     'for_sale' => 'Lines for Sale',
     'trashed' => 'Trash',
     'new_line' => 'New Line',

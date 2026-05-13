@@ -95,6 +95,38 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Filter Bar --}}
+            <div class="mt-8 animate-in" style="animation-delay: 0.1s">
+                <form action="{{ route('public.for-sale') }}" method="GET" class="bg-white/80 dark:bg-gray-800/60 p-4 rounded-3xl border border-white dark:border-gray-700/30 shadow-xl backdrop-blur-md flex flex-wrap items-end gap-4 max-w-4xl mx-auto">
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5 px-1">{{ __('messages.provider') }}</label>
+                        <select name="provider" class="w-full h-12 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl px-4 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 transition-all text-gray-900 dark:text-white">
+                            <option value="">{{ __('messages.all_providers') }}</option>
+                            @foreach($providers as $p)
+                                <option value="{{ $p }}" {{ request('provider') == $p ? 'selected' : '' }}>{{ $p }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5 px-1">{{ __('messages.plan') }}</label>
+                        <select name="plan_id" class="w-full h-12 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl px-4 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 transition-all text-gray-900 dark:text-white">
+                            <option value="">{{ __('messages.all_plans') }}</option>
+                            @foreach($plans as $p)
+                                <option value="{{ $p->id }}" {{ request('plan_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-indigo-600/25 active:scale-95">
+                        🔍 {{ __('messages.search') }}
+                    </button>
+                    @if(request()->anyFilled(['provider', 'plan_id']))
+                        <a href="{{ route('public.for-sale') }}" class="h-12 w-12 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl font-black text-sm flex items-center justify-center transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600">
+                            ✖️
+                        </a>
+                    @endif
+                </form>
+            </div>
         </div>
 
         {{-- Lines Grid --}}
@@ -126,9 +158,6 @@
                                         <span class="w-1.5 h-1.5 rounded-full" style="background: {{ $pc['from'] }}"></span>
                                         {{ $line->provider }}
                                     </span>
-                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                        #{{ $line->id }}
-                                    </span>
                                 </div>
 
                                 {{-- Phone Number --}}
@@ -140,6 +169,19 @@
                                         <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">{{ __('messages.phone_number') }}</p>
                                         <p class="text-lg font-black text-gray-900 dark:text-white font-mono tracking-wide" dir="ltr">
                                             {{ $line->phone_number }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {{-- Plan Details --}}
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-lg">
+                                        📜
+                                    </div>
+                                    <div>
+                                        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">{{ __('messages.plan') }}</p>
+                                        <p class="text-sm font-black text-gray-700 dark:text-gray-300 line-clamp-1">
+                                            {{ $line->plan?->name ?? '-' }}
                                         </p>
                                     </div>
                                 </div>

@@ -43,4 +43,9 @@ class Plan extends Model
 
         return $query;
     }
+
+    public function lines()
+    {
+        return $this->hasMany(Line::class);
+    }
 }

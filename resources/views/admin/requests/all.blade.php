@@ -80,9 +80,9 @@
                         @foreach($requests as $req)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700/50">
                                 <td class="p-3"><input type="checkbox" name="selected_requests[]" value="{{ $req->id }}" form="bulk-action-form" class="rounded dark:bg-gray-900 dark:border-gray-700"></td>
-                                <td class="p-3 font-mono text-gray-800 dark:text-gray-200">{{ $req->line->phone_number ?? '-' }}</td>
+                                <td class="p-3 font-mono text-gray-800 dark:text-gray-200">{{ $req->line?->phone_number ?? '-' }}</td>
                                 <td class="p-3">{{ __('messages.request_type_'.$req->request_type) ?? $req->request_type }}</td>
-                                <td class="p-3">{{ $req->line->provider ?? '-' }}</td>
+                                <td class="p-3">{{ $req->line?->provider ?? '-' }}</td>
                                 <td class="p-3">
                                     <span class="px-3 py-1 rounded-full text-xs font-bold 
                                         @if($req->status == 'pending') bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400
@@ -128,7 +128,7 @@
                                                 <div>
                                                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">{{ __('messages.plan') }}</label>
                                                     <select name="new_plan_id" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-sm">
-                                                        @foreach($plans->where('provider', $req->line->provider) as $plan)
+                                                        @foreach($plans->where('provider', $req->line?->provider) as $plan)
                                                             <option value="{{ $plan->id }}" {{ ($req->changePlan->new_plan_id ?? '') == $plan->id ? 'selected' : '' }}>{{ $plan->name }}</option>
                                                         @endforeach
                                                     </select>

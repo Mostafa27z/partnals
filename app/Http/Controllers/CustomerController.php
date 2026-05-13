@@ -13,8 +13,25 @@ class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $customers = Customer::with('lines')->filter($request)->paginate(10);
-        // $customers = $query->latest()->get(); // Consider paginate() in production
+        $user = auth()->user();
+        $isDistributor = $user->role && $user->role->name === 'موزع';
+
+        $query = Customer::filter($request);
+
+        if ($isDistributor) {
+            // Only show customers that have at least one line belonging to this distributor
+            $query->whereHas('lines', function($q) use ($user) {
+                $q->where('distributor_id', $user->id);
+            });
+            // And only load those specific lines
+            $query->with(['lines' => function($q) use ($user) {
+                $q->where('distributor_id', $user->id);
+            }]);
+        } else {
+            $query->with('lines');
+        }
+
+        $customers = $query->paginate(10);
 
         return view('admin.customers.index', compact('customers'));
     }
@@ -56,7 +73,15 @@ class CustomerController extends Controller
 
     public function show(Customer $customer)
     {
-        $customer->load('lines');
+        $user = auth()->user();
+        $isDistributor = $user->role && $user->role->name === 'موزع';
+
+        $customer->load(['lines' => function($q) use ($isDistributor, $user) {
+            if ($isDistributor) {
+                $q->where('distributor_id', $user->id);
+            }
+        }]);
+
         return view('admin.customers.show', compact('customer'));
     }
 

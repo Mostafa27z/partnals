@@ -5,17 +5,41 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Carbon\Carbon;
 
 class Line extends Model
 {
     use HasFactory, SoftDeletes;
+    
+    protected static function booted()
+    {
+        static::saving(function ($line) {
+            if ($line->provider && $line->last_invoice_date) {
+                // Find the provider to get its invoice_day
+                $provider = Provider::where('name', $line->provider)->first();
+                if ($provider && $provider->invoice_day) {
+                    try {
+                        $date = Carbon::parse($line->last_invoice_date);
+                        $newDay = $provider->invoice_day;
+                        
+                        // Ensure the day is valid for the given month (e.g., Feb 30 -> Feb 28/29)
+                        $safeDay = min($newDay, $date->daysInMonth);
+                        
+                        $line->last_invoice_date = $date->day($safeDay)->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        // Keep original if parsing fails
+                    }
+                }
+            }
+        });
+    }
 
     protected $fillable = [
         'phone_number', 'provider', 'serial_number', 'plan_id', 'customer_id',
         'attached_at', 'distributor_id', 'status', 'sale_price', 'buy_price',
         'is_sold', 'system_type', 'second_phone', 'offer_name', 'branch_name', 
         'employee_name', 'gcode', 'line_type', 'package', 'payment_date', 
-        'last_invoice_date', 'notes', 'added_by'
+        'last_invoice_date', 'notes', 'added_by', 'for_sale'
     ];
 
     protected $casts = [
@@ -41,6 +65,11 @@ class Line extends Model
     public function requests()
     {
         return $this->hasMany(Request::class);
+    }
+
+    public function providerData()
+    {
+        return $this->belongsTo(Provider::class, 'provider', 'name');
     }
 
     /**

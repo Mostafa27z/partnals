@@ -655,10 +655,18 @@ public function importResellRequests(HttpRequest $request)
     {
         //
     }
-public function stopLineRequests(HttpRequest $request)
-{
+
+    public function stopLineRequests(HttpRequest $request)
+    {
+    $user = auth()->user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
     $query = RequestModel::where('request_type', 'stop')
         ->with(['line.customer', 'stopDetails', 'requestedBy', 'doneBy']);
+
+    if ($isDistributor) {
+        $query->whereHas('line', fn($q) => $q->where('distributor_id', $user->id));
+    }
 
     // فلترة حسب الرقم القومي
     if ($request->filled('nid')) {
@@ -933,6 +941,12 @@ protected function applyResell(RequestModel $request)
         'gcode' => $data->new_serial ? substr($data->new_serial, 0, 3) : $request->line->gcode,
         'attached_at' => now(),
     ]);
+
+    // ✅ أتمتة حساب الأرباح: حفظ سعر الشراء الحالي في سجل الطلب
+    $data->update([
+        'buy_price' => (float)$request->line->buy_price,
+        'is_sold'   => true,
+    ]);
 }
 protected function applyChangeDate(RequestModel $request)
 {
@@ -1021,10 +1035,18 @@ public function storeResell(HttpRequest $request)
 
     return redirect()->route('requests.all')->with('success', '✅ تم إنشاء طلب إعادة البيع بنجاح');
 }
+
 public function resellRequests(HttpRequest $request)
 {
+    $user = auth()->user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
     $query = Request::where('request_type', 'resell')
         ->with(['line.customer', 'resellDetails', 'requestedBy', 'doneBy']);
+
+    if ($isDistributor) {
+        $query->whereHas('line', fn($q) => $q->where('distributor_id', $user->id));
+    }
 
     if ($request->filled('resell_type')) {
         $query->whereHas('resellDetails', fn($q) =>
@@ -1068,6 +1090,10 @@ public function resellDetails(RequestModel $request)
 {
     $request->load(['line.customer', 'resellDetails', 'requestedBy', 'doneBy']);
 
+    if (auth()->user()->role?->name === 'موزع' && $request->line?->distributor_id !== auth()->id()) {
+        abort(403, 'غير مصرح لك بمشاهدة هذا الطلب.');
+    }
+
     return view('admin.requests.resell-show', ['requestModel' => $request]);
 }
 
@@ -1107,7 +1133,14 @@ public function completeResellSale(HttpRequest $httpRequest, RequestModel $reque
 
 public function chooseLineForResell()
 {
-    $lines = \App\Models\Line::with('customer')->latest()->paginate(20);
+    $user = auth()->user();
+    $query = \App\Models\Line::with('customer');
+
+    if ($user->role?->name === 'موزع') {
+        $query->where('distributor_id', $user->id);
+    }
+
+    $lines = $query->latest()->paginate(20);
     return view('admin.requests.choose-line-resell', compact('lines'));
 }
 private function providerCodeMap()
@@ -1323,8 +1356,19 @@ protected function applyChangeDistributor(RequestModel $request)
 
 public function history(HttpRequest $request)
 {
+    $user = auth()->user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
     $query = \App\Models\Request::with(['line.customer', 'requestedBy', 'doneBy', 'resellDetails'])
-    ->where('status', 'done');
+        ->whereIn('status', ['done', 'cancelled']);
+
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+
+    if ($isDistributor) {
+        $query->whereHas('line', fn($q) => $q->where('distributor_id', $user->id));
+    }
 
 
     // فلترة بالرقم
@@ -1362,7 +1406,15 @@ public function history(HttpRequest $request)
 
 public function all(HttpRequest $request)
 {
-    $query = \App\Models\Request::with(['line.customer', 'stopDetails', 'resellDetails', 'changePlan', 'changeChip', 'pause', 'resume', 'changeDistributor', 'changeDate'])->where('status', '!=', 'done');
+    $user = auth()->user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
+    $query = \App\Models\Request::with(['line.customer', 'stopDetails', 'resellDetails', 'changePlan', 'changeChip', 'pause', 'resume', 'changeDistributor', 'changeDate'])
+        ->whereNotIn('status', ['done', 'cancelled']);
+
+    if ($isDistributor) {
+        $query->whereHas('line', fn($q) => $q->where('distributor_id', $user->id));
+    }
 
     // فلترة بالرقم
     if ($request->filled('phone')) {
@@ -1396,6 +1448,8 @@ public function all(HttpRequest $request)
     $plans = \App\Models\Plan::all();
     $distributors = \App\Models\User::whereHas('role', function($q) {
         $q->where('name', 'موزع');
+    })->when($isDistributor, function($q) use ($user) {
+        $q->where('id', $user->id);
     })->select('id', 'name')->get();
 
     return view('admin.requests.all', compact('requests', 'plans', 'distributors'));
@@ -1482,6 +1536,10 @@ public function bulkAction(HttpRequest $request)
 
 public function show(RequestModel $request)
 {
+    if (auth()->user()->role?->name === 'موزع' && $request->line?->distributor_id !== auth()->id()) {
+        abort(403, 'غير مصرح لك بمشاهدة هذا الطلب.');
+    }
+
     $request->load([
         'line.customer',
         'requestedBy',
@@ -1505,12 +1563,19 @@ public function summary()
 
 $counts = [];
 foreach ($types as $type) {
-    $counts[$type] = [
-        'today' => \App\Models\Request::where('request_type', $type)
-                        ->whereDate('created_at', now()->toDateString())
-                        ->count(),
-        'total' => \App\Models\Request::where('request_type', $type)->count(),
-    ];
+        $counts[$type] = [
+            'today' => \App\Models\Request::where('request_type', $type)
+                            ->when(auth()->user()->role?->name === 'موزع', function($q) {
+                                $q->whereHas('line', fn($lineQ) => $lineQ->where('distributor_id', auth()->id()));
+                            })
+                            ->whereDate('created_at', now()->toDateString())
+                            ->count(),
+            'total' => \App\Models\Request::where('request_type', $type)
+                            ->when(auth()->user()->role?->name === 'موزع', function($q) {
+                                $q->whereHas('line', fn($lineQ) => $lineQ->where('distributor_id', auth()->id()));
+                            })
+                            ->count(),
+        ];
 }
 
 return view('admin.requests.summary', compact('counts'));

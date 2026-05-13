@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Imports;
+
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithStartRow;
+use App\Models\Line;
+use App\Models\Invoice;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+
+class OperatorPriceImport implements ToCollection, WithStartRow
+{
+    public $errorsList = [];
+
+    public function startRow(): int
+    {
+        return 2; // Skip header
+    }
+
+    public function collection(Collection $rows)
+    {
+        foreach ($rows as $index => $row) {
+            if (!isset($row[0])) continue;
+
+            $phoneNumber = trim($row[0]);
+            if (strlen($phoneNumber) === 10 && strpos($phoneNumber, '1') === 0) {
+                $phoneNumber = '0' . $phoneNumber;
+            }
+
+            $month = str_pad($row[1], 2, '0', STR_PAD_LEFT);
+            $year = $row[2];
+            $operatorPrice = (float) $row[3];
+
+            $line = Line::where('phone_number', $phoneNumber)->first();
+
+            if (!$line) {
+                $this->addError($row, 'الرقم غير موجود في النظام');
+                continue;
+            }
+
+            try {
+                $invoiceMonth = Carbon::create($year, $month, 1)->startOfMonth();
+            } catch (\Exception $e) {
+                $this->addError($row, 'تاريخ غير صالح');
+                continue;
+            }
+
+            $invoice = Invoice::where('line_id', $line->id)
+                ->where('invoice_month', $invoiceMonth->format('Y-m-d'))
+                ->first();
+
+            if ($invoice) {
+                $updateData = [
+                    'operator_price' => $operatorPrice,
+                ];
+                
+                // If it's already paid, just update profit. If not paid, keep it unpaid.
+                if ($invoice->amount > 0) {
+                    $updateData['calculated_profit'] = $invoice->amount - $operatorPrice;
+                }
+
+                $invoice->update($updateData);
+            } else {
+                // Create new unpaid invoice
+                Invoice::create([
+                    'line_id'           => $line->id,
+                    'amount'            => 0,
+                    'operator_price'    => $operatorPrice,
+                    'calculated_profit' => - $operatorPrice,
+                    'invoice_month'     => $invoiceMonth,
+                    'is_paid'           => false,
+                    'notes'             => 'تم إضافة سعر المشغل من الإكسيل',
+                ]);
+            }
+
+            // Update line's last_invoice_date if this is newer AND the invoice is paid
+            $isPaid = Invoice::where('line_id', $line->id)
+                ->where('invoice_month', $invoiceMonth->format('Y-m-d'))
+                ->where('is_paid', true)
+                ->exists();
+
+            if ($isPaid) {
+                $currentLast = $line->last_invoice_date ? Carbon::parse($line->last_invoice_date) : Carbon::create(1900, 1, 1);
+                if ($invoiceMonth->gt($currentLast)) {
+                    $line->update(['last_invoice_date' => $invoiceMonth, 'for_sale' => 0]);
+                }
+            }
+        }
+    }
+
+    private function addError($row, $errorMessage)
+    {
+        $this->errorsList[] = [
+            $row[0] ?? '',
+            $row[1] ?? '',
+            $row[2] ?? '',
+            $row[3] ?? '',
+            $errorMessage
+        ];
+    }
+}

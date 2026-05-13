@@ -175,8 +175,13 @@ public function importProcess(Request $request)
     public function all(Request $request) 
 { 
     $plans = \App\Models\Plan::select('id', 'name')->get();
+    $user = Auth::user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
     $distributors = \App\Models\User::whereHas('role', function($q) {
         $q->where('name', 'موزع');
+    })->when($isDistributor, function($q) use ($user) {
+        $q->where('id', $user->id);
     })->select('id', 'name')->get();
 
     $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid']);
@@ -187,6 +192,11 @@ public function importProcess(Request $request)
     }
 
     $query = Line::with(['customer', 'plan', 'distributor']);
+    
+    if ($isDistributor) {
+        $query->where('distributor_id', $user->id);
+    }
+
     $query = $this->applyFilters($query, $request);
 
     $totalCount = $query->count();
@@ -195,12 +205,88 @@ public function importProcess(Request $request)
     return view('admin.lines.all', compact('lines', 'plans', 'distributors', 'hasSearch', 'totalCount'));
 }
 
+public function bulkDistributorsIndex(Request $request) 
+{ 
+    $user = Auth::user();
+    if ($user->role && $user->role->name === 'موزع') {
+        abort(403, 'غير مصرح لك بالوصول إلى هذه الصفحة.');
+    }
+
+    $plans = \App\Models\Plan::select('id', 'name')->get();
+    $isDistributor = false;
+
+    $distributors = \App\Models\User::whereHas('role', function($q) {
+        $q->where('name', 'موزع');
+    })->when($isDistributor, function($q) use ($user) {
+        $q->where('id', $user->id);
+    })->select('id', 'name')->get();
+
+    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid']);
+
+    if (!$hasSearch) {
+        $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+        return view('admin.lines.bulk-distributors', compact('lines', 'plans', 'distributors', 'hasSearch'));
+    }
+
+    $query = Line::with(['customer', 'plan', 'distributor']);
+    
+    if ($isDistributor) {
+        $query->where('distributor_id', $user->id);
+    }
+
+    $query = $this->applyFilters($query, $request);
+
+    $totalCount = $query->count();
+    $lines = $query->latest()->paginate(20);
+
+    return view('admin.lines.bulk-distributors', compact('lines', 'plans', 'distributors', 'hasSearch', 'totalCount'));
+}
+
+public function deleteIndex(Request $request) 
+{ 
+    $plans = \App\Models\Plan::select('id', 'name')->get();
+    $user = Auth::user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
+    $distributors = \App\Models\User::whereHas('role', function($q) {
+        $q->where('name', 'موزع');
+    })->when($isDistributor, function($q) use ($user) {
+        $q->where('id', $user->id);
+    })->select('id', 'name')->get();
+
+    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid']);
+
+    if (!$hasSearch) {
+        $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+        return view('admin.lines.delete', compact('lines', 'plans', 'distributors', 'hasSearch'));
+    }
+
+    $query = Line::with(['customer', 'plan', 'distributor']);
+    
+    if ($isDistributor) {
+        $query->where('distributor_id', $user->id);
+    }
+
+    $query = $this->applyFilters($query, $request);
+
+    $totalCount = $query->count();
+    $lines = $query->latest()->paginate(20);
+
+    return view('admin.lines.delete', compact('lines', 'plans', 'distributors', 'hasSearch', 'totalCount'));
+}
+
 public function bulkUpdateDistributor(Request $request)
 {
     $ids = $request->input('selected_lines', []);
     $distributor_id = $request->input('bulk_distributor_id');
     $applyToAll = $request->has('apply_to_all');
     $action = $request->input('bulk_action'); // 'assign' or 'remove'
+
+    if ($action === 'remove' || $action === 'assign') {
+        if (auth()->user()->role?->name !== 'admin') {
+            return back()->with('error', '❌ غير مصرح لك بتغيير الموزع.');
+        }
+    }
 
     if ($action === 'remove') {
         $distributor_id = null;
@@ -232,7 +318,13 @@ private function applyFilters($query, Request $request)
     }
 
     if ($request->filled('distributor_id')) {
-        $query->where('distributor_id', $request->distributor_id);
+        // If the user is a distributor, they can only filter by their own ID anyway
+        // but we enforce it here just in case.
+        if (auth()->user()->role?->name === 'موزع') {
+            $query->where('distributor_id', auth()->id());
+        } else {
+            $query->where('distributor_id', $request->distributor_id);
+        }
     }
 
     if ($request->filled('provider')) {
@@ -259,16 +351,30 @@ private function applyFilters($query, Request $request)
 
     public function index(Customer $customer)
     {
-        $lines = $customer->lines()->with('plan')->get();
+        $user = auth()->user();
+        $isDistributor = $user->role && $user->role->name === 'موزع';
+
+        $query = $customer->lines()->with('plan');
+        
+        if ($isDistributor) {
+            $query->where('distributor_id', $user->id);
+        }
+
+        $lines = $query->get();
         return view('admin.lines.index', compact('customer', 'lines'));
     }
 
     public function create(Customer $customer)
 {
+    $user = Auth::user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
     $providers = Provider::all();
     $plans = Plan::all(); // كل الخطط مبدئيًا
     $distributors = \App\Models\User::whereHas('role', function($q) {
         $q->where('name', 'موزع');
+    })->when($isDistributor, function($q) use ($user) {
+        $q->where('id', $user->id);
     })->select('id', 'name')->get();
     return view('admin.lines.create', compact('customer', 'plans', 'providers', 'distributors'));
 }
@@ -310,10 +416,15 @@ private function applyFilters($query, Request $request)
 
     public function edit(Customer $customer, Line $line)
 {
+    $user = Auth::user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
     $providers = Provider::all();
     $plans = Plan::all(); // Send all plans to allow dynamic switching
     $distributors = \App\Models\User::whereHas('role', function($q) {
         $q->where('name', 'موزع');
+    })->when($isDistributor, function($q) use ($user) {
+        $q->where('id', $user->id);
     })->select('id', 'name')->get();
     return view('admin.lines.edit', compact('customer', 'line', 'plans', 'providers', 'distributors'));
 }
@@ -350,11 +461,16 @@ private function applyFilters($query, Request $request)
 
     public function createStandalone()
 {
+    $user = Auth::user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
     $customers = Customer::all();
     $plans = Plan::all(); // كل الخطط مبدئيًا
     $providers = Provider::all();
     $distributors = \App\Models\User::whereHas('role', function($q) {
         $q->where('name', 'موزع');
+    })->when($isDistributor, function($q) use ($user) {
+        $q->where('id', $user->id);
     })->select('id', 'name')->get();
     return view('admin.lines.create', compact('plans', 'customers', 'providers', 'distributors'));
 }
@@ -431,6 +547,9 @@ public function show(Line $line)
 
     public function editStandalone(Line $line)
 {
+    $user = Auth::user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
     $customers = Customer::all();
     $providers = Provider::all();
     $plans = Plan::all(); // Send all plans to allow dynamic switching
@@ -443,6 +562,8 @@ public function show(Line $line)
         'providers' => $providers,
         'distributors' => \App\Models\User::whereHas('role', function($q) {
             $q->where('name', 'موزع');
+        })->when($isDistributor, function($q) use ($user) {
+            $q->where('id', $user->id);
         })->select('id', 'name')->get(),
     ]);
 }
@@ -611,7 +732,14 @@ public function restore($id)
     }
     public function forSaleList(Request $request)
 {
+    $user = auth()->user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
     $query = Line::with('customer');
+
+    if ($isDistributor) {
+        $query->where('distributor_id', $user->id);
+    }
     
     // البحث برقم الهاتف
     if ($request->filled('search')) {

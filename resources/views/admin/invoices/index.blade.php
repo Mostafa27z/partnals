@@ -15,26 +15,67 @@
 
     <div class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8">
     
-    {{-- Import Excel Form --}}
-    <div class="mb-8 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50" dir="rtl">
-        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-            📥 {{ __('messages.Import Invoices from Excel') ?? 'إستيراد الفواتير من إكسيل' }}
-        </h3>
-        <form method="POST" action="{{ route('invoices.import') }}" enctype="multipart/form-data" class="flex flex-col md:flex-row items-center gap-4">
-            @csrf
-            <div class="w-full md:w-1/2">
+    {{-- Import Section --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8" dir="rtl">
+        {{-- Combined Import (Old Logic) --}}
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50">
+            <h3 class="text-md font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                📦 إستيراد مجمع (الوضع القديم)
+            </h3>
+            <form method="POST" action="{{ route('invoices.import') }}" enctype="multipart/form-data" class="space-y-4">
+                @csrf
                 <input type="file" name="excel_file" accept=".xlsx,.xls,.csv" required
-                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/40 dark:file:text-indigo-300 transition">
-            </div>
-            <div class="flex gap-3 mt-4 md:mt-0">
-                <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/25">
-                    🚀 تحميل البيانات
-                </button>
-                <a href="{{ route('invoices.sample') }}" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-all border border-gray-200 dark:border-gray-600">
-                    📄 تنزيل نموذج فارغ
-                </a>
-            </div>
-        </form>
+                       class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/40 dark:file:text-indigo-300 transition">
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <button type="submit" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700 transition-all">
+                        🚀 رفع مجمع
+                    </button>
+                    <a href="{{ route('invoices.sample', ['type' => 'bulk']) }}" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all border border-gray-200 dark:border-gray-600 text-center">
+                        📄 نموذج
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        {{-- Operator Price Import --}}
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 border-t-4 border-t-amber-500">
+            <h3 class="text-md font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                📡 إستيراد سعر المشغل (Operator)
+            </h3>
+            <form method="POST" action="{{ route('invoices.import-operator') }}" enctype="multipart/form-data" class="space-y-4">
+                @csrf
+                <input type="file" name="excel_file" accept=".xlsx,.xls,.csv" required
+                       class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 dark:file:bg-amber-900/40 dark:file:text-amber-300 transition">
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <button type="submit" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white font-bold text-xs hover:bg-amber-700 transition-all">
+                        🚀 رفع المشغل
+                    </button>
+                    <a href="{{ route('invoices.sample', ['type' => 'operator']) }}" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all border border-gray-200 dark:border-gray-600 text-center">
+                        📄 نموذج
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        {{-- Customer Price Import --}}
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 border-t-4 border-t-emerald-500">
+            <h3 class="text-md font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                👤 إستيراد سعر العميل (Customer)
+            </h3>
+            <form method="POST" action="{{ route('invoices.import-customer') }}" enctype="multipart/form-data" class="space-y-4">
+                @csrf
+                <input type="file" name="excel_file" accept=".xlsx,.xls,.csv" required
+                       class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900/40 dark:file:text-emerald-300 transition">
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <button type="submit" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition-all">
+                        🚀 رفع العميل
+                    </button>
+                    <a href="{{ route('invoices.sample', ['type' => 'customer']) }}" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all border border-gray-200 dark:border-gray-600 text-center">
+                        📄 نموذج
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 
     {{-- Filter Form --}}
@@ -107,6 +148,19 @@
             </select>
         </div>
 
+        {{-- Customer --}}
+        <div>
+            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">{{ __('messages.Customer') }}</label>
+            <select name="customer_id[]" multiple
+                    class="block w-full px-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
+                @foreach($customers as $customer)
+                    <option value="{{ $customer->id }}" {{ in_array($customer->id, request('customer_id', [])) ? 'selected' : '' }}>
+                        {{ $customer->full_name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
         {{-- Date From --}}
         <div>
             <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">{{ __('messages.From Date') }}</label>
@@ -137,7 +191,9 @@
                     <tr class="bg-gray-50/80 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Customer') }}</th>
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Month') }}</th>
-                        <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Amount') }}</th>
+                        <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">👤 سعر العميل</th>
+                        <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">📡 سعر المشغل</th>
+                        <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">📈 الربح</th>
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Paid') }}</th>
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Payment Date') }}</th>
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Paid By') }}</th>
@@ -146,9 +202,11 @@
                 <tbody class="divide-y divide-gray-100">
                     @foreach($invoices as $invoice)
                         <tr class="hover:bg-gray-50 dark:bg-gray-700/50 transition">
-                            <td class="px-4 py-3 border">{{ $invoice->customer->full_name ?? '-' }}</td>
+                            <td class="px-4 py-3 border">{{ $invoice->line->customer->full_name ?? '-' }}</td>
                             <td class="px-4 py-3 border">{{ \Carbon\Carbon::parse($invoice->invoice_month)->translatedFormat('F Y') }}</td>
-                            <td class="px-4 py-3 border text-green-600 font-bold">{{ $invoice->amount }} {{ __('messages.EGP') }}</td>
+                            <td class="px-4 py-3 border text-green-600 font-bold">{{ number_format($invoice->amount, 2) }}</td>
+                            <td class="px-4 py-3 border text-amber-600 font-bold">{{ number_format($invoice->operator_price, 2) }}</td>
+                            <td class="px-4 py-3 border {{ $invoice->calculated_profit >= 0 ? 'text-emerald-600' : 'text-rose-600' }} font-bold">{{ number_format($invoice->calculated_profit, 2) }}</td>
                             <td class="px-4 py-3 border">
                                 @if($invoice->is_paid)
                                     <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">

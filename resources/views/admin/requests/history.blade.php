@@ -40,6 +40,15 @@
                 </div>
 
                 <div>
+                    <label class="block text-xs font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">{{ __('messages.status') }}</label>
+                    <select name="status" class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold">
+                        <option value="">{{ __('messages.all') }}</option>
+                        <option value="done" {{ request('status') == 'done' ? 'selected' : '' }}>{{ __('messages.status_done') }}</option>
+                        <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>{{ __('messages.status_cancelled') }}</option>
+                    </select>
+                </div>
+
+                <div>
                     <label class="block text-xs font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">{{ __('messages.from_date') }}</label>
                     <input type="date" name="from" value="{{ request('from') }}"
                            class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all" />
@@ -69,6 +78,7 @@
                             <th class="px-6 py-4">{{ __('messages.name') }}</th>
                             <th class="px-6 py-4">{{ __('messages.national_id') }}</th>
                             <th class="px-6 py-4">{{ __('messages.request_type') }}</th>
+                            <th class="px-6 py-4">{{ __('messages.status') }}</th>
                             <th class="px-6 py-4">{{ __('messages.request_created') }}</th>
                             <th class="px-6 py-4">{{ __('messages.request_done') }}</th>
                             <th class="px-6 py-4">{{ __('messages.date') }}</th>
@@ -78,13 +88,28 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700 font-medium text-sm">
                         @forelse ($requests as $request)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/40 transition-all">
-                                <td class="px-6 py-4 text-blue-600 dark:text-blue-400 font-black font-mono tracking-tighter">{{ $request->line->phone_number }}</td>
-                                <td class="px-6 py-4 text-gray-900 dark:text-gray-200 font-bold">{{ $request->line->customer?->full_name ?? '-' }}</td>
-                                <td class="px-6 py-4 text-gray-500 dark:text-gray-400 font-mono text-xs">{{ $request->line->customer?->national_id ?? '-' }}</td>
+                                <td class="px-6 py-4 text-blue-600 dark:text-blue-400 font-black font-mono tracking-tighter">{{ $request->line?->phone_number ?? '-' }}</td>
+                                <td class="px-6 py-4 text-gray-900 dark:text-gray-200 font-bold">{{ $request->line?->customer?->full_name ?? '-' }}</td>
+                                <td class="px-6 py-4 text-gray-500 dark:text-gray-400 font-mono text-xs">{{ $request->line?->customer?->national_id ?? '-' }}</td>
                                 <td class="px-6 py-4">
                                     <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-xs font-black text-gray-600 dark:text-gray-300">
                                         {{ __('messages.request_type_' . $request->request_type) }}
                                     </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if($request->status === 'done')
+                                        <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 rounded-lg text-xs font-black text-green-600 dark:text-green-400">
+                                            {{ __('messages.status_done') }}
+                                        </span>
+                                    @elseif($request->status === 'cancelled')
+                                        <span class="px-3 py-1 bg-red-100 dark:bg-red-900/30 rounded-lg text-xs font-black text-red-600 dark:text-red-400">
+                                            {{ __('messages.status_cancelled') }}
+                                        </span>
+                                    @else
+                                        <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-xs font-black text-gray-600 dark:text-gray-300">
+                                            {{ __('messages.status_' . $request->status) }}
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
                                     <div class="flex items-center justify-center gap-1.5 font-bold">
@@ -103,31 +128,32 @@
                                     <span class="block text-[10px] opacity-50">{{ $request->created_at->format('H:i') }}</span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    @if($request->request_type === 'resell' && $request->resellDetails && !$request->resellDetails->is_sold)
-                                        <form method="POST" action="{{ route('requests.complete-sale', $request->id) }}" class="inline">
-                                            @csrf
-                                            <button type="submit" 
-                                                class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-lg font-black text-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all border border-emerald-100 dark:border-emerald-800/50 shadow-sm"
-                                                onclick="return confirm('{{ __('هل أنت متأكد من إتمام البيعة بمبلغ :price؟', ['price' => number_format($request->resellDetails->sale_price, 2)]) }}')"
-                                            >
-                                                💰 {{ __('messages.complete_sale') }} ({{ number_format($request->resellDetails->sale_price, 2) }})
-                                            </button>
-                                        </form>
-                                    @elseif($request->request_type === 'resell' && $request->resellDetails && $request->resellDetails->is_sold)
-                                         <span class="inline-flex items-center gap-1 bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-500 px-3 py-1.5 rounded-lg font-black text-xs border border-gray-100 dark:border-gray-800">
-                                            ✅ {{ $request->resellDetails->sale_price }} {{ __('messages.currency') }}
-                                        </span>
-                                    @else
-                                        -
-                                    @endif
+                                    <div class="flex items-center justify-center gap-2">
+                                        {{-- View Details Icon --}}
+                                        <a href="{{ route('requests.show', $request->id) }}" 
+                                           class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all border border-blue-100 dark:border-blue-800/50 shadow-sm"
+                                           title="{{ __('messages.view') }}">
+                                            👁️
+                                        </a>
+
+                                        @if($request->request_type === 'resell' && $request->resellDetails && $request->status === 'done')
+                                             <span class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-lg font-black text-xs border border-emerald-100 dark:border-emerald-800/50">
+                                                ✅ {{ number_format($request->resellDetails->sale_price, 2) }} {{ __('messages.currency') }}
+                                            </span>
+                                        @elseif($request->request_type === 'resell' && $request->resellDetails && $request->status === 'cancelled')
+                                            <span class="text-gray-400 dark:text-gray-500">-</span>
+                                        @else
+                                            <span class="text-gray-400 dark:text-gray-500">-</span>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="py-12 bg-gray-50/50 dark:bg-gray-900/30">
+                                <td colspan="9" class="py-12 bg-gray-50/50 dark:bg-gray-900/30">
                                     <div class="flex flex-col items-center justify-center gap-3">
                                         <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center text-3xl">📭</div>
-                                        <p class="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-sm">{{ __('messages.no_completed_requests') }}</p>
+                                        <p class="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-sm">{{ __('messages.no_requests_found') }}</p>
                                     </div>
                                 </td>
                             </tr>

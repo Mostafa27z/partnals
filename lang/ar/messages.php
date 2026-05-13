@@ -795,4 +795,9 @@ return [
     'new_serial' => 'المسلسل الجديد',
     'request_date' => 'تاريخ الطلب',
     'serial_number' => 'المسلسل',
+    'delete_lines' => 'حذف الخطوط',
+    'min_price' => 'أقل سعر',
+    'max_price' => 'أعلى سعر',
+    'all_providers' => 'جميع المزودين',
+    'all_plans' => 'جميع الأنظمة',
 ];

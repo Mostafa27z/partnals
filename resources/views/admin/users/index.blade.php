@@ -118,18 +118,112 @@
             </div>
         </div>
     </div>
+    {{-- Delete User Modal --}}
+    <div id="deleteUserModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity" style="display: none;">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 w-full max-w-lg p-6 m-4 animate-in fade-in zoom-in duration-200">
+            <h3 class="text-xl font-black text-gray-800 dark:text-white flex items-center gap-2 mb-4">
+                <span class="w-8 h-8 bg-rose-100 dark:bg-rose-900/30 text-rose-600 rounded-lg flex items-center justify-center">⚠️</span>
+                {{ __('messages.confirm_delete') ?? 'تأكيد الحذف' }}
+            </h3>
+            
+            <p id="deleteModalMessage" class="text-gray-600 dark:text-gray-400 mb-6 font-bold text-sm">
+                {{ __('messages.are_you_sure_delete_user') ?? 'هل أنت متأكد من حذف هذا المستخدم؟' }}
+            </p>
+
+            <form id="modalDeleteForm" method="POST">
+                @csrf
+                @method('DELETE')
+                
+                <div id="distributorOptions" class="hidden mb-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <p class="text-sm font-black text-gray-800 dark:text-gray-200 mb-3">ماذا تريد أن تفعل بخطوط هذا الموزع؟</p>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="line_action" value="delete" class="w-4 h-4 text-rose-600 focus:ring-rose-500 border-gray-300 dark:border-gray-600" checked onchange="toggleDistributorSelect()">
+                            <span class="text-sm font-bold text-gray-700 dark:text-gray-300">حذف الخطوط (نقل لسلة المهملات)</span>
+                        </label>
+                        
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="line_action" value="reassign" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600" onchange="toggleDistributorSelect()">
+                            <span class="text-sm font-bold text-gray-700 dark:text-gray-300">نقل الخطوط لموزع آخر</span>
+                        </label>
+                    </div>
+
+                    <div id="distributorSelectWrapper" class="mt-4 hidden animate-in fade-in slide-in-from-top-2">
+                        <label class="block text-xs font-black text-gray-500 dark:text-gray-400 mb-1">اختر الموزع الجديد</label>
+                        <select name="new_distributor_id" id="new_distributor_id" class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 transition text-sm">
+                            <option value="">-- اختر الموزع --</option>
+                            @foreach($distributors as $distributor)
+                                <option value="{{ $distributor->id }}">{{ $distributor->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700/50">
+                    <button type="button" onclick="closeDeleteModal()" class="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-bold transition-all">
+                        {{ __('messages.cancel') ?? 'إلغاء' }}
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition-all shadow-lg shadow-rose-500/30">
+                        {{ __('messages.confirm') ?? 'تأكيد الحذف' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     @push('scripts')
     <script>
         function confirmDeletion(userId, roleName, linesCount) {
-            let message = "{{ __('messages.confirm_delete') ?? 'Are you sure?' }}";
+            const modal = document.getElementById('deleteUserModal');
+            const form = document.getElementById('modalDeleteForm');
+            const distOptions = document.getElementById('distributorOptions');
+            const messageEl = document.getElementById('deleteModalMessage');
             
-            if (roleName === 'موزع' && linesCount > 0) {
-                message = "{{ __('messages.distributor_delete_warning') }}".replace(':count', linesCount);
+            // Set form action dynamically
+            form.action = `/admin/users/${userId}`;
+
+            // Reset options
+            document.querySelector('input[name="line_action"][value="delete"]').checked = true;
+            toggleDistributorSelect();
+
+            // Hide the user being deleted from the new distributor dropdown
+            const distSelect = document.getElementById('new_distributor_id');
+            for (let i = 0; i < distSelect.options.length; i++) {
+                if (distSelect.options[i].value == userId) {
+                    distSelect.options[i].style.display = 'none';
+                } else {
+                    distSelect.options[i].style.display = '';
+                }
             }
 
-            if (confirm(message)) {
-                document.getElementById('delete-form-' + userId).submit();
+            if (roleName === 'موزع' && linesCount > 0) {
+                messageEl.textContent = `هذا الموزع لديه ${linesCount} خط/خطوط. يرجى تحديد الإجراء المطلوب قبل الحذف.`;
+                distOptions.classList.remove('hidden');
+            } else {
+                messageEl.textContent = "{{ __('messages.are_you_sure_delete_user') ?? 'هل أنت متأكد من حذف هذا المستخدم؟' }}";
+                distOptions.classList.add('hidden');
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteUserModal').style.display = 'none';
+        }
+
+        function toggleDistributorSelect() {
+            const isReassign = document.querySelector('input[name="line_action"][value="reassign"]').checked;
+            const selectWrapper = document.getElementById('distributorSelectWrapper');
+            const select = document.getElementById('new_distributor_id');
+            
+            if (isReassign) {
+                selectWrapper.classList.remove('hidden');
+                select.required = true;
+            } else {
+                selectWrapper.classList.add('hidden');
+                select.required = false;
+                select.value = "";
             }
         }
     </script>

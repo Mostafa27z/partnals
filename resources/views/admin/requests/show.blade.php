@@ -18,7 +18,7 @@
                     <div class="space-y-6">
                         <div class="flex items-center justify-between">
                             <span class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{{ __('messages.phone_number') }}</span>
-                            <span class="font-mono font-black text-gray-900 dark:text-white tracking-widest text-sm">{{ $request->line->phone_number }}</span>
+                            <span class="font-mono font-black text-gray-900 dark:text-white tracking-widest text-sm">{{ $request->line?->phone_number ?? '-' }}</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{{ __('messages.request_type') }}</span>
@@ -43,11 +43,11 @@
                     <div class="mt-8 pt-8 border-t border-gray-50 dark:border-gray-700/50 space-y-4 text-center sm:text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                         <div class="space-y-1">
                             <p class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{{ __('messages.customer') }}</p>
-                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ $request->line->customer->full_name ?? '-' }}</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ $request->line?->customer?->full_name ?? '-' }}</p>
                         </div>
                         <div class="space-y-1">
                             <p class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{{ __('messages.national_id') }}</p>
-                            <p class="text-xs font-bold text-gray-500 dark:text-gray-400 font-mono tracking-widest">{{ $request->line->customer->national_id ?? '-' }}</p>
+                            <p class="text-xs font-bold text-gray-500 dark:text-gray-400 font-mono tracking-widest">{{ $request->line?->customer?->national_id ?? '-' }}</p>
                         </div>
                     </div>
                 </div>

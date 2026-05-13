@@ -135,9 +135,9 @@
                                 {{ __('welcome.get_started') }}
                             </a>
                         @endauth
-                        <a href="#guide" class="px-8 py-4 rounded-2xl glass-card font-bold text-lg hover:shadow-lg transition-all hover:-translate-y-1">
+                        <!-- <a href="#guide" class="px-8 py-4 rounded-2xl glass-card font-bold text-lg hover:shadow-lg transition-all hover:-translate-y-1">
                             {{ __('welcome.how_it_works') }}
-                        </a>
+                        </a> -->
                     </div>
                 </div>
 

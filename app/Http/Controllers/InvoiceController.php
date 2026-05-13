@@ -144,13 +144,20 @@ if ($request->filled('paid_by')) {
     $query->whereIn('paid_by', $request->paid_by);
 }
 
+if ($request->filled('customer_id')) {
+    $query->whereHas('line', function ($q) use ($request) {
+        $q->whereIn('customer_id', $request->customer_id);
+    });
+}
+
     $invoices = $query->latest('invoice_month')->paginate(20);
     $total = $query->sum('amount');
 
     $plans = Plan::all();
     $users = \App\Models\User::all();
+    $customers = \App\Models\Customer::orderBy('full_name')->get();
 
-    return view('admin.invoices.index', compact('invoices', 'total', 'plans', 'users'));
+    return view('admin.invoices.index', compact('invoices', 'total', 'plans', 'users', 'customers'));
 }
 
 
@@ -229,16 +236,33 @@ public function lineInvoices(Request $request, Line $line)
 }
 
 
-    public function downloadSample()
+    public function downloadSample(Request $request)
     {
-        $sampleData = [
-            ['رقم الهاتف', 'شهر البداية', 'السنة', 'عدد الشهور', 'المبلغ المدفوع الكلي', 'التكلفة الكلية'],
-            ['25899911', '04', '2026', '4', '624.00', '499.20']
-        ];
+        $type = $request->query('type', 'bulk');
+        
+        if ($type === 'operator') {
+            $sampleData = [
+                ['رقم الهاتف', 'الشهر', 'السنة', 'سعر المشغل'],
+                ['25899911', '04', '2026', '124.80']
+            ];
+            $fileName = 'operator_price_sample.xlsx';
+        } elseif ($type === 'customer') {
+            $sampleData = [
+                ['رقم الهاتف', 'الشهر', 'السنة', 'سعر العميل'],
+                ['25899911', '04', '2026', '156.00']
+            ];
+            $fileName = 'customer_price_sample.xlsx';
+        } else {
+            $sampleData = [
+                ['رقم الهاتف', 'شهر البداية', 'السنة', 'عدد الشهور', 'المبلغ المدفوع الكلي', 'التكلفة الكلية'],
+                ['25899911', '04', '2026', '4', '624.00', '499.20']
+            ];
+            $fileName = 'invoices_import_sample.xlsx';
+        }
         
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\InvoiceErrorsExport($sampleData), 
-            'invoices_import_sample.xlsx'
+            $fileName
         );
     }
 
@@ -263,5 +287,51 @@ public function lineInvoices(Request $request, Line $line)
         }
 
         return back()->with('success', 'تم استيراد ودفع الفواتير بنجاح!');
+    }
+
+    public function importOperatorPrice(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|mimes:xlsx,csv,xls|max:5120',
+        ]);
+
+        $import = new \App\Imports\OperatorPriceImport();
+        \Maatwebsite\Excel\Facades\Excel::import($import, $request->file('excel_file'));
+
+        if (count($import->errorsList) > 0) {
+            array_unshift($import->errorsList, [
+                'رقم الهاتف', 'الشهر', 'السنة', 'سعر المشغل', 'الخطأ (Errors)'
+            ]);
+            
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\InvoiceErrorsExport($import->errorsList), 
+                'operator_import_errors_'.now()->format('Ymd_His').'.xlsx'
+            );
+        }
+
+        return back()->with('success', 'تم استيراد سعر المشغل بنجاح!');
+    }
+
+    public function importCustomerPrice(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|mimes:xlsx,csv,xls|max:5120',
+        ]);
+
+        $import = new \App\Imports\CustomerPriceImport();
+        \Maatwebsite\Excel\Facades\Excel::import($import, $request->file('excel_file'));
+
+        if (count($import->errorsList) > 0) {
+            array_unshift($import->errorsList, [
+                'رقم الهاتف', 'الشهر', 'السنة', 'سعر العميل', 'الخطأ (Errors)'
+            ]);
+            
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\InvoiceErrorsExport($import->errorsList), 
+                'customer_import_errors_'.now()->format('Ymd_His').'.xlsx'
+            );
+        }
+
+        return back()->with('success', 'تم استيراد سعر العميل بنجاح!');
     }
 }

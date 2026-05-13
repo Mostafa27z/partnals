@@ -37,7 +37,7 @@
         </div>
 
         {{-- Quick Stats Grid --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             @php
                 $stats = [
                     ['title' => __('messages.active_customers'), 'value' => number_format($activeCustomersCount), 'icon' => '👥', 'color' => 'blue', 'label' => __('messages.total_registered')],
@@ -60,7 +60,7 @@
                     <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $stat['value'] }}</p>
                 </div>
             @endforeach
-        </div>
+        </div> -->
 
         {{-- For Sale Link Card --}}
         <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">

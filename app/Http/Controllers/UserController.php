@@ -12,7 +12,10 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with(['role', 'lines'])->paginate(10);
-        return view('admin.users.index', compact('users'));
+        $distributors = User::whereHas('role', function($q) {
+            $q->where('name', 'موزع');
+        })->select('id', 'name')->get();
+        return view('admin.users.index', compact('users', 'distributors'));
     }
 
     public function create()
@@ -82,7 +85,7 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', __('messages.user_updated_success') ?? 'User updated successfully');
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
         if ($user->id === auth()->id()) {
             return redirect()->route('users.index')->with('error', __('messages.cannot_delete_self') ?? 'You cannot delete yourself');
@@ -92,7 +95,19 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('error', __('messages.cannot_delete_admin') ?? 'Cannot delete admin user');
         }
 
-        // The cascading delete of lines is handled in User model boot method
+        if ($user->role && $user->role->name === 'موزع') {
+            $action = $request->input('line_action', 'delete');
+            
+            if ($action === 'reassign' && $request->filled('new_distributor_id')) {
+                // Reassign all lines to the new distributor
+                $newDistributorId = $request->input('new_distributor_id');
+                // Temporarily disable the booted soft delete just in case, though we are changing the ID so they won't belong to this user anymore
+                \App\Models\Line::where('distributor_id', $user->id)
+                    ->update(['distributor_id' => $newDistributorId]);
+            }
+            // If action is 'delete', the User model's boot method will handle it via `$user->lines()->delete()`
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')->with('success', __('messages.user_deleted_success') ?? 'User deleted successfully');

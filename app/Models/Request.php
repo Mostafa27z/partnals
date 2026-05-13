@@ -32,10 +32,10 @@ public function doneBy()
     return $this->belongsTo(User::class, 'done_by');
 }
 
-public function line()
-{
-    return $this->belongsTo(Line::class);
-}
+    public function line()
+    {
+        return $this->belongsTo(Line::class)->withTrashed();
+    }
 
 public function resellDetails()
 {

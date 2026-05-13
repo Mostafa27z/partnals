@@ -39,15 +39,36 @@ Route::middleware(['auth', 'condition.is.active:manage permissions'])->group(fun
     Route::post('/admin/permissions/update', [PermissionController::class, 'update'])->name('permissions.update');
 });
 
-Route::get('/for-sale', function () {
-    $lines = \App\Models\Line::withoutGlobalScope('distributor')
+Route::get('/for-sale', function (\Illuminate\Http\Request $request) {
+    $query = \App\Models\Line::withoutGlobalScope('distributor')
+        ->with('plan')
         ->where('for_sale', true)
         ->where('is_sold', false)
-        ->whereNotNull('sale_price')
-        ->select('id', 'phone_number', 'provider', 'sale_price')
-        ->orderBy('sale_price')
-        ->get();
-    return view('public.for-sale', compact('lines'));
+        ->whereNotNull('sale_price');
+
+    if ($request->filled('provider')) {
+        $query->where('provider', $request->provider);
+    }
+
+    if ($request->filled('plan_id')) {
+        $query->where('plan_id', $request->plan_id);
+    }
+
+    $lines = $query->orderBy('sale_price')->get();
+    
+    $providers = \App\Models\Line::withoutGlobalScope('distributor')
+        ->where('for_sale', true)
+        ->where('is_sold', false)
+        ->distinct()
+        ->pluck('provider');
+
+    $plans = \App\Models\Plan::whereHas('lines', function($q) {
+        $q->withoutGlobalScope('distributor')
+          ->where('for_sale', true)
+          ->where('is_sold', false);
+    })->get();
+
+    return view('public.for-sale', compact('lines', 'providers', 'plans'));
 })->name('public.for-sale');
 
 Route::get('home', function () {
@@ -59,9 +80,26 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    $activeCustomersCount = \App\Models\Customer::count();
-    $pendingRequestsCount = \App\Models\Request::where('status', 'pending')->count();
-    $newLinesCount = \App\Models\Line::whereMonth('created_at', now()->month)->count();
+    $user = auth()->user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
+    $activeCustomersCount = \App\Models\Customer::when($isDistributor, function($q) use ($user) {
+        $q->whereHas('lines', function($lineQ) use ($user) {
+            $lineQ->where('distributor_id', $user->id);
+        });
+    })->count();
+
+    $pendingRequestsCount = \App\Models\Request::where('status', 'pending')
+        ->when($isDistributor, function($q) use ($user) {
+            $q->whereHas('line', function($lineQ) use ($user) {
+                $lineQ->where('distributor_id', $user->id);
+            });
+        })->count();
+
+    $newLinesCount = \App\Models\Line::whereMonth('created_at', now()->month)
+        ->when($isDistributor, function($q) use ($user) {
+            $q->where('distributor_id', $user->id);
+        })->count();
 
     return view('dashboard', compact('activeCustomersCount', 'pendingRequestsCount', 'newLinesCount'));
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -141,6 +179,8 @@ Route::get('/lines/{line}', [LineController::class, 'show'])->name('lines.show')
     Route::get('/customers/{customer}/invoices', [InvoiceController::class, 'customerInvoices'])->name('customers.invoices');
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::post('/invoices/import', [InvoiceController::class, 'import'])->name('invoices.import');
+    Route::post('/invoices/import-operator', [InvoiceController::class, 'importOperatorPrice'])->name('invoices.import-operator');
+    Route::post('/invoices/import-customer', [InvoiceController::class, 'importCustomerPrice'])->name('invoices.import-customer');
     Route::get('/invoices/sample', [InvoiceController::class, 'downloadSample'])->name('invoices.sample');
 
 });
@@ -162,6 +202,8 @@ Route::middleware(['auth', 'condition.is.active:manage lines'])->prefix('admin')
    Route::prefix('lines')->name('lines.')->group(function () {
     // ثابتة
     Route::get('all', [LineController::class, 'all'])->name('all');
+    Route::get('bulk-distributors', [LineController::class, 'bulkDistributorsIndex'])->name('bulk-distributors');
+    Route::get('delete-lines', [LineController::class, 'deleteIndex'])->name('delete-index');
     Route::get('create', [LineController::class, 'createStandalone'])->name('create');
     Route::post('/', [LineController::class, 'storeStandalone'])->name('store');
     Route::get('export', [LineController::class, 'export'])->name('export');

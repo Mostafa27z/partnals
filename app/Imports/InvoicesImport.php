@@ -27,7 +27,11 @@ class InvoicesImport implements ToCollection, WithStartRow
                 continue;
             }
 
-            $phoneNumber = $row[0];
+            $phoneNumber = trim($row[0]);
+            if (strlen($phoneNumber) === 10 && strpos($phoneNumber, '1') === 0) {
+                $phoneNumber = '0' . $phoneNumber;
+            }
+
             $startMonth = str_pad($row[1], 2, '0', STR_PAD_LEFT);
             $year = $row[2];
             $numsOfMonths = (int) $row[3];
@@ -88,6 +92,7 @@ class InvoicesImport implements ToCollection, WithStartRow
                     // Update if already paid or exists
                     $existingInvoice->update([
                         'amount' => $monthlyAmount,
+                        'operator_price' => $monthlyCost,
                         'calculated_profit' => $monthlyProfit,
                         'is_paid' => true,
                         'payment_date' => now(),
@@ -97,6 +102,7 @@ class InvoicesImport implements ToCollection, WithStartRow
                     Invoice::create([
                         'line_id'           => $line->id,
                         'amount'            => $monthlyAmount,
+                        'operator_price'    => $monthlyCost,
                         'calculated_profit' => $monthlyProfit,
                         'invoice_month'     => $currentMonth,
                         'is_paid'           => true,

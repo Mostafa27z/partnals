@@ -55,14 +55,18 @@
             {{-- Distributor --}}
             <div>
                 <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">{{ __('messages.distributor') }}</label>
-                <select name="distributor_id" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
+                @php $isAdmin = auth()->user()->role && auth()->user()->role->name === 'admin'; @endphp
+                <select name="distributor_id" class="w-full rounded-lg {{ $isAdmin ? 'border-gray-300 dark:border-gray-600' : 'bg-gray-100 dark:bg-gray-900 cursor-not-allowed' }} dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" {{ $isAdmin ? '' : 'disabled' }}>
                     <option value="">-- {{ __('messages.select_distributor') ?? 'اختر الموزع' }} --</option>
                     @foreach($distributors as $distributor)
-                        <option value="{{ $distributor->id }}" {{ old('distributor_id') == $distributor->id ? 'selected' : '' }}>
+                        <option value="{{ $distributor->id }}" {{ old('distributor_id', (!$isAdmin && auth()->id() == $distributor->id) ? auth()->id() : '') == $distributor->id ? 'selected' : '' }}>
                             {{ $distributor->name }}
                         </option>
                     @endforeach
                 </select>
+                @if(!$isAdmin)
+                    <input type="hidden" name="distributor_id" value="{{ auth()->id() }}">
+                @endif
             </div>
 
             {{-- Provider --}}

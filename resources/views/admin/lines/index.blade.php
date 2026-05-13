@@ -54,15 +54,6 @@
                                                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold text-xs hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all"> 
                                                 ✏️ {{ __('messages.edit') }} 
                                             </a> 
-                                            <form action="{{ route('customers.lines.destroy', [$customer, $line]) }}" method="POST" class="inline"> 
-                                                @csrf 
-                                                @method('DELETE') 
-                                                <button 
-                                                    onclick="return confirm('{{ __('messages.confirm_delete_line') }}')" 
-                                                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 font-bold text-xs hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all"> 
-                                                    🗑 {{ __('messages.delete') }} 
-                                                </button> 
-                                            </form>
                                         </div> 
                                     </td> 
                                 </tr> 
