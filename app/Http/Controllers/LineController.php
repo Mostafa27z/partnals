@@ -69,8 +69,8 @@ public function importProcess(Request $request)
         if ($index === 0) continue;
 
         $rowNumber = $index + 1;
-        $planName   = trim($row[0] ?? '');
-        $phone      = trim($row[1] ?? '');
+        $phone      = trim($row[0] ?? '');
+        $planName   = trim($row[1] ?? '');
         $provider   = trim($row[2] ?? '');
         $fullName   = trim($row[3] ?? '');
         $nationalId = trim($row[4] ?? '');
@@ -78,29 +78,29 @@ public function importProcess(Request $request)
         $error = null;
 
         // Required fields validation
-        if (!$planName) {
-            $error = "النظام مطلوب.";
-        } elseif (!$phone) {
+        if (!$phone) {
             $error = "رقم الهاتف مطلوب.";
         } elseif (!preg_match('/^\d{11}$/', $phone)) {
             $error = "رقم الهاتف يجب أن يكون 11 رقم.";
         } elseif (Line::where('phone_number', $phone)->exists()) {
             $error = "رقم الهاتف $phone مستخدم بالفعل.";
+        } elseif (!$planName) {
+            $error = "النظام مطلوب.";
         } elseif (!$provider || !in_array($provider, $validProviders)) {
             $error = "مزود الخدمة غير صالح ($provider).";
         }
 
         // Plan validation
         $plan = Plan::where('name', $planName)->first();
-        if (!$plan) {
+        if (!$plan && !$error) {
             $error = "النظام '$planName' غير موجود.";
         }
 
         // Capture the error
         if ($error) {
             $failedRows[] = [
-                'النظام' => $planName,
                 'رقم الهاتف' => $phone,
+                'النظام' => $planName,
                 'المزود' => $provider,
                 'الاسم' => $fullName,
                 'الرقم القومي' => $nationalId,
@@ -130,6 +130,7 @@ public function importProcess(Request $request)
         // Create the line
         Line::create([
             'phone_number'       => $phone,
+            'gcode'              => substr($phone, 0, 3),
             'provider'           => $provider,
             'plan_id'            => $plan->id,
             'customer_id'        => $customerId,
@@ -159,7 +160,7 @@ public function importProcess(Request $request)
 
             public function headings(): array
             {
-                return ['النظام', 'رقم الهاتف', 'المزود', 'الاسم', 'الرقم القومي', 'الخطأ'];
+                return ['رقم الهاتف', 'النظام', 'المزود', 'الاسم', 'الرقم القومي', 'الخطأ'];
             }
         }, $filename);
     }

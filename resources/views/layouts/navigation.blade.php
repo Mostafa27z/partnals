@@ -273,7 +273,7 @@
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-4"
-         class="lg:hidden absolute top-20 inset-x-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-700 shadow-2xl overflow-hidden rounded-b-3xl">
+         class="lg:hidden absolute top-20 inset-x-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-700 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)] rounded-b-3xl custom-scrollbar">
         
         <div class="p-6 pt-10">
             <!-- Mobile Notifications -->
