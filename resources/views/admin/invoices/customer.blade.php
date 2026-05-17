@@ -98,7 +98,7 @@
                                     <span class="text-red-600 font-semibold">{{ __('messages.No') }}</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-3">{{ $invoice->payment_date ? \Carbon\Carbon::parse($invoice->payment_date)->format('Y-m-d') : '-' }}</td>
+                            <td class="px-6 py-3">{{ $invoice->payment_date ? \Carbon\Carbon::parse($invoice->payment_date)->format('Y-m-d H:i:s') : '-' }}</td>
                             <td class="px-6 py-3">{{ $invoice->user?->name ?? '-' }}</td>
                         </tr>
                     @empty

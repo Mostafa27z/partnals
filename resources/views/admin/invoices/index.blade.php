@@ -218,7 +218,7 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 border">{{ $invoice->payment_date ? \Carbon\Carbon::parse($invoice->payment_date)->format('Y-m-d') : '-' }}</td>
+                            <td class="px-4 py-3 border">{{ $invoice->payment_date ? \Carbon\Carbon::parse($invoice->payment_date)->format('Y-m-d H:i:s') : '-' }}</td>
                             <td class="px-4 py-3 border">{{ $invoice->user?->name ?? '-' }}</td>
                         </tr>
                     @endforeach

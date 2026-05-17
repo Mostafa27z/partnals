@@ -8,8 +8,8 @@
     <!-- Filter Form -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6" dir="rtl">
         <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <input type="text" name="phone" value="{{ request('phone') }}" placeholder="{{ __('messages.phone_number') }}" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring focus:ring-blue-200" />
-            <input type="text" name="nid" value="{{ request('nid') }}" placeholder="{{ __('messages.national_id') }}" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring focus:ring-blue-200" />
+            <input type="text" name="phone" value="{{ request('phone') }}" placeholder="{{ __('messages.phone_number') }}" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring focus:ring-blue-200" />
+            <input type="text" name="nid" id="filter_nid" value="{{ request('nid') }}" placeholder="{{ __('messages.national_id') }}" maxlength="14" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring focus:ring-blue-200" />
             
             <select name="type" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring focus:ring-blue-200">
                 <option value="">{{ __('messages.select_request_type') }}</option>
@@ -118,7 +118,7 @@
                                             @elseif($req->request_type === 'resell')
                                                 <div>
                                                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">{{ __('messages.new_serial') }}</label>
-                                                    <input type="text" name="new_serial" value="{{ $req->resellDetails->new_serial ?? '' }}" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-sm">
+                                                    <input type="text" name="new_serial" maxlength="19" value="{{ $req->resellDetails->new_serial ?? '' }}" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-sm serial-input">
                                                 </div>
                                                 <div>
                                                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">{{ __('messages.sale_price') }}</label>
@@ -136,7 +136,7 @@
                                             @elseif($req->request_type === 'change_chip')
                                                 <div>
                                                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">{{ __('messages.new_serial') }}</label>
-                                                    <input type="text" name="new_serial" value="{{ $req->changeChip->new_serial ?? '' }}" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-sm">
+                                                    <input type="text" name="new_serial" maxlength="19" value="{{ $req->changeChip->new_serial ?? '' }}" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-sm serial-input">
                                                 </div>
                                             @elseif($req->request_type === 'change_distributor')
                                                 <div>
@@ -197,6 +197,53 @@
                 row.classList.add('hidden');
             }
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById('filter_nid')?.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 14);
+            });
+
+            // Serial inputs validation & numeric restriction
+            document.querySelectorAll('.serial-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '');
+                });
+
+                input.addEventListener('blur', function() {
+                    const val = this.value.trim();
+                    let errEl = this.parentNode.querySelector('.serial-error-msg');
+                    if (errEl) {
+                        errEl.remove();
+                    }
+                    this.classList.remove('border-red-500', 'focus:ring-red-500');
+
+                    const isRequired = this.hasAttribute('required') || this.required;
+
+                    if (val === '') {
+                        if (isRequired) {
+                            const isAr = document.documentElement.lang === 'ar';
+                            const requiredMsg = isAr ? 'هذا الحقل مطلوب' : 'This field is required';
+                            showError(this, requiredMsg);
+                        }
+                        return;
+                    }
+
+                    if (val.length !== 19) {
+                        const isAr = document.documentElement.lang === 'ar';
+                        const lengthMsg = isAr ? 'يجب أن يتكون الرقم التسلسلي من 19 رقماً بالضبط' : 'Serial number must be exactly 19 digits';
+                        showError(this, lengthMsg);
+                    }
+                });
+            });
+
+            function showError(input, msg) {
+                const errEl = document.createElement('span');
+                errEl.className = 'serial-error-msg text-red-500 text-sm mt-1 block font-bold';
+                errEl.textContent = msg;
+                input.parentNode.appendChild(errEl);
+                input.classList.add('border-red-500', 'focus:ring-red-500');
+            }
+        });
     </script>
     @endpush
 </x-app-layout>

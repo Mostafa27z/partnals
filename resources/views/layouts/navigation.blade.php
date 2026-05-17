@@ -60,7 +60,7 @@
                          x-transition:enter="transition ease-out duration-200" 
                          x-transition:enter-start="opacity-0 scale-95 translate-y-[-10px]" 
                          x-transition:enter-end="opacity-100 scale-100 translate-y-0" 
-                         class="absolute left-1/2 -translate-x-1/2 mt-4 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 w-64 overflow-hidden">
+                         class="absolute left-1/2 -translate-x-1/2 mt-4 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 w-64 max-h-[calc(100vh-7rem)] overflow-y-auto overflow-x-hidden custom-scrollbar">
                         <div class="p-2 space-y-0.5">
                             <x-dropdown-link :href="route('providers.index')" class="rounded-xl">
                                 <span class="flex items-center gap-3">
@@ -98,12 +98,14 @@
                                     <span>{{ __('messages.bulk_distributor_management') ?? 'إدارة الموزعين بالجملة' }}</span>
                                 </span>
                             </x-dropdown-link>
+                            @if(auth()->user()->hasPermission('delete line'))
                             <x-dropdown-link :href="route('lines.delete-index')" class="rounded-xl">
                                 <span class="flex items-center gap-3">
                                     <span class="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">🗑️</span>
                                     <span>{{ __('messages.delete_lines') ?? 'حذف الخطوط' }}</span>
                                 </span>
                             </x-dropdown-link>
+                            @endif
                             
                             <div class="h-[1px] bg-gray-100 dark:bg-gray-700 my-2 mx-2"></div>
                             
@@ -394,12 +396,14 @@
                             <span class="text-xs font-bold">{{ __('messages.bulk_distributor_management') ?? 'تعيين موزع' }}</span>
                         </div>
                     </x-responsive-nav-link>
+                    @if(auth()->user()->hasPermission('delete line'))
                     <x-responsive-nav-link :href="route('lines.delete-index')" class="rounded-2xl border border-gray-50 dark:border-gray-700/30">
                         <div class="flex flex-col gap-1 py-1">
                             <span class="text-lg">🗑️</span>
                             <span class="text-xs font-bold">{{ __('messages.delete_lines') ?? 'حذف الخطوط' }}</span>
                         </div>
                     </x-responsive-nav-link>
+                    @endif
                 </div>
             </div>
 

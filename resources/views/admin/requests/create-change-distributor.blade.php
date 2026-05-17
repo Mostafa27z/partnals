@@ -49,7 +49,7 @@
                                     required>
                                 <option value="" disabled selected>-- اختر الموزع الجديد --</option>
                                 @foreach($distributors as $distributor)
-                                    <option value="{{ $distributor->id }}">{{ $distributor->name }}</option>
+                                    <option value="{{ $distributor->id }}" {{ old('new_distributor_id') == $distributor->id ? 'selected' : '' }}>{{ $distributor->name }}</option>
                                 @endforeach
                             </select>
                         </div>

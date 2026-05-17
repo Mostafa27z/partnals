@@ -21,10 +21,7 @@ class CheckLinePayments extends Command
 
         foreach ($lines as $line) {
             // لا تنشئ الطلب مرتين إذا كان موجود بالفعل
-            $exists = Request::where('line_id', $line->id)
-                ->where('request_type', 'stop')
-                ->where('status', 'pending')
-                ->exists();
+            $exists = Request::hasActiveRequest($line->id, 'stop');
 
             if ($exists) continue;
 
@@ -43,6 +40,26 @@ class CheckLinePayments extends Command
             ]);
         }
 
-        $this->info('✅ تم إنشاء الطلبات بنجاح.');
+        // Auto deactivate lines whose active period has expired
+        $expiredLines = Line::whereNotNull('last_invoice_date')
+            ->where('status', 'active')
+            ->get();
+
+        $deactivatedCount = 0;
+        foreach ($expiredLines as $line) {
+            try {
+                $lastInvoice = Carbon::parse($line->last_invoice_date);
+                $expiryDate = $lastInvoice->copy()->addMonth();
+                if (Carbon::now()->startOfDay()->gte($expiryDate->startOfDay())) {
+                    $line->status = 'inactive';
+                    $line->save();
+                    $deactivatedCount++;
+                }
+            } catch (\Exception $e) {
+                // Ignore parsing errors
+            }
+        }
+
+        $this->info("✅ تم إنشاء الطلبات بنجاح. وتم إيقاف {$deactivatedCount} خطاً منتهية الصلاحية.");
     }
 }

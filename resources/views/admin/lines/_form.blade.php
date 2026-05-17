@@ -19,7 +19,7 @@
 
     <div>
         <label class="block font-medium">رقم الهاتف (9 أرقام)</label>
-        <input type="text" name="phone_number" class="input input-bordered w-full"
+        <input type="text" name="phone_number" maxlength="11" class="input input-bordered w-full"
                value="{{ old('phone_number', $line->phone_number ?? '') }}" required>
     </div>
 
@@ -92,7 +92,7 @@
 
         <div>
             <label class="block font-medium">الرقم القومي</label>
-            <input type="text" name="new_national_id" class="input input-bordered w-full" value="{{ old('new_national_id') }}">
+            <input type="text" name="new_national_id" id="new_national_id" maxlength="14" class="input input-bordered w-full" value="{{ old('new_national_id') }}">
         </div>
     </div>
 
@@ -102,3 +102,37 @@
         </button>
     </div>
 </form>
+
+@push('scripts')
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const newNationalIdInput = document.getElementById('new_national_id');
+        if (newNationalIdInput) {
+            newNationalIdInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 14);
+            });
+
+            newNationalIdInput.addEventListener('blur', function() {
+                const value = newNationalIdInput.value.trim();
+                let errEl = newNationalIdInput.nextElementSibling;
+                if (!errEl || !errEl.classList.contains('nid-error-msg')) {
+                    errEl = document.createElement('span');
+                    errEl.className = 'nid-error-msg text-red-500 text-sm mt-1 block font-bold';
+                    newNationalIdInput.parentNode.insertBefore(errEl, newNationalIdInput.nextSibling);
+                }
+
+                const isAr = document.documentElement.lang === 'ar';
+                const lengthMsg = isAr ? 'الرقم القومي يجب أن يتكون من 14 رقماً' : 'National ID must be 14 digits';
+
+                if (value !== '' && value.length !== 14) {
+                    errEl.textContent = lengthMsg;
+                    newNationalIdInput.classList.add('border-red-500', 'focus:ring-red-500');
+                } else {
+                    errEl.textContent = '';
+                    newNationalIdInput.classList.remove('border-red-500', 'focus:ring-red-500');
+                }
+            });
+        }
+    });
+</script>
+@endpush

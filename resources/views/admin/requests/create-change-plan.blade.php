@@ -49,7 +49,7 @@
                                     required>
                                 <option value="">-- {{ __('messages.select_plan') }} --</option>
                                 @foreach ($plans as $plan)
-                                    <option value="{{ $plan->id }}">{{ $plan->name }} ({{ number_format($plan->price, 2) }} {{ __('messages.currency') }})</option>
+                                    <option value="{{ $plan->id }}" {{ old('new_plan_id') == $plan->id ? 'selected' : '' }}>{{ $plan->name }} ({{ number_format($plan->price, 2) }} {{ __('messages.currency') }})</option>
                                 @endforeach
                             </select>
                         </div>

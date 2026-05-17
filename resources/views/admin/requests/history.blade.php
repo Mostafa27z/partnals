@@ -11,13 +11,13 @@
             <form method="GET" action="{{ route('requests.history') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <div>
                     <label class="block text-xs font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">{{ __('messages.phone_number') }}</label>
-                    <input type="text" name="phone" value="{{ request('phone') }}" placeholder="01xxxxxxxxx"
+                    <input type="text" name="phone" value="{{ request('phone') }}" placeholder="01xxxxxxxxx" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                            class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-mono" />
                 </div>
 
                 <div>
                     <label class="block text-xs font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">{{ __('messages.national_id') }}</label>
-                    <input type="text" name="nid" value="{{ request('nid') }}" placeholder="29xxxxxxxxxxxx"
+                    <input type="text" name="nid" id="filter_nid" value="{{ request('nid') }}" placeholder="29xxxxxxxxxxxx" maxlength="14"
                            class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-mono" />
                 </div>
 
@@ -168,3 +168,13 @@
         </div>
     </div>
 </x-app-layout>
+
+@push('scripts')
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById('filter_nid')?.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 14);
+        });
+    });
+</script>
+@endpush

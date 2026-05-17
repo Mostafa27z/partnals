@@ -9,10 +9,12 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">{{ __('messages.total_registered_customers', ['count' => $customers->total()]) }}</p>
             </div>
             <div class="flex items-center gap-3">
+                @if(auth()->user()->hasPermission('delete customer'))
                 <a href="{{ route('customers.trashed') }}" class="group px-5 py-2.5 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl text-sm font-black border border-rose-100 dark:border-rose-800 transition-all active:scale-95 flex items-center gap-2">
                     <svg class="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     <span>{{ __('messages.Deleted Customers') }}</span>
                 </a>
+                @endif
                 <a href="{{ route('customers.create') }}" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-black shadow-lg shadow-indigo-100 dark:shadow-none transition-all active:scale-95 flex items-center gap-2">
                     <span>+</span>
                     <span>{{ __('messages.New Customer') }}</span>
@@ -25,16 +27,22 @@
         {{-- Search & Export Card --}}
         <div class="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-700">
             <form method="GET" action="{{ route('customers.index') }}" class="flex flex-col md:flex-row gap-4 items-end">
-                <div class="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex-1 w-full grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block mb-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">الاسم الكامل</label>
+                        <input type="text" name="name" value="{{ request('name') }}" 
+                               placeholder="{{ __('messages.Full Name') ?? 'الاسم الكامل' }}" 
+                               class="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl p-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500" />
+                    </div>
                     <div>
                         <label class="block mb-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">رقم الهاتف</label>
-                        <input type="text" name="phone_number" value="{{ request('phone_number') }}" 
+                        <input type="text" name="phone_number" value="{{ request('phone_number') }}" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                placeholder="{{ __('messages.Phone Number') }}" 
                                class="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl p-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500" />
                     </div>
                     <div>
                         <label class="block mb-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">الرقم القومي</label>
-                        <input type="text" name="national_id" value="{{ request('national_id') }}" 
+                        <input type="text" name="national_id" id="filter_nid" value="{{ request('national_id') }}" maxlength="14"
                                placeholder="{{ __('messages.National ID') }}" 
                                class="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl p-3.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500" />
                     </div>
@@ -91,12 +99,14 @@
                                         <a href="{{ route('customers.edit', $customer) }}" class="p-2.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-100 transition-all" title="{{ __('messages.Edit') }}">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                         </a>
+                                        @if(auth()->user()->hasPermission('delete customer'))
                                         <form action="{{ route('customers.destroy', $customer) }}" method="POST" class="inline">
                                             @csrf @method('DELETE')
                                             <button onclick="return confirm('{{ __('messages.Are you sure?') }}')" class="p-2.5 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-100 transition-all" title="{{ __('messages.Delete') }}">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -114,3 +124,13 @@
         </div>
     </div>
 </x-app-layout>
+
+@push('scripts')
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById('filter_nid')?.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 14);
+        });
+    });
+</script>
+@endpush

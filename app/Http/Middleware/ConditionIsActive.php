@@ -20,21 +20,8 @@ class ConditionIsActive
     {
         $user = Auth::user();
 
-        // 1. Check if user is admin (Always has access)
-        if ($user && $user->role && $user->role->name === 'admin') {
+        if ($user && $user->hasPermission($permissionName)) {
             return $next($request);
-        }
-
-        // 2. Check if the user's role has this permission AND it is active
-        if ($user && $user->role) {
-            $hasPermission = $user->role->permissions()
-                ->where('permissions.name', $permissionName)
-                ->where('permissions.is_active', true)
-                ->exists();
-
-            if ($hasPermission) {
-                return $next($request);
-            }
         }
 
         // 3. If neither, return 403 Forbidden

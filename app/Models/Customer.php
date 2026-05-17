@@ -13,8 +13,8 @@ class Customer extends Model
 use SoftDeletes;
     use HasFactory;
     protected $fillable = [
-    'full_name', 'national_id', 'email', 'birth_date', 'address','deleted_at'
-];
+        'full_name', 'national_id', 'email', 'birth_date', 'address', 'contact_number', 'whatsapp_number', 'deleted_at'
+    ];
 
     /**
      * خطوط العميل (أرقام الهاتف)

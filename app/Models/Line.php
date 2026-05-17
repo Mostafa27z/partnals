@@ -31,6 +31,22 @@ class Line extends Model
                     }
                 }
             }
+
+            if ($line->isDirty('last_invoice_date')) {
+                if ($line->last_invoice_date) {
+                    try {
+                        $lastInvoice = Carbon::parse($line->last_invoice_date);
+                        $expiryDate = $lastInvoice->copy()->addMonth();
+                        if (Carbon::now()->startOfDay()->gte($expiryDate->startOfDay())) {
+                            $line->status = 'inactive';
+                        } else {
+                            $line->status = 'active';
+                        }
+                    } catch (\Exception $e) {
+                        // Keep current status if parsing fails
+                    }
+                }
+            }
         });
     }
 

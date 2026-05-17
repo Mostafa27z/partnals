@@ -40,6 +40,7 @@ public function exportSelected(Request $request)
 
 public function bulkDelete(Request $request)
 {
+    abort_unless(auth()->user()->hasPermission('delete line'), 403);
     $ids = $request->input('selected_lines', []);
 
     if (empty($ids)) {
@@ -245,6 +246,7 @@ public function bulkDistributorsIndex(Request $request)
 
 public function deleteIndex(Request $request) 
 { 
+    abort_unless(auth()->user()->hasPermission('delete line'), 403);
     $plans = \App\Models\Plan::select('id', 'name')->get();
     $user = Auth::user();
     $isDistributor = $user->role && $user->role->name === 'موزع';
@@ -456,6 +458,7 @@ private function applyFilters($query, Request $request)
 
     public function destroy(Customer $customer, Line $line)
     {
+        abort_unless(auth()->user()->hasPermission('delete line'), 403);
         $line->delete();
         return redirect()->route('customers.show', $customer)->with('success', 'تم حذف الخط');
     }
@@ -671,6 +674,7 @@ public function updateStandalone(Request $request, Line $line)
 
     public function destroyStandalone(Line $line)
 {
+    abort_unless(auth()->user()->hasPermission('delete line'), 403);
     $line->delete(); // soft delete instead of force delete
     return redirect()->route('lines.all')->with('success', '✅ تم حذف الخط مؤقتًا.');
 }
@@ -682,6 +686,7 @@ public function trashed()
 
 public function forceDelete($id)
 {
+    abort_unless(auth()->user()->hasPermission('delete line'), 403);
     $line = Line::onlyTrashed()->findOrFail($id);
     $line->forceDelete();
 

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\RequestResell;
 use App\Models\RequestResumeLine;
 use App\Models\Line;
+use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
 use App\Models\RequestChangeDistributor;
 use App\Models\Plan;
@@ -90,6 +91,11 @@ public function importPauseRequests(HttpRequest $request)
             continue;
         }
 
+        if (RequestModel::hasActiveRequest($line->id, 'pause')) {
+            $errors[] = [$phone, $reason, $comment, "❌ هناك طلب إيقاف مؤقت معلق بالفعل لهذا الرقم"];
+            continue;
+        }
+
         $mainRequest = RequestModel::create([
             'line_id'      => $line->id,
             'customer_id'  => $line->customer_id,
@@ -155,6 +161,11 @@ public function importResumeRequests(HttpRequest $request)
 
         if (!$line) {
             $errors[] = [$phone, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
+            continue;
+        }
+
+        if (RequestModel::hasActiveRequest($line->id, 'resume')) {
+            $errors[] = [$phone, $reason, $comment, "❌ هناك طلب تشغيل معلق بالفعل لهذا الرقم"];
             continue;
         }
 
@@ -225,6 +236,11 @@ public function importChangeDateRequests(HttpRequest $request)
 
         if (!$line) {
             $errors[] = [$phone, $newDate, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
+            continue;
+        }
+
+        if (RequestModel::hasActiveRequest($line->id, 'change_date')) {
+            $errors[] = [$phone, $newDate, $reason, $comment, "❌ هناك طلب تغيير تاريخ معلق بالفعل لهذا الرقم"];
             continue;
         }
 
@@ -300,6 +316,11 @@ public function importChangeDistributorRequests(HttpRequest $request)
 
         if (!$line) {
             $errors[] = [$phone, $newDistributor, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
+            continue;
+        }
+
+        if (RequestModel::hasActiveRequest($line->id, 'change_distributor')) {
+            $errors[] = [$phone, $newDistributor, $reason, $comment, "❌ هناك طلب تغيير موزع معلق بالفعل لهذا الرقم"];
             continue;
         }
 
@@ -385,6 +406,11 @@ public function importChangeChipRequests(HttpRequest $request)
             continue;
         }
 
+        if (RequestModel::hasActiveRequest($line->id, 'change_chip')) {
+            $errors[] = [$phone, $newSerial, $reason, $comment, "❌ هناك طلب تغيير شريحة معلق بالفعل لهذا الرقم"];
+            continue;
+        }
+
         if (!$newSerial) {
             $errors[] = [$phone, $newSerial, $reason, $comment, "❌ رقم الشريحة الجديدة مفقود"];
             continue;
@@ -460,6 +486,11 @@ public function importChangePlanRequests(HttpRequest $request)
 
         if (!$line) {
             $errors[] = [$phone, $newPlanName, $reason, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
+            continue;
+        }
+
+        if (RequestModel::hasActiveRequest($line->id, 'change_plan')) {
+            $errors[] = [$phone, $newPlanName, $reason, $comment, "❌ هناك طلب تغيير نظام معلق بالفعل لهذا الرقم"];
             continue;
         }
 
@@ -540,6 +571,11 @@ public function importStopRequests(HttpRequest $request)
             continue;
         }
 
+        if (RequestModel::hasActiveRequest($line->id, 'stop')) {
+            $errors[] = [$phone, $reason, $comment, "❌ هناك طلب إيقاف معلق بالفعل لهذا الرقم"];
+            continue;
+        }
+
         $mainRequest = RequestModel::create([
             'line_id'      => $line->id,
             'customer_id'  => $line->customer_id,
@@ -609,6 +645,11 @@ public function importResellRequests(HttpRequest $request)
 
         if (!$line) {
             $errors[] = [$phone, $type, $oldSerial, $newSerial, $comment, "❌ رقم الهاتف غير موجود أو غير تابع لك"];
+            continue;
+        }
+
+        if (RequestModel::hasActiveRequest($line->id, 'resell')) {
+            $errors[] = [$phone, $type, $oldSerial, $newSerial, $comment, "❌ هناك طلب إعادة بيع معلق بالفعل لهذا الرقم"];
             continue;
         }
 
@@ -725,6 +766,10 @@ public function storeStop(HttpRequest $request)
         'comment'     => 'nullable|string|max:1000',
     ]);
 
+    if (\App\Models\Request::hasActiveRequest($request->line_id, 'stop')) {
+        return back()->withInput()->withErrors(['line_id' => '❌ هناك طلب إيقاف معلق بالفعل لهذا الرقم.']);
+    }
+
     $requestRecord = \App\Models\Request::create([
         'line_id'      => $request->line_id,
         'customer_id'  => $request->customer_id,
@@ -769,6 +814,10 @@ public function storeChangeDate(HttpRequest $request)
         'new_date'     => 'required|date|after:1900-01-01',
         'reason'       => 'nullable|string|max:255',
     ]);
+
+    if (\App\Models\Request::hasActiveRequest($validated['line_id'], 'change_date')) {
+        return back()->withInput()->withErrors(['line_id' => '❌ هناك طلب تغيير تاريخ معلق بالفعل لهذا الرقم.']);
+    }
 
     $line = Line::findOrFail($validated['line_id']);
 
@@ -934,13 +983,17 @@ protected function applyResell(RequestModel $request)
         }
     }
 
-    // تحديث الخط
-    $request->line->update([
+    $updateData = [
         'customer_id' => $customer?->id,
-        'phone_number' => $data->new_serial ?? $request->line->phone_number,
-        'gcode' => $data->new_serial ? substr($data->new_serial, 0, 3) : $request->line->gcode,
         'attached_at' => now(),
-    ]);
+    ];
+
+    if ($data->new_serial) {
+        $updateData['serial_number'] = $data->new_serial;
+    }
+
+    // تحديث الخط
+    $request->line->update($updateData);
 
     // ✅ أتمتة حساب الأرباح: حفظ سعر الشراء الحالي في سجل الطلب
     $data->update([
@@ -999,9 +1052,11 @@ public function storeResell(HttpRequest $request)
     'old_serial.regex'         => 'المسلسل القديم يجب أن يحتوي على أرقام فقط.',
     'full_name.required_if'    => 'يجب إدخال الاسم عند اختيار النوع فرع.',
     'national_id.required_if'  => 'يجب إدخال الرقم القومي عند اختيار النوع فرع.',
-    'national_id.digits'       => 'الرقم القومي يجب أن يكون 14 رقمًا.',
 ]);
 
+    if (\App\Models\Request::hasActiveRequest($validated['line_id'], 'resell')) {
+        return back()->withInput()->withErrors(['line_id' => '❌ هناك طلب إعادة بيع معلق بالفعل لهذا الرقم.']);
+    }
 
     $line = \App\Models\Line::find($validated['line_id']);
 
@@ -1169,6 +1224,10 @@ public function storeChangePlan(HttpRequest $request)
         'comment' => 'nullable|string|max:1000',
     ]);
 
+    if (\App\Models\Request::hasActiveRequest($validated['line_id'], 'change_plan')) {
+        return back()->withInput()->withErrors(['line_id' => '❌ هناك طلب تغيير نظام معلق بالفعل لهذا الرقم.']);
+    }
+
     $line = Line::findOrFail($validated['line_id']);
 
     $mainRequest = RequestModel::create([
@@ -1215,8 +1274,11 @@ public function storeChangeChip(HttpRequest $request)
     'old_serial.regex'         => 'المسلسل القديم يجب أن يحتوي على أرقام فقط.',
     'full_name.required_if'    => 'يجب إدخال الاسم عند اختيار النوع فرع.',
     'national_id.required_if'  => 'يجب إدخال الرقم القومي عند اختيار النوع فرع.',
-    'national_id.digits'       => 'الرقم القومي يجب أن يكون 14 رقمًا.',
 ]);
+
+    if (\App\Models\Request::hasActiveRequest($validated['line_id'], 'change_chip')) {
+        return back()->withInput()->withErrors(['line_id' => '❌ هناك طلب تغيير شريحة معلق بالفعل لهذا الرقم.']);
+    }
 
     $line = \App\Models\Line::findOrFail($validated['line_id']);
 
@@ -1254,6 +1316,10 @@ public function storePause(HttpRequest $request)
         'comment'     => 'nullable|string|max:1000',
     ]);
 
+    if (\App\Models\Request::hasActiveRequest($validated['line_id'], 'pause')) {
+        return back()->withInput()->withErrors(['line_id' => '❌ هناك طلب إيقاف مؤقت معلق بالفعل لهذا الرقم.']);
+    }
+
     $line = Line::findOrFail($validated['line_id']);
 
     $requestModel = RequestModel::create([
@@ -1285,6 +1351,10 @@ public function storeResume(HttpRequest $request)
         'reason' => 'required|string|max:255',
         'comment' => 'nullable|string|max:1000',
     ]);
+
+    if (\App\Models\Request::hasActiveRequest($validated['line_id'], 'resume')) {
+        return back()->withInput()->withErrors(['line_id' => '❌ هناك طلب تشغيل معلق بالفعل لهذا الرقم.']);
+    }
 
     $line = Line::findOrFail($validated['line_id']);
 
@@ -1323,6 +1393,10 @@ public function storeChangeDistributor(HttpRequest $request)
         'new_distributor_id' => 'required|exists:users,id',
         'reason'             => 'nullable|string|max:1000',
     ]);
+
+    if (\App\Models\Request::hasActiveRequest($validated['line_id'], 'change_distributor')) {
+        return back()->withInput()->withErrors(['line_id' => '❌ هناك طلب تغيير موزع معلق بالفعل لهذا الرقم.']);
+    }
 
     $line = Line::findOrFail($validated['line_id']);
 

@@ -255,23 +255,23 @@
                     @csrf
                     <div>
                         <label class="block mb-1 text-xs font-bold text-gray-500 uppercase tracking-wider">{{ __('messages.target_name') }}</label>
-                        <input type="text" name="name" required class="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:border-indigo-500 outline-none">
+                        <input type="text" name="name" value="{{ old('name') }}" required class="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:border-indigo-500 outline-none">
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block mb-1 text-xs font-bold text-gray-500 uppercase tracking-wider">{{ __('messages.target_type') }}</label>
                             <select name="type" required class="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:border-indigo-500 outline-none">
-                                <option value="general">{{ __('messages.target_general') }}</option>
-                                <option value="specific">{{ __('messages.target_specific') }}</option>
+                                <option value="general" {{ old('type') == 'general' ? 'selected' : '' }}>{{ __('messages.target_general') }}</option>
+                                <option value="specific" {{ old('type') == 'specific' ? 'selected' : '' }}>{{ __('messages.target_specific') }}</option>
                             </select>
                         </div>
                         <div>
                             <label class="block mb-1 text-xs font-bold text-gray-500 uppercase tracking-wider">{{ __('messages.target_scope') }}</label>
                             <select name="scope" required class="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:border-indigo-500 outline-none">
-                                <option value="requests">{{ __('messages.scope_requests') }}</option>
-                                <option value="invoices">{{ __('messages.scope_invoices') }}</option>
-                                <option value="both">{{ __('messages.scope_both') }}</option>
+                                <option value="requests" {{ old('scope') == 'requests' ? 'selected' : '' }}>{{ __('messages.scope_requests') }}</option>
+                                <option value="invoices" {{ old('scope') == 'invoices' ? 'selected' : '' }}>{{ __('messages.scope_invoices') }}</option>
+                                <option value="both" {{ old('scope') == 'both' ? 'selected' : '' }}>{{ __('messages.scope_both') }}</option>
                             </select>
                         </div>
                     </div>
@@ -279,11 +279,11 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block mb-1 text-xs font-bold text-gray-500 uppercase tracking-wider">{{ __('messages.target_threshold') }}</label>
-                            <input type="number" name="threshold" required min="1" class="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:border-indigo-500 outline-none">
+                            <input type="number" name="threshold" value="{{ old('threshold') }}" required min="1" class="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:border-indigo-500 outline-none">
                         </div>
                         <div>
                             <label class="block mb-1 text-xs font-bold text-gray-500 uppercase tracking-wider">{{ __('messages.target_reward') }}</label>
-                            <input type="number" step="0.01" name="reward" required min="0" class="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:border-indigo-500 outline-none">
+                            <input type="number" step="0.01" name="reward" value="{{ old('reward') }}" required min="0" class="w-full p-4 bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-100 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:border-indigo-500 outline-none">
                         </div>
                     </div>
 
@@ -543,6 +543,15 @@
 
     @push('scripts')
     <script>
+        @if ($errors->hasAny(['name', 'type', 'scope', 'threshold', 'reward']))
+            document.addEventListener('DOMContentLoaded', () => {
+                const createModal = document.getElementById('create_target_modal');
+                if (createModal && typeof createModal.showModal === 'function') {
+                    createModal.showModal();
+                }
+            });
+        @endif
+
         document.addEventListener('DOMContentLoaded', function() {
             const modalIds = ['edit_target_modal', 'create_target_modal', 'advance_modal', 'bonus_modal', 'target_modal'];
             modalIds.forEach(id => {

@@ -66,7 +66,7 @@
                             <textarea name="comment" 
                                       class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500 transition-all font-sans placeholder-gray-300 dark:placeholder-gray-700" 
                                       rows="3"
-                                      placeholder="..."></textarea>
+                                      placeholder="...">{{ old('comment') }}</textarea>
                         </div>
 
                         <div class="pt-4">

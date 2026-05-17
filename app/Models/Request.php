@@ -66,4 +66,15 @@ public function changeDate()
 {
     return $this->hasOne(RequestChangeDate::class);
 }
+
+/**
+ * Check if there is an active request of a specific type on a line
+ */
+public static function hasActiveRequest($lineId, $type)
+{
+    return self::where('line_id', $lineId)
+        ->where('request_type', $type)
+        ->whereNotIn('status', ['done', 'cancelled'])
+        ->exists();
+}
 }

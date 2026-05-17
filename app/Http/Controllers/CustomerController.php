@@ -47,7 +47,12 @@ class CustomerController extends Controller
         $request->validate([
             'full_name' => 'required|string|max:255',
             'national_id' => 'required|string|size:14|unique:customers,national_id',
-            'phone_number' => 'required|string|max:20|unique:lines,phone_number',
+            'phone_number' => 'required|string|max:11|unique:lines,phone_number',
+            'contact_number' => 'nullable|string|max:11',
+            'whatsapp_number' => 'nullable|string|max:11',
+            'address' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'birth_date' => 'nullable|date',
         ]);
 
         $customer = Customer::create([
@@ -55,6 +60,9 @@ class CustomerController extends Controller
             'national_id' => $request->national_id,
             'email' => $request->email,
             'birth_date' => $request->birth_date,
+            'address' => $request->address,
+            'contact_number' => $request->contact_number,
+            'whatsapp_number' => $request->whatsapp_number,
         ]);
 
         // إنشاء الخط المرتبط بالعميل
@@ -97,6 +105,11 @@ class CustomerController extends Controller
         $request->validate([
             'full_name' => 'required|string|max:255',
             'national_id' => 'required|string|size:14|unique:customers,national_id,' . $customer->id,
+            'contact_number' => 'nullable|string|max:11',
+            'whatsapp_number' => 'nullable|string|max:11',
+            'address' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'birth_date' => 'nullable|date',
         ]);
 
         $customer->update([
@@ -104,6 +117,9 @@ class CustomerController extends Controller
             'national_id' => $request->national_id,
             'email' => $request->email,
             'birth_date' => $request->birth_date,
+            'address' => $request->address,
+            'contact_number' => $request->contact_number,
+            'whatsapp_number' => $request->whatsapp_number,
         ]);
 
         // تحديث أول خط (بافتراض خط واحد هنا - يمكنك تعديل هذا لاحقًا لدعم أكثر من خط)
@@ -124,6 +140,7 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
+        abort_unless(auth()->user()->hasPermission('delete customer'), 403);
         $customer->delete();
         return redirect()->route('customers.index')->with('success', 'تم حذف العميل بنجاح');
     }
@@ -167,6 +184,7 @@ public function restore($id)
 
 public function forceDelete($id)
 {
+    abort_unless(auth()->user()->hasPermission('delete customer'), 403);
     $customer = Customer::onlyTrashed()->findOrFail($id);
     $customer->forceDelete();
 

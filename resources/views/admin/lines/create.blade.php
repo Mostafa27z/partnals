@@ -40,14 +40,14 @@
             {{-- Phone Number --}}
             <div>
                 <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">رقم الهاتف</label>
-                <input type="text" name="phone_number" value="{{ old('phone_number') }}"
+                <input type="text" name="phone_number" maxlength="11" value="{{ old('phone_number') }}"
                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" required>
             </div>
 
             {{-- Serial Number --}}
             <div>
                 <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">{{ __('messages.serial_number') }}</label>
-                <input type="text" name="serial_number" value="{{ old('serial_number') }}"
+                <input type="text" name="serial_number" id="serial_number" maxlength="19" value="{{ old('serial_number') }}"
                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500 font-mono tracking-wider"
                        placeholder="مثال: 8920012345678901234">
             </div>
@@ -154,7 +154,7 @@
             {{-- National ID --}}
             <div>
                 <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">الرقم القومي</label>
-                <input type="text" id="search-nid" name="national_id" placeholder="أدخل الرقم القومي"
+                <input type="text" id="search-nid" name="national_id" placeholder="أدخل الرقم القومي" maxlength="14"
                        oninput="document.getElementById('customer-data-fields').classList.remove('hidden')"
                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" />
                 <button type="button" onclick="loadCustomerData()"
@@ -242,9 +242,33 @@
                 });
         }
 
-        // Clear existing_customer_id if NID changes
-        document.getElementById('search-nid').addEventListener('input', function() {
+        // Clear existing_customer_id if NID changes and sanitize input
+        const searchNidInput = document.getElementById('search-nid');
+        searchNidInput.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 14);
             document.getElementById('existing_customer_id').value = '';
+        });
+
+        // National ID Validation on exit
+        searchNidInput.addEventListener('blur', function() {
+            const value = searchNidInput.value.trim();
+            let errEl = searchNidInput.nextElementSibling;
+            if (!errEl || !errEl.classList.contains('nid-error-msg')) {
+                errEl = document.createElement('span');
+                errEl.className = 'nid-error-msg text-red-500 text-sm mt-1 block font-bold';
+                searchNidInput.parentNode.insertBefore(errEl, searchNidInput.nextSibling);
+            }
+
+            const isAr = document.documentElement.lang === 'ar';
+            const lengthMsg = isAr ? 'الرقم القومي يجب أن يتكون من 14 رقماً' : 'National ID must be 14 digits';
+
+            if (value !== '' && value.length !== 14) {
+                errEl.textContent = lengthMsg;
+                searchNidInput.classList.add('border-red-500', 'focus:ring-red-500');
+            } else {
+                errEl.textContent = '';
+                searchNidInput.classList.remove('border-red-500', 'focus:ring-red-500');
+            }
         });
 
         function filterPlans() {
@@ -295,6 +319,34 @@
 
         document.getElementById('last_invoice_date').addEventListener('change', function() { enforceProviderDay(this); });
         document.getElementById('payment_date').addEventListener('change', function() { enforceProviderDay(this); });
+
+        // Serial number validation & numeric restriction
+        const serialInput = document.getElementById('serial_number');
+        if (serialInput) {
+            serialInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '');
+            });
+
+            serialInput.addEventListener('blur', function() {
+                const val = this.value.trim();
+                let errEl = this.nextElementSibling;
+                if (errEl && errEl.classList.contains('serial-error-msg')) {
+                    errEl.remove();
+                }
+                this.classList.remove('border-red-500', 'focus:ring-red-500');
+
+                if (val !== '' && val.length !== 19) {
+                    const isAr = document.documentElement.lang === 'ar';
+                    const lengthMsg = isAr ? 'يجب أن يتكون الرقم التسلسلي من 19 رقماً بالضبط' : 'Serial number must be exactly 19 digits';
+                    
+                    errEl = document.createElement('span');
+                    errEl.className = 'serial-error-msg text-red-500 text-sm mt-1 block font-bold';
+                    errEl.textContent = lengthMsg;
+                    this.parentNode.insertBefore(errEl, this.nextSibling);
+                    this.classList.add('border-red-500', 'focus:ring-red-500');
+                }
+            });
+        }
     </script>
     @endpush
 </x-app-layout>

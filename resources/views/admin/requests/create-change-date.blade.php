@@ -46,6 +46,7 @@
                             </label>
                             <input type="date" 
                                    name="new_date" 
+                                   value="{{ old('new_date') }}"
                                    class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all" 
                                    required>
                         </div>

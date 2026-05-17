@@ -66,14 +66,17 @@ class CustomerPriceImport implements ToCollection, WithStartRow
                 $invoice->update($updateData);
             } else {
                 // Create new paid invoice
+                $opPrice = optional($line->plan)->provider_price ?? 0;
                 Invoice::create([
-                    'line_id'       => $line->id,
-                    'amount'        => $customerPrice,
-                    'invoice_month' => $invoiceMonth,
-                    'is_paid'       => true,
-                    'payment_date'  => now(),
-                    'paid_by'       => Auth::id() ?? 1,
-                    'notes'         => 'تم إضافة سعر العميل من الإكسيل',
+                    'line_id'           => $line->id,
+                    'amount'            => $customerPrice,
+                    'operator_price'    => $opPrice,
+                    'calculated_profit' => $customerPrice - $opPrice,
+                    'invoice_month'     => $invoiceMonth,
+                    'is_paid'           => true,
+                    'payment_date'      => now(),
+                    'paid_by'           => Auth::id() ?? 1,
+                    'notes'             => 'تم إضافة سعر العميل من الإكسيل',
                 ]);
             }
             

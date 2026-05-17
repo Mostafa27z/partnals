@@ -83,7 +83,7 @@
                         title="{{ __('messages.copy_for_sale_link') }}">
                         📋
                     </button>
-                    <a href="{{ route('public.for-sale') }}" target="_blank"
+                    <a href="{{ route('public.for-sale') }}"
                         class="shrink-0 w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800/40 flex items-center justify-center text-lg hover:scale-110 transition-all"
                         title="{{ __('messages.view') }}">
                         🔗

@@ -244,6 +244,22 @@ class User extends Authenticatable
         }
     }
 
+    public function hasPermission(string $permissionName): bool
+    {
+        if ($this->role && $this->role->name === 'admin') {
+            return true;
+        }
+
+        if ($this->role) {
+            return $this->role->permissions()
+                ->where('permissions.name', $permissionName)
+                ->where('permissions.is_active', true)
+                ->exists();
+        }
+
+        return false;
+    }
+
     public function role()
     {
         return $this->belongsTo(Role::class);

@@ -30,7 +30,7 @@
 
                     <div>
                         <label class="block font-medium text-gray-700 dark:text-gray-300 text-base">{{ __('messages.National ID') }}</label>
-                        <input type="text" name="national_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" value="{{ old('national_id', $customer->national_id) }}" required>
+                        <input type="text" name="national_id" id="national_id" maxlength="14" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" value="{{ old('national_id', $customer->national_id) }}" required>
                     </div>
 
                     <div>
@@ -46,6 +46,16 @@
                     <div class="md:col-span-2">
                         <label class="block font-medium text-gray-700 dark:text-gray-300 text-base">{{ __('messages.Address') }}</label>
                         <input type="text" name="address" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" value="{{ old('address', $customer->address) }}">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-gray-700 dark:text-gray-300 text-base">رقم التواصل</label>
+                        <input type="text" name="contact_number" maxlength="11" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" value="{{ old('contact_number', $customer->contact_number) }}">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-gray-700 dark:text-gray-300 text-base">رقم الواتساب</label>
+                        <input type="text" name="whatsapp_number" maxlength="11" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" value="{{ old('whatsapp_number', $customer->whatsapp_number) }}">
                     </div>
                 </div>
 
@@ -82,11 +92,13 @@
                                     <td class="px-4 py-3 border">{{ $line->plan->name ?? '-' }}</td>
                                     <td class="px-4 py-3 border space-x-2">
                                         <a href="{{ route('customers.lines.edit', [$customer, $line]) }}" class="text-blue-600 hover:underline">{{ __('messages.Edit') }}</a>
+                                        @if(auth()->user()->hasPermission('delete line'))
                                         <form action="{{ route('customers.lines.destroy', [$customer, $line]) }}" method="POST" class="inline">
                                             @csrf
                                             @method('DELETE')
                                             <button onclick="return confirm('{{ __('messages.Are you sure to delete this line?') }}')" class="text-red-600 hover:underline">{{ __('messages.Delete') }}</button>
                                         </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -105,3 +117,48 @@
         </div>
     </div>
 </x-app-layout>
+
+@push('scripts')
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const nationalIdInput = document.getElementById('national_id');
+        if (nationalIdInput) {
+            function validateNationalId() {
+                const value = nationalIdInput.value.trim();
+                let errEl = nationalIdInput.nextElementSibling;
+                if (!errEl || !errEl.classList.contains('nid-error-msg')) {
+                    errEl = document.createElement('span');
+                    errEl.className = 'nid-error-msg text-red-500 text-sm mt-1 block font-bold';
+                    nationalIdInput.parentNode.insertBefore(errEl, nationalIdInput.nextSibling);
+                }
+
+                const isAr = document.documentElement.lang === 'ar';
+                const requiredMsg = isAr ? 'هذا الحقل مطلوب' : 'This field is required';
+                const lengthMsg = isAr ? 'الرقم القومي يجب أن يتكون من 14 رقماً' : 'National ID must be 14 digits';
+
+                if (value === '') {
+                    if (nationalIdInput.required) {
+                        errEl.textContent = requiredMsg;
+                        nationalIdInput.classList.add('border-red-500', 'focus:ring-red-500');
+                    } else {
+                        errEl.textContent = '';
+                        nationalIdInput.classList.remove('border-red-500', 'focus:ring-red-500');
+                    }
+                } else if (value.length !== 14) {
+                    errEl.textContent = lengthMsg;
+                    nationalIdInput.classList.add('border-red-500', 'focus:ring-red-500');
+                } else {
+                    errEl.textContent = '';
+                    nationalIdInput.classList.remove('border-red-500', 'focus:ring-red-500');
+                }
+            }
+
+            nationalIdInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 14);
+            });
+
+            nationalIdInput.addEventListener('blur', validateNationalId);
+        }
+    });
+</script>
+@endpush

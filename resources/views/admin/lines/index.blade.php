@@ -47,7 +47,7 @@
                                             {{ $line->status === 'active' ? __('messages.active') : __('messages.inactive') }}
                                         </span> 
                                     </td> 
-                                    <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400 whitespace-nowrap text-sm">{{ $line->payment_date }}</td> 
+                                    <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400 whitespace-nowrap text-sm">{{ $line->payment_date ? \Carbon\Carbon::parse($line->payment_date)->format('Y-m-d H:i') : '-' }}</td> 
                                     <td class="px-4 py-3.5 whitespace-nowrap"> 
                                         <div class="flex justify-center gap-2">
                                             <a href="{{ route('customers.lines.edit', [$customer, $line]) }}" 

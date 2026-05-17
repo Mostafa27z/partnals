@@ -18,9 +18,10 @@ class Kernel extends ConsoleKernel
      * تعريف الجدولة الزمنية للأوامر.
      */
     protected function schedule(Schedule $schedule)
-{
-    $schedule->command('lines:check-payments')->dailyAt('00:00');
-}
+    {
+        $schedule->command('lines:check-payments')->dailyAt('00:00');
+        $schedule->command('lines:update-statuses')->dailyAt('00:05');
+    }
 
 
     /**

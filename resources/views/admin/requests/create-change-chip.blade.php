@@ -72,7 +72,7 @@
                                 <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
                                     {{ __('messages.old_serial') }}
                                 </label>
-                                <input type="text" minlength="19" maxlength="19" name="old_serial" value="{{ old('old_serial') }}"
+                                <input type="text" id="old_serial" minlength="19" maxlength="19" name="old_serial" value="{{ old('old_serial', $line->serial_number) }}"
                                        class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-mono tracking-wider">
                             </div>
 
@@ -145,6 +145,7 @@
                     newSerialInput.required = true;
                     fullNameInput.required = false;
                     nationalIdInput.required = false;
+                    clearNidError();
                 } else if (value === 'branch') {
                     branchFields.classList.remove('hidden');
                     newSerialInput.required = false;
@@ -155,6 +156,15 @@
                     newSerialInput.required = false;
                     fullNameInput.required = false;
                     nationalIdInput.required = false;
+                    clearNidError();
+                }
+            }
+
+            function clearNidError() {
+                if (nationalIdInput) {
+                    const errEl = nationalIdInput.parentNode.querySelector('.nid-error-msg');
+                    if (errEl) errEl.textContent = '';
+                    nationalIdInput.classList.remove('border-red-500', 'focus:ring-red-500');
                 }
             }
 
@@ -165,6 +175,85 @@
             nationalIdInput?.addEventListener('input', (e) => {
                 e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 14);
             });
+
+            // National ID Validation on exit (blur)
+            nationalIdInput?.addEventListener('blur', () => {
+                const value = nationalIdInput.value.trim();
+                let errEl = nationalIdInput.nextElementSibling;
+                if (!errEl || !errEl.classList.contains('nid-error-msg')) {
+                    errEl = document.createElement('span');
+                    errEl.className = 'nid-error-msg text-red-500 text-sm mt-1 block font-bold';
+                    nationalIdInput.parentNode.insertBefore(errEl, nationalIdInput.nextSibling);
+                }
+
+                const isAr = document.documentElement.lang === 'ar';
+                const requiredMsg = isAr ? 'هذا الحقل مطلوب' : 'This field is required';
+                const lengthMsg = isAr ? 'الرقم القومي يجب أن يتكون من 14 رقماً' : 'National ID must be 14 digits';
+
+                const isRequired = typeSelect.value === 'branch';
+
+                if (value === '') {
+                    if (isRequired) {
+                        errEl.textContent = requiredMsg;
+                        nationalIdInput.classList.add('border-red-500', 'focus:ring-red-500');
+                    } else {
+                        errEl.textContent = '';
+                        nationalIdInput.classList.remove('border-red-500', 'focus:ring-red-500');
+                    }
+                } else if (value.length !== 14) {
+                    errEl.textContent = lengthMsg;
+                    nationalIdInput.classList.add('border-red-500', 'focus:ring-red-500');
+                } else {
+                    errEl.textContent = '';
+                    nationalIdInput.classList.remove('border-red-500', 'focus:ring-red-500');
+                }
+            });
+
+            // Serial inputs validation & numeric restriction
+            const oldSerial = document.getElementById('old_serial');
+            const newSerial = document.getElementById('new_serial');
+
+            [oldSerial, newSerial].forEach(input => {
+                if (!input) return;
+
+                input.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '');
+                });
+
+                input.addEventListener('blur', function() {
+                    const val = this.value.trim();
+                    let errEl = this.parentNode.querySelector('.serial-error-msg');
+                    if (errEl) {
+                        errEl.remove();
+                    }
+                    this.classList.remove('border-red-500', 'focus:ring-red-500');
+
+                    const isRequired = this.hasAttribute('required') || this.required;
+
+                    if (val === '') {
+                        if (isRequired) {
+                            const isAr = document.documentElement.lang === 'ar';
+                            const requiredMsg = isAr ? 'هذا الحقل مطلوب' : 'This field is required';
+                            showError(this, requiredMsg);
+                        }
+                        return;
+                    }
+
+                    if (val.length !== 19) {
+                        const isAr = document.documentElement.lang === 'ar';
+                        const lengthMsg = isAr ? 'يجب أن يتكون الرقم التسلسلي من 19 رقماً بالضبط' : 'Serial number must be exactly 19 digits';
+                        showError(this, lengthMsg);
+                    }
+                });
+            });
+
+            function showError(input, msg) {
+                const errEl = document.createElement('span');
+                errEl.className = 'serial-error-msg text-red-500 text-sm mt-1 block font-bold';
+                errEl.textContent = msg;
+                input.parentNode.appendChild(errEl);
+                input.classList.add('border-red-500', 'focus:ring-red-500');
+            }
         });
     </script>
     @endpush

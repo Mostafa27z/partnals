@@ -33,14 +33,45 @@ class InvoiceController extends Controller
    public function store(Request $request, Line $line)
 {
     $request->validate([
-        'months_count' => 'required|integer|min:1',
+        'months_count'   => 'required|integer|min:1',
+        'payment_option' => 'required|string|in:default,custom_per_month,total_divided',
+        'amounts'        => 'nullable|array',
+        'amounts.*'      => 'nullable|numeric|min:0',
+        'total_amount'   => 'nullable|numeric|min:0',
     ]);
+
+    $months = (int) $request->months_count;
+    $option = $request->payment_option;
 
     $planPrice = optional($line->plan)->price ?? 0;
     $providerPrice = optional($line->plan)->provider_price ?? 0;
-    $calculatedProfit = $planPrice - $providerPrice;
-    
-    $months = $request->months_count;
+
+    // Resolve amounts for each month
+    $resolvedAmounts = [];
+    if ($option === 'default') {
+        for ($i = 0; $i < $months; $i++) {
+            $resolvedAmounts[$i] = $planPrice;
+        }
+    } elseif ($option === 'total_divided') {
+        $total = (float) $request->total_amount;
+        $evenAmount = $months > 0 ? round($total / $months, 2) : 0;
+        $sum = 0;
+        for ($i = 0; $i < $months; $i++) {
+            if ($i === $months - 1) {
+                $resolvedAmounts[$i] = round($total - $sum, 2);
+            } else {
+                $resolvedAmounts[$i] = $evenAmount;
+                $sum += $evenAmount;
+            }
+        }
+    } else { // custom_per_month
+        $submittedAmounts = $request->input('amounts', []);
+        for ($i = 0; $i < $months; $i++) {
+            $resolvedAmounts[$i] = isset($submittedAmounts[$i]) && is_numeric($submittedAmounts[$i])
+                ? (float) $submittedAmounts[$i]
+                : $planPrice;
+        }
+    }
 
     // نأخذ اليوم من التاريخ الأخير أو اليوم الحالي
     $baseDate = $line->last_invoice_date
@@ -58,9 +89,13 @@ class InvoiceController extends Controller
             $invoiceDate->day = $invoiceDate->daysInMonth;
         }
 
+        $amountPaid = $resolvedAmounts[$i];
+        $calculatedProfit = $amountPaid - $providerPrice;
+
         Invoice::create([
             'line_id'           => $line->id,
-            'amount'            => $planPrice,
+            'amount'            => $amountPaid,
+            'operator_price'    => $providerPrice,
             'calculated_profit' => $calculatedProfit,
             'invoice_month'     => $invoiceDate,
             'is_paid'           => true,
@@ -107,7 +142,7 @@ class InvoiceController extends Controller
         ]);
     }
 
-    return redirect()->route('invoices.index', ['line' => $line->id])
+    return redirect()->route('invoices.create', $line)
                      ->with('success', '✅ تم دفع الفواتير بنجاح.');
 }
 

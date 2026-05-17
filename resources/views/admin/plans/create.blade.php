@@ -15,7 +15,7 @@
                 <label class="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ __('messages.Plan Name') }}
                 </label>
-                <input type="text" name="name"
+                <input type="text" name="name" value="{{ old('name') }}"
                        class="w-full text-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                        required>
             </div>
@@ -25,7 +25,7 @@
                 <label class="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ __('messages.Price') }} ({{ __('messages.EGP') }})
                 </label>
-                <input type="number" step="0.01" name="price"
+                <input type="number" step="0.01" name="price" value="{{ old('price') }}"
                        class="w-full text-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                        required>
             </div>
@@ -39,7 +39,7 @@
                         class="w-full text-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     <option value="">{{ __('messages.Select Provider') }}</option>
                     @foreach(['Vodafone', 'Etisalat', 'Orange', 'WE'] as $provider)
-                        <option value="{{ $provider }}">{{ $provider }}</option>
+                        <option value="{{ $provider }}" {{ old('provider') == $provider ? 'selected' : '' }}>{{ $provider }}</option>
                     @endforeach
                 </select>
             </div>
@@ -49,7 +49,7 @@
                 <label class="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ __('messages.Provider Price') }} ({{ __('messages.EGP') }})
                 </label>
-                <input type="number" step="0.01" name="provider_price"
+                <input type="number" step="0.01" name="provider_price" value="{{ old('provider_price') }}"
                        class="w-full text-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
             </div>
 
@@ -58,7 +58,7 @@
                 <label class="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ __('messages.Type') }}
                 </label>
-                <input type="text" name="type"
+                <input type="text" name="type" value="{{ old('type') }}"
                        class="w-full text-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
             </div>
 
@@ -67,7 +67,7 @@
                 <label class="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ __('messages.Plan Code') }}
                 </label>
-                <input type="text" name="plan_code"
+                <input type="text" name="plan_code" value="{{ old('plan_code') }}"
                        class="w-full text-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
             </div>
 
@@ -76,7 +76,7 @@
                 <label class="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ __('messages.Description / Penalty') }}
                 </label>
-                <input type="text" name="penalty"
+                <input type="text" name="penalty" value="{{ old('penalty') }}"
                        class="w-full text-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
             </div>
 

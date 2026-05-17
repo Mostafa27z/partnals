@@ -28,6 +28,7 @@ public function restore($id)
 }
 public function forceDelete($id)
 {
+    abort_unless(auth()->user()->hasPermission('delete plan'), 403);
     $plan = Plan::onlyTrashed()->findOrFail($id);
     $plan->forceDelete();
 
@@ -92,6 +93,7 @@ public function show(Plan $plan)
 }
 public function destroy(Plan $plan)
     {
+        abort_unless(auth()->user()->hasPermission('delete plan'), 403);
         $plan->delete();
 
         return redirect()->route('plans.index')->with('success', 'تم حذف النظام بنجاح');

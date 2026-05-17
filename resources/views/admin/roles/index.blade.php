@@ -98,7 +98,7 @@
                     @csrf
                     <div>
                         <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2 px-1">{{ __('messages.role_name') }}</label>
-                        <input type="text" name="name" required class="w-full px-5 py-4 rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all font-bold text-gray-800 dark:text-white" placeholder="مثال: مدير المبيعات">
+                        <input type="text" name="name" value="{{ old('name') }}" required class="w-full px-5 py-4 rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all font-bold text-gray-800 dark:text-white" placeholder="مثال: مدير المبيعات">
                     </div>
                     <div class="flex gap-4 pt-4">
                         <button type="submit" class="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-xl shadow-indigo-200 dark:shadow-none transition-all active:scale-95">
@@ -155,5 +155,11 @@
             input.value = name;
             toggleModal('editRoleModal');
         }
+
+        @if ($errors->has('name'))
+            document.addEventListener('DOMContentLoaded', () => {
+                toggleModal('addRoleModal');
+            });
+        @endif
     </script>
 </x-app-layout>

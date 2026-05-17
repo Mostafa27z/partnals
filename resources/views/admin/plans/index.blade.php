@@ -11,10 +11,12 @@
                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full shadow-lg transform hover:scale-105 transition">
                     + {{ __('messages.Add Plan') }}
                 </a>
+                @if(auth()->user()->hasPermission('delete plan'))
                 <a href="{{ route('plans.trashed') }}"
                    class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full shadow-lg transform hover:scale-105 transition">
                     🗑️ {{ __('messages.Deleted Plans') }}
                 </a>
+                @endif
             </div>
         </div>
 
@@ -81,6 +83,7 @@
                                 <td class="px-6 py-3 border-b dark:border-gray-700 flex gap-4 justify-center">
                                     <a href="{{ route('plans.show', $plan->id) }}" class="text-green-600 hover:underline">{{ __('messages.View') }}</a>
                                     <a href="{{ route('plans.edit', $plan->id) }}" class="text-blue-600 hover:underline">{{ __('messages.Edit') }}</a>
+                                    @if(auth()->user()->hasPermission('delete plan'))
                                     <form method="POST" action="{{ route('plans.destroy', $plan->id) }}">
                                         @csrf
                                         @method('DELETE')
@@ -88,6 +91,7 @@
                                             {{ __('messages.Delete') }}
                                         </button>
                                     </form>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

@@ -179,7 +179,7 @@
                         <tr class="border-b dark:border-gray-700 {{ $invoice->calculated_profit == 0 ? 'bg-orange-50 dark:bg-orange-900/10' : '' }}">
                             <td class="p-3 font-mono text-gray-900 dark:text-gray-200">{{ $invoice->line->phone_number ?? '---' }}</td>
                             <td class="p-3 text-xs">{{ \Carbon\Carbon::parse($invoice->invoice_month)->format('Y-m') }}</td>
-                            <td class="p-3 font-bold text-gray-700 dark:text-gray-300">{{ \Carbon\Carbon::parse($invoice->payment_date)->format('Y-m-d') }}</td>
+                            <td class="p-3 font-bold text-gray-700 dark:text-gray-300">{{ \Carbon\Carbon::parse($invoice->payment_date)->format('Y-m-d H:i:s') }}</td>
                             <td class="p-3">{{ number_format($invoice->amount, 2) }}</td>
                             <td class="p-3 {{ $invoice->calculated_profit <= 0 ? 'text-red-500 font-black' : 'text-emerald-600 font-bold' }}">
                                 {{ number_format($invoice->calculated_profit, 2) }}
