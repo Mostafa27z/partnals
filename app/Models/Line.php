@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
 class Line extends Model
@@ -29,6 +30,17 @@ class Line extends Model
                     } catch (\Exception $e) {
                         // Keep original if parsing fails
                     }
+                }
+            }
+
+            if ($line->provider && $line->gcode) {
+                $expectedProvider = static::providerForGcode($line->gcode);
+                if ($expectedProvider && $line->provider !== $expectedProvider) {
+                    $message = app()->getLocale() === 'ar'
+                        ? "مزود الخدمة يجب أن يكون $expectedProvider للمقدمة {$line->gcode}."
+                        : "Provider must be $expectedProvider for prefix {$line->gcode}.";
+
+                    throw ValidationException::withMessages(['provider' => [$message]]);
                 }
             }
 
@@ -88,10 +100,30 @@ class Line extends Model
         return $this->belongsTo(Provider::class, 'provider', 'name');
     }
 
+    public static function expectedProviders(): array
+    {
+        return [
+            '010' => 'Vodafone',
+            '011' => 'Etisalat',
+            '012' => 'Orange',
+            '015' => 'WE',
+        ];
+    }
+
+    public static function providerForGcode(string $gcode): ?string
+    {
+        return static::expectedProviders()[$gcode] ?? null;
+    }
+
+    public static function allowedGcodes(): array
+    {
+        return array_keys(static::expectedProviders());
+    }
+
     /**
      * Get number of days in a given month/year
      */
-    private function getDaysInMonth($month, $year)
+    public function getDaysInMonth($month, $year)
     {
         return Carbon::create($year, $month, 1)->daysInMonth;
     }

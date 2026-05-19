@@ -75,6 +75,7 @@ public function importProcess(Request $request)
         $provider   = trim($row[2] ?? '');
         $fullName   = trim($row[3] ?? '');
         $nationalId = trim($row[4] ?? '');
+        $gcode      = substr($phone, 0, 3);
 
         $error = null;
 
@@ -89,6 +90,13 @@ public function importProcess(Request $request)
             $error = "النظام مطلوب.";
         } elseif (!$provider || !in_array($provider, $validProviders)) {
             $error = "مزود الخدمة غير صالح ($provider).";
+        } elseif (!in_array($gcode, Line::allowedGcodes())) {
+            $error = "مقدمة الرقم غير صحيحة ($gcode).";
+        } else {
+            $expectedProvider = Line::providerForGcode($gcode);
+            if ($expectedProvider && $provider !== $expectedProvider) {
+                $error = "مزود الخدمة يجب أن يكون $expectedProvider للمقدمة $gcode.";
+            }
         }
 
         // Plan validation
@@ -448,6 +456,10 @@ private function applyFilters($query, Request $request)
     // إذا تغيّر العميل، حدّث تاريخ الربط
     if (array_key_exists('customer_id', $validated) && $validated['customer_id'] != $line->customer_id) {
         $validated['attached_at'] = now();
+
+        if ($request->input('transfer_invoices') == '1') {
+            \App\Models\Invoice::where('line_id', $line->id)->update(['customer_id' => $validated['customer_id']]);
+        }
     }
 
     $line->update($validated);
@@ -665,7 +677,12 @@ public function updateStandalone(Request $request, Line $line)
         $updateData['last_invoice_date'] = $validated['last_invoice_date'];
     }
 
+    $oldCustomerId = $line->customer_id;
     $line->update($updateData);
+
+    if ($oldCustomerId != $customerId && $request->input('transfer_invoices') == '1') {
+        \App\Models\Invoice::where('line_id', $line->id)->update(['customer_id' => $customerId]);
+    }
 
     return redirect()->route('lines.all')->with('success', 'تم تحديث بيانات الخط بنجاح');
 }
@@ -712,9 +729,34 @@ public function restore($id)
         $validProvidersStr = Provider::pluck('name')->implode(',');
 
         return [
-            'gcode'        => 'required|in:010,011,012,015',
-            'phone_number' => ['required', 'digits:11', 'regex:/^[0-9]/', $uniqueRule],
-            'provider'     => 'required|in:' . $validProvidersStr,
+            'gcode'        => 'required|in:' . implode(',', Line::allowedGcodes()),
+            'phone_number' => [
+                'required',
+                'digits:11',
+                'regex:/^[0-9]+$/',
+                $uniqueRule,
+                function ($attribute, $value, $fail) {
+                    $gcode = request('gcode');
+                    if ($gcode && !str_starts_with($value, $gcode)) {
+                        $fail(app()->getLocale() === 'ar'
+                            ? "رقم الهاتف يجب أن يبدأ بمقدمة الرقم المحددة ($gcode)."
+                            : "Phone number must start with the selected prefix ($gcode).");
+                    }
+                }
+            ],
+            'provider'     => [
+                'required',
+                'in:' . $validProvidersStr,
+                function ($attribute, $value, $fail) {
+                    $gcode = request('gcode');
+                    $expected = Line::providerForGcode($gcode);
+                    if ($expected && $value !== $expected) {
+                        $fail(app()->getLocale() === 'ar'
+                            ? "مزود الخدمة يجب أن يكون $expected للمقدمة $gcode."
+                            : "Provider must be $expected for prefix $gcode.");
+                    }
+                }
+            ],
             'line_type'    => 'required|in:prepaid,postpaid',
             'plan_id'      => 'nullable|exists:plans,id',
             'last_invoice_date' => 'nullable|date',
@@ -727,15 +769,6 @@ public function restore($id)
         ];
     }
 
-    private function expectedProviders()
-    {
-        return [
-            '010' => 'Orange',
-            '011' => 'Etisalat',
-            '015' => 'WE',
-            '012' => 'Vodafone',
-        ];
-    }
     public function forSaleList(Request $request)
 {
     $user = auth()->user();

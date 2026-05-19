@@ -149,7 +149,7 @@ class InvoiceController extends Controller
 
 public function index(Request $request)
 {
-    $query = Invoice::with(['line.customer', 'user'])
+    $query = Invoice::with(['customer', 'line', 'user'])
         ->whereHas('line');
 
     if ($request->filled('provider')) {
@@ -180,9 +180,7 @@ if ($request->filled('paid_by')) {
 }
 
 if ($request->filled('customer_id')) {
-    $query->whereHas('line', function ($q) use ($request) {
-        $q->whereIn('customer_id', $request->customer_id);
-    });
+    $query->whereIn('customer_id', $request->customer_id);
 }
 
     $invoices = $query->latest('invoice_month')->paginate(20);
@@ -198,9 +196,7 @@ if ($request->filled('customer_id')) {
 
     public function customerInvoices(Request $request, Customer $customer) 
 { 
-    $query = Invoice::whereHas('line', function ($q) use ($customer) { 
-        $q->where('customer_id', $customer->id); 
-    }); 
+    $query = Invoice::where('customer_id', $customer->id); 
  
     if ($request->filled('provider')) { 
         $query->whereHas('line', fn($q) => $q->whereIn('provider', $request->provider)); 

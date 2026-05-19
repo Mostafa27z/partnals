@@ -306,7 +306,7 @@ return [
     'national_id_label' => 'الرقم القومي',
     'request_date'    => 'تاريخ الطلب',
     'notes_optional'  => 'ملاحظات (اختياري)',
-    'reason_optional' => 'السبب (اختياري)',
+    'reason_optional' => 'السبب ',
     'confirm_save_request' => 'حفظ الطلب',
     'select_line_to_continue' => 'اختر الخط للمتابعة',
     'request_details' => 'تفاصيل الطلب',

@@ -10,6 +10,18 @@
 
     <div class="py-12 px-4">
         <div class="max-w-xl mx-auto">
+            @if ($errors->any())
+                <div class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 p-5 rounded-3xl">
+                    <ul class="space-y-1">
+                        @foreach ($errors->all() as $error)
+                            <li class="text-sm text-red-600 dark:text-red-400 font-bold flex items-center gap-2">
+                                <span>❌</span> {{ $error }}
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl shadow-rose-500/10 border border-gray-100 dark:border-gray-700 overflow-hidden text-center sm:text-start">
                 <!-- Decorative Header -->
                 <div class="h-24 bg-gradient-to-r from-rose-600 to-red-700 relative overflow-hidden">

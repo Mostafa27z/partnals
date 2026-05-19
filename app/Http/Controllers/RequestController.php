@@ -995,6 +995,10 @@ protected function applyResell(RequestModel $request)
     // تحديث الخط
     $request->line->update($updateData);
 
+    if ($customer && request('transfer_invoices') == '1') {
+        \App\Models\Invoice::where('line_id', $request->line->id)->update(['customer_id' => $customer->id]);
+    }
+
     // ✅ أتمتة حساب الأرباح: حفظ سعر الشراء الحالي في سجل الطلب
     $data->update([
         'buy_price' => (float)$request->line->buy_price,
@@ -1012,10 +1016,30 @@ protected function applyChangeDate(RequestModel $request)
 protected function applyChangeChip(RequestModel $request)
 {
     $data = RequestChangeChip::where('request_id', $request->id)->first();
-    if ($data && $data->new_serial) {
-        $request->line->update([
-            'serial_number' => $data->new_serial,
-        ]);
+    if (!$data) return;
+
+    $updateData = [];
+
+    if ($data->new_serial) {
+        $updateData['serial_number'] = $data->new_serial;
+    }
+
+    if ($data->national_id) {
+        $customer = Customer::where('national_id', $data->national_id)->first();
+        if (!$customer && $data->full_name) {
+            $customer = Customer::create([
+                'full_name'   => $data->full_name,
+                'national_id' => $data->national_id,
+            ]);
+        }
+        if ($customer) {
+            $updateData['customer_id'] = $customer->id;
+            $request->update(['customer_id' => $customer->id]);
+        }
+    }
+
+    if (!empty($updateData)) {
+        $request->line->update($updateData);
     }
 }
 
@@ -1256,25 +1280,26 @@ public function createChangeChip(Line $line)
     return view('admin.requests.create-change-chip', compact('line'));
 }
 
-public function storeChangeChip(HttpRequest $request)
-{
-    $validated = $request->validate([
-    'line_id'      => 'required|exists:lines,id',
-    'change_type'  => 'required|in:chip,branch',
-    'old_serial'   => 'nullable|regex:/^\d+$/|size:19',
-    'new_serial'   => 'required_if:change_type,chip|regex:/^\d+$/|size:19',
-    'request_date' => 'required|date',
-    'comment'      => 'nullable|string|max:1000',
-    'full_name'    => 'nullable|required_if:change_type,branch|string|max:255',
-    'national_id'  => 'nullable|required_if:change_type,branch|digits:14',
-], [
-    'change_type.required'     => 'يجب اختيار نوع  التغيير.',
-    'new_serial.required_if'   => 'يجب إدخال المسلسل الجديد عند اختيار نوع الشريحة.',
-    'new_serial.regex'         => 'المسلسل الجديد يجب أن يحتوي على أرقام فقط.',
-    'old_serial.regex'         => 'المسلسل القديم يجب أن يحتوي على أرقام فقط.',
-    'full_name.required_if'    => 'يجب إدخال الاسم عند اختيار النوع فرع.',
-    'national_id.required_if'  => 'يجب إدخال الرقم القومي عند اختيار النوع فرع.',
-]);
+    public function storeChangeChip(HttpRequest $request)
+    {
+        $validated = $request->validate([
+        'line_id'      => 'required|exists:lines,id',
+        'change_type'  => 'required|in:chip,branch',
+        'old_serial'   => 'nullable|regex:/^\d+$/|size:19',
+        'new_serial'   => 'required_if:change_type,chip|regex:/^\d+$/|size:19',
+        'request_date' => 'required|date',
+        'comment'      => 'nullable|string|max:1000',
+        'full_name'    => 'required|string|max:255',
+        'national_id'  => 'required|digits:14',
+    ], [
+        'change_type.required'     => 'يجب اختيار نوع  التغيير.',
+        'new_serial.required_if'   => 'يجب إدخال المسلسل الجديد عند اختيار نوع الشريحة.',
+        'new_serial.regex'         => 'المسلسل الجديد يجب أن يحتوي على أرقام فقط.',
+        'old_serial.regex'         => 'المسلسل القديم يجب أن يحتوي على أرقام فقط.',
+        'full_name.required'       => 'يجب إدخال الاسم بالكامل.',
+        'national_id.required'     => 'يجب إدخال الرقم القومي.',
+        'national_id.digits'       => 'الرقم القومي يجب أن يتكون من 14 رقماً.',
+    ]);
 
     if (\App\Models\Request::hasActiveRequest($validated['line_id'], 'change_chip')) {
         return back()->withInput()->withErrors(['line_id' => '❌ هناك طلب تغيير شريحة معلق بالفعل لهذا الرقم.']);

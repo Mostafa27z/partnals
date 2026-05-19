@@ -54,12 +54,9 @@ class LineProfitTest extends TestCase
             'sale_price' => 200 // Sold for 200 EGP
         ]);
 
-        // Daily cost = 60 / 30 = 2
-        // Days before sale = 10 days
-        // Cost before sale = 10 * 2 = 20
-        // Expected Profit = sale_price (200) - 20 = 180
-        
-        $this->assertEquals(180, $line->calculateProfit(4, 2026));
+        // Profit for April is revenue (plan price) - cost (provider price)
+        // Profit = 100 - 60 = 40
+        $this->assertEquals(40, $line->calculateProfit(4, 2026));
     }
 
     public function test_calculate_profit_for_existing_line()

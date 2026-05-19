@@ -28,6 +28,7 @@
         <form action="{{ route('lines.update', $line) }}" method="POST" class="space-y-6 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md">
             @csrf
             @method('PUT')
+            <input type="hidden" name="transfer_invoices" id="transfer_invoices" value="0">
 
             {{-- رقم الخط --}}
             <div class="grid grid-cols-2 gap-6">
@@ -211,8 +212,93 @@
         </form>
     </div>
 
+    <!-- Invoice Transfer Confirmation Modal -->
+    <div id="invoice-transfer-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+            <!-- Center modal contents -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-3xl text-right overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6 border border-gray-100 dark:border-gray-700" dir="rtl">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                        <span class="text-xl">📊</span>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:mr-4 sm:text-right">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="modal-title">
+                            هل ترغب في نقل الفواتير السابقة؟
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                لقد قمت بتغيير عميل هذا الخط. هل ترغب في نقل جميع الفواتير السابقة المرتبطة بهذا الخط إلى العميل الجديد، أم الاحتفاظ بها تحت اسم العميل القديم؟
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex flex-col sm:flex-row-reverse gap-3">
+                    <button type="button" id="confirm-transfer-yes" class="w-full inline-flex justify-center rounded-2xl border border-transparent shadow-sm px-4 py-2.5 bg-blue-600 text-base font-bold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm transition-all">
+                        نعم، انقل الفواتير للعميل الجديد
+                    </button>
+                    <button type="button" id="confirm-transfer-no" class="w-full inline-flex justify-center rounded-2xl border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2.5 bg-white dark:bg-gray-700 text-base font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm transition-all">
+                        لا، ابق الفواتير مع العميل القديم
+                    </button>
+                    <button type="button" id="confirm-transfer-cancel" class="w-full inline-flex justify-center rounded-2xl border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-base font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm transition-all">
+                        إلغاء التعديل
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.querySelector('form[action*="lines.update"]');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const originalCustomerId = "{{ $line->customer_id ?? '' }}";
+                    const originalNid = "{{ $line->customer?->national_id ?? '' }}";
+                    const originalFullName = "{{ $line->customer?->full_name ?? '' }}";
+
+                    const currentCustomerId = document.getElementById('existing_customer_id')?.value || '';
+                    const currentNid = document.getElementById('search-nid')?.value || '';
+                    const currentFullName = document.getElementById('full_name')?.value || '';
+
+                    const isCustomerChanged = (currentCustomerId !== originalCustomerId) || 
+                                              (currentNid !== originalNid) || 
+                                              (currentFullName !== originalFullName);
+
+                    if (isCustomerChanged) {
+                        e.preventDefault(); // Stop normal submission
+
+                        // Show the custom confirmation modal
+                        const modal = document.getElementById('invoice-transfer-modal');
+                        modal.classList.remove('hidden');
+
+                        // Handle YES click
+                        document.getElementById('confirm-transfer-yes').onclick = function() {
+                            document.getElementById('transfer_invoices').value = '1';
+                            modal.classList.add('hidden');
+                            form.submit();
+                        };
+
+                        // Handle NO click
+                        document.getElementById('confirm-transfer-no').onclick = function() {
+                            document.getElementById('transfer_invoices').value = '0';
+                            modal.classList.add('hidden');
+                            form.submit();
+                        };
+
+                        // Handle CANCEL click
+                        document.getElementById('confirm-transfer-cancel').onclick = function() {
+                            modal.classList.add('hidden');
+                        };
+                    }
+                });
+            }
+        });
         function onProviderChange() {
             syncProviderDay();
             filterPlans();

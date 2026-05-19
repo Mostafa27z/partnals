@@ -202,7 +202,7 @@
                 <tbody class="divide-y divide-gray-100">
                     @foreach($invoices as $invoice)
                         <tr class="hover:bg-gray-50 dark:bg-gray-700/50 transition">
-                            <td class="px-4 py-3 border">{{ $invoice->line->customer->full_name ?? '-' }}</td>
+                            <td class="px-4 py-3 border">{{ $invoice->customer->full_name ?? '-' }}</td>
                             <td class="px-4 py-3 border">{{ \Carbon\Carbon::parse($invoice->invoice_month)->translatedFormat('F Y') }}</td>
                             <td class="px-4 py-3 border text-green-600 font-bold">{{ number_format($invoice->amount, 2) }}</td>
                             <td class="px-4 py-3 border text-amber-600 font-bold">{{ number_format($invoice->operator_price, 2) }}</td>

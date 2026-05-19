@@ -67,6 +67,26 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- الاسم الكامل -->
+                            <div id="full-name-group" class="space-y-2">
+                                <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
+                                    {{ __('messages.full_name_label') }}
+                                </label>
+                                <input type="text" name="full_name" id="full_name" value="{{ old('full_name') }}" required
+                                       class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
+                            </div>
+
+                            <!-- الرقم القومي -->
+                            <div id="national-id-group" class="space-y-2">
+                                <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
+                                    {{ __('messages.national_id_label') }}
+                                </label>
+                                <input type="text" name="national_id" id="national_id" value="{{ old('national_id') }}" maxlength="14" required
+                                       class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-mono">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- مسلسل قديم -->
                             <div class="space-y-2">
                                 <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
@@ -83,29 +103,6 @@
                                 </label>
                                 <input type="text" maxlength="19" name="new_serial" id="new_serial" value="{{ old('new_serial') }}"
                                        class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-mono tracking-wider">
-                            </div>
-                        </div>
-
-                        <div id="branch-fields" class="space-y-6 pt-4 border-t border-gray-50 dark:border-gray-700/50 hidden">
-                            <p class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em]">{{ __('messages.at_branch') }} Details</p>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- الاسم الكامل -->
-                                <div id="full-name-group" class="space-y-2">
-                                    <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
-                                        {{ __('messages.full_name_label') }}
-                                    </label>
-                                    <input type="text" name="full_name" id="full_name" value="{{ old('full_name') }}"
-                                           class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
-                                </div>
-
-                                <!-- الرقم القومي -->
-                                <div id="national-id-group" class="space-y-2">
-                                    <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
-                                        {{ __('messages.national_id_label') }}
-                                    </label>
-                                    <input type="text" name="national_id" id="national_id" value="{{ old('national_id') }}" maxlength="14"
-                                           class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-mono">
-                                </div>
                             </div>
                         </div>
 
@@ -133,7 +130,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const typeSelect = document.getElementById('change-type');
-            const branchFields = document.getElementById('branch-fields');
             const newSerialInput = document.getElementById('new_serial');
             const fullNameInput = document.getElementById('full_name');
             const nationalIdInput = document.getElementById('national_id');
@@ -141,22 +137,15 @@
             function toggleFields() {
                 const value = typeSelect.value;
                 if (value === 'chip') {
-                    branchFields.classList.add('hidden');
                     newSerialInput.required = true;
-                    fullNameInput.required = false;
-                    nationalIdInput.required = false;
-                    clearNidError();
-                } else if (value === 'branch') {
-                    branchFields.classList.remove('hidden');
-                    newSerialInput.required = false;
-                    fullNameInput.required = true;
-                    nationalIdInput.required = true;
                 } else {
-                    branchFields.classList.add('hidden');
                     newSerialInput.required = false;
-                    fullNameInput.required = false;
-                    nationalIdInput.required = false;
-                    clearNidError();
+                    // Remove error indicator if serial is optional and empty
+                    if (newSerialInput.value.trim() === '') {
+                        const errEl = newSerialInput.parentNode.querySelector('.serial-error-msg');
+                        if (errEl) errEl.remove();
+                        newSerialInput.classList.remove('border-red-500', 'focus:ring-red-500');
+                    }
                 }
             }
 
@@ -190,7 +179,7 @@
                 const requiredMsg = isAr ? 'هذا الحقل مطلوب' : 'This field is required';
                 const lengthMsg = isAr ? 'الرقم القومي يجب أن يتكون من 14 رقماً' : 'National ID must be 14 digits';
 
-                const isRequired = typeSelect.value === 'branch';
+                const isRequired = true;
 
                 if (value === '') {
                     if (isRequired) {

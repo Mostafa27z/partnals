@@ -198,7 +198,7 @@
                                             </div>
                                         </div>
 
-                                        @if($request->changeChip->change_type === 'branch')
+                                        @if($request->changeChip->full_name || $request->changeChip->national_id)
                                         <div class="grid grid-cols-2 gap-8 pt-6 border-t border-gray-50 dark:border-gray-700/50">
                                             <div class="space-y-1">
                                                 <p class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{{ __('messages.full_name_label') }}</p>

@@ -12,7 +12,7 @@ class Invoice extends Model
 use LogsChanges;
 
     protected $fillable = [
-        'line_id', 'amount', 'operator_price', 'calculated_profit', 'is_paid', 'invoice_month', 'payment_date', 'paid_by', 'notes'
+        'line_id', 'customer_id', 'amount', 'operator_price', 'calculated_profit', 'is_paid', 'invoice_month', 'payment_date', 'paid_by', 'notes'
     ];
 public function user()
 {
@@ -29,6 +29,19 @@ public function user()
 {
     return $this->belongsTo(Line::class);
 }
+
+    protected static function booted()
+    {
+        static::creating(function ($invoice) {
+            if (!$invoice->customer_id && $invoice->line_id) {
+                $line = $invoice->line;
+                if ($line) {
+                    $invoice->customer_id = $line->customer_id;
+                }
+            }
+        });
+    }
+
 
 // public function user()
 // {
