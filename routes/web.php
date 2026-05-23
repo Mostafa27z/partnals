@@ -336,4 +336,9 @@ Route::get('/ajax/customer-by-nid', function (\Illuminate\Http\Request $request)
 
 
 });
+Route::get('/ajax/customer-by-line/{line}', function (\Illuminate\Http\Request $request, $line) {
+    $lineModel = \App\Models\Line::with('customer')->findOrFail($line);
+    $customer = $lineModel->customer;
+    return response()->json($customer);
+});
 require __DIR__.'/auth.php';

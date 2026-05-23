@@ -22,6 +22,15 @@
                 </div>
             @endif
 
+            @if (session('success'))
+                <div class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-5 rounded-3xl">
+                    <div class="text-sm text-green-600 dark:text-green-400 font-bold flex items-center gap-2">
+                        <span>✅</span>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
+
             <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl shadow-indigo-500/10 border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <!-- Decorative Header -->
                 <div class="h-28 bg-gradient-to-r from-indigo-500 to-purple-600 relative overflow-hidden">
@@ -51,8 +60,12 @@
                                 <select name="resell_type" id="resell-type" required
                                         class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
                                     <option value="">-- {{ __('messages.choose_type') ?? 'Choose Type' }} --</option>
-                                    <option value="chip" {{ old('resell_type') == 'chip' ? 'selected' : '' }}>{{ __('messages.on_chip') }}</option>
-                                    <option value="branch" {{ old('resell_type') == 'branch' ? 'selected' : '' }}>{{ __('messages.at_branch') }}</option>
+                                    <option value="chip" {{ old('resell_type') == 'chip' ? 'selected' : '' }}>
+                                        {{ __('messages.on_chip') }}
+                                    </option>
+                                    <option value="branch" {{ old('resell_type') == 'branch' ? 'selected' : '' }}>
+                                        {{ __('messages.at_branch') }}
+                                    </option>
                                 </select>
                             </div>
 
@@ -63,6 +76,25 @@
                                 </label>
                                 <input type="date" name="request_date" value="{{ old('request_date', now()->toDateString()) }}" required
                                        class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
+                            </div>
+                        </div>
+
+                        <!-- الاسم الكامل + الرقم القومي ظاهرين دائمًا -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
+                                    {{ __('messages.full_name_label') }}
+                                </label>
+                                <input type="text" name="full_name" id="full_name" value="{{ old('full_name') }}" required
+                                       class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
+                                    {{ __('messages.national_id_label') }}
+                                </label>
+                                <input type="text" name="national_id" id="national_id" value="{{ old('national_id') }}" maxlength="14" required
+                                       class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-mono">
                             </div>
                         </div>
 
@@ -77,35 +109,12 @@
                             </div>
 
                             <!-- مسلسل جديد -->
-                            <div id="new-serial-group" class="space-y-2">
+                            <div class="space-y-2">
                                 <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
                                     {{ __('messages.new_serial') }}
                                 </label>
                                 <input type="text" maxlength="19" name="new_serial" id="new_serial" value="{{ old('new_serial') }}"
                                        class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-mono tracking-wider">
-                            </div>
-                        </div>
-
-                        <div id="branch-fields" class="space-y-6 pt-4 border-t border-gray-50 dark:border-gray-700/50 hidden">
-                            <p class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em]">{{ __('messages.at_branch') }} Details</p>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- الاسم الكامل -->
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
-                                        {{ __('messages.full_name_label') }}
-                                    </label>
-                                    <input type="text" name="full_name" id="full_name" value="{{ old('full_name') }}"
-                                           class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
-                                </div>
-
-                                <!-- الرقم القومي -->
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
-                                        {{ __('messages.national_id_label') }}
-                                    </label>
-                                    <input type="text" name="national_id" id="national_id" value="{{ old('national_id') }}" maxlength="14"
-                                           class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-mono">
-                                </div>
                             </div>
                         </div>
 
@@ -141,54 +150,47 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const typeSelect = document.getElementById('resell-type');
-            const branchFields = document.getElementById('branch-fields');
-            const newSerialInput = document.getElementById('new_serial');
-            const fullNameInput = document.getElementById('full_name');
-            const nationalIdInput = document.getElementById('national_id');
+    const typeSelect = document.getElementById('resell-type');
+    const newSerialInput = document.getElementById('new_serial');
+    const fullNameInput = document.getElementById('full_name');
+    const nationalIdInput = document.getElementById('national_id');
+    
+    function toggleFields() {
+        const value = typeSelect.value;
+        // new serial required only for chip type
+        newSerialInput.required = (value === 'chip');
+        // full name and national id are always required
+        fullNameInput.required = true;
+        nationalIdInput.required = true;
+    }
 
-            function toggleFields() {
-                const value = typeSelect.value;
-                if (value === 'chip') {
-                    branchFields.classList.add('hidden');
-                    newSerialInput.required = true;
-                    fullNameInput.required = false;
-                    nationalIdInput.required = false;
-                    clearNidError();
-                } else if (value === 'branch') {
-                    branchFields.classList.remove('hidden');
-                    newSerialInput.required = false;
-                    fullNameInput.required = true;
-                    nationalIdInput.required = true;
-                } else {
-                    branchFields.classList.add('hidden');
-                    newSerialInput.required = false;
-                    fullNameInput.required = false;
-                    nationalIdInput.required = false;
-                    clearNidError();
-                }
-            }
+    toggleFields();
+    // Auto-fill customer data based on line ID
+    const lineIdInput = document.querySelector('input[name="line_id"]');
+    if (lineIdInput) {
+        fetch(`/ajax/customer-by-line/${lineIdInput.value}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.full_name) fullNameInput.value = data.full_name;
+                if (data.national_id) nationalIdInput.value = data.national_id;
+            })
+            .catch(() => {
+                // optional: handle fetch errors silently
+            });
+    }
+    
+    typeSelect.addEventListener('change', toggleFields);
 
-            function clearNidError() {
-                if (nationalIdInput) {
-                    const errEl = nationalIdInput.parentNode.querySelector('.nid-error-msg');
-                    if (errEl) errEl.textContent = '';
-                    nationalIdInput.classList.remove('border-red-500', 'focus:ring-red-500');
-                }
-            }
-
-            toggleFields();
-            typeSelect.addEventListener('change', toggleFields);
-            
             // Limit NID to 14 digits
             nationalIdInput?.addEventListener('input', (e) => {
                 e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 14);
             });
 
-            // National ID Validation on exit (blur)
+            // National ID Validation on blur
             nationalIdInput?.addEventListener('blur', () => {
                 const value = nationalIdInput.value.trim();
                 let errEl = nationalIdInput.nextElementSibling;
+
                 if (!errEl || !errEl.classList.contains('nid-error-msg')) {
                     errEl = document.createElement('span');
                     errEl.className = 'nid-error-msg text-red-500 text-sm mt-1 block font-bold';
@@ -199,16 +201,9 @@
                 const requiredMsg = isAr ? 'هذا الحقل مطلوب' : 'This field is required';
                 const lengthMsg = isAr ? 'الرقم القومي يجب أن يتكون من 14 رقماً' : 'National ID must be 14 digits';
 
-                const isRequired = typeSelect.value === 'branch';
-
                 if (value === '') {
-                    if (isRequired) {
-                        errEl.textContent = requiredMsg;
-                        nationalIdInput.classList.add('border-red-500', 'focus:ring-red-500');
-                    } else {
-                        errEl.textContent = '';
-                        nationalIdInput.classList.remove('border-red-500', 'focus:ring-red-500');
-                    }
+                    errEl.textContent = requiredMsg;
+                    nationalIdInput.classList.add('border-red-500', 'focus:ring-red-500');
                 } else if (value.length !== 14) {
                     errEl.textContent = lengthMsg;
                     nationalIdInput.classList.add('border-red-500', 'focus:ring-red-500');
@@ -232,9 +227,11 @@
                 input.addEventListener('blur', function() {
                     const val = this.value.trim();
                     let errEl = this.parentNode.querySelector('.serial-error-msg');
+
                     if (errEl) {
                         errEl.remove();
                     }
+
                     this.classList.remove('border-red-500', 'focus:ring-red-500');
 
                     const isRequired = this.hasAttribute('required') || this.required;
@@ -267,5 +264,3 @@
     </script>
     @endpush
 </x-app-layout>
-
-

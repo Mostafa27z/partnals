@@ -101,7 +101,7 @@
                                     <th class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.phone_number') }}</th>
                                     <th class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.national_id') }}</th>
                                     <th class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.customer_name') }}</th>
-                                    <th class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.status') }}</th>
+                                    <th class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">الموزع</th>
                                     <th colspan="3" class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.actions') }}</th>
                                 </tr>
                             </thead>
@@ -113,9 +113,8 @@
                                         <td class="px-4 py-3.5 text-gray-600 dark:text-gray-400">{{ $line->customer->national_id ?? '-' }}</td>
                                         <td class="px-4 py-3.5 font-medium text-gray-700 dark:text-gray-300">{{ $line->customer->full_name ?? '-' }}</td>
                                         <td class="px-4 py-3.5">
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black {{ $line->status === 'active' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' }}">
-                                                <span class="w-1.5 h-1.5 rounded-full mr-1.5 {{ $line->status === 'active' ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
-                                                {{ $line->status === 'active' ? __('messages.active') : __('messages.inactive') }}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400">
+                                                {{ $line->distributor?->name ?? '-' }}
                                             </span>
                                         </td>
                                         <td class="px-1.5 py-3.5 whitespace-nowrap">

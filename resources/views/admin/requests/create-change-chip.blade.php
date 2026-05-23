@@ -21,7 +21,14 @@
                     </ul>
                 </div>
             @endif
-
+@if (session('success'))
+    <div class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-5 rounded-3xl">
+        <div class="text-sm text-green-600 dark:text-green-400 font-bold flex items-center gap-2">
+            <span>✅</span>
+            <span>{{ session('success') }}</span>
+        </div>
+    </div>
+@endif
             <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl shadow-indigo-500/10 border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <!-- Decorative Header -->
                 <div class="h-28 bg-gradient-to-r from-indigo-500 to-blue-600 relative overflow-hidden">
@@ -72,7 +79,7 @@
                                 <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
                                     {{ __('messages.full_name_label') }}
                                 </label>
-                                <input type="text" name="full_name" id="full_name" value="{{ old('full_name') }}" required
+                                <input type="text" name="full_name" id="full_name" value="{{ old('full_name', $line->customer?->full_name ?? '') }}" required
                                        class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
                             </div>
 
@@ -81,7 +88,7 @@
                                 <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
                                     {{ __('messages.national_id_label') }}
                                 </label>
-                                <input type="text" name="national_id" id="national_id" value="{{ old('national_id') }}" maxlength="14" required
+                                <input type="text" name="national_id" id="national_id" value="{{ old('national_id', $line->customer?->national_id ?? '') }}" maxlength="14" required
                                        class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold px-5 py-4 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-mono">
                             </div>
                         </div>

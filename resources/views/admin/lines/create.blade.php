@@ -23,6 +23,9 @@
         @endif
 
         {{-- Form --}}
+        @php
+            $showCustomerFields = old('existing_customer_id') || isset($selectedCustomer);
+        @endphp
         <form action="{{ route('lines.store') }}" method="POST" 
               class="space-y-6 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md max-w-4xl mx-auto">
             @csrf
@@ -155,6 +158,7 @@
             <div>
                 <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">الرقم القومي</label>
                 <input type="text" id="search-nid" name="national_id" placeholder="أدخل الرقم القومي" maxlength="14"
+                       value="{{ old('national_id', $selectedCustomer?->national_id ?? '') }}"
                        oninput="document.getElementById('customer-data-fields').classList.remove('hidden')"
                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500" />
                 <button type="button" onclick="loadCustomerData()"
@@ -164,32 +168,36 @@
             </div>
 
             {{-- Customer Data --}}
-            <div id="customer-data-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4 hidden">
+            <div id="customer-data-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4 {{ $showCustomerFields ? '' : 'hidden' }}">
                 <div>
                     <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">اسم العميل</label>
                     <input type="text" name="full_name" id="full_name"
+                           value="{{ old('full_name', $selectedCustomer?->full_name ?? '') }}"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">البريد الإلكتروني</label>
                     <input type="email" name="email" id="email"
+                           value="{{ old('email', $selectedCustomer?->email ?? '') }}"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">تاريخ الميلاد</label>
                     <input type="date" name="birth_date" id="birth_date"
+                           value="{{ old('birth_date', $selectedCustomer?->birth_date ?? '') }}"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label class="block mb-2 font-semibold text-gray-700 dark:text-gray-300">العنوان</label>
                     <input type="text" name="address" id="address"
+                           value="{{ old('address', $selectedCustomer?->address ?? '') }}"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-3 focus:ring-2 focus:ring-blue-500">
                 </div>
 
-                <input type="hidden" name="existing_customer_id" id="existing_customer_id" />
+                <input type="hidden" name="existing_customer_id" id="existing_customer_id" value="{{ old('existing_customer_id', $selectedCustomer?->id ?? '') }}" />
 
                 <div class="col-span-1 sm:col-span-2">
                     <label class="inline-flex items-center gap-2 cursor-pointer">

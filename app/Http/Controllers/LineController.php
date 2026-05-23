@@ -475,7 +475,7 @@ private function applyFilters($query, Request $request)
         return redirect()->route('customers.show', $customer)->with('success', 'تم حذف الخط');
     }
 
-    public function createStandalone()
+    public function createStandalone(Request $request)
 {
     $user = Auth::user();
     $isDistributor = $user->role && $user->role->name === 'موزع';
@@ -488,7 +488,13 @@ private function applyFilters($query, Request $request)
     })->when($isDistributor, function($q) use ($user) {
         $q->where('id', $user->id);
     })->select('id', 'name')->get();
-    return view('admin.lines.create', compact('plans', 'customers', 'providers', 'distributors'));
+
+    $selectedCustomer = null;
+    if ($request->filled('customer_id')) {
+        $selectedCustomer = Customer::find($request->input('customer_id'));
+    }
+
+    return view('admin.lines.create', compact('plans', 'customers', 'providers', 'distributors', 'selectedCustomer'));
 }
 
     public function storeStandalone(Request $request)

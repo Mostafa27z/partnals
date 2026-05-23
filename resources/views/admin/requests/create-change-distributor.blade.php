@@ -21,7 +21,14 @@
                     </ul>
                 </div>
             @endif
-
+@if (session('success'))
+    <div class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-5 rounded-3xl">
+        <div class="text-sm text-green-600 dark:text-green-400 font-bold flex items-center gap-2">
+            <span>✅</span>
+            <span>{{ session('success') }}</span>
+        </div>
+    </div>
+@endif
             <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl shadow-indigo-500/10 border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <!-- Decorative Header -->
                 <div class="h-24 bg-gradient-to-r from-indigo-500 to-blue-600 relative overflow-hidden">
