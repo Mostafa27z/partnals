@@ -3,16 +3,29 @@
 namespace App\Exports;
 
 use App\Models\Customer;
-use Maatwebsite\Excel\Concerns\FromCollection; // تأكد من استيراد هذه الواجهة
-use Maatwebsite\Excel\Concerns\WithHeadings; // لو تريد رؤوس الأعمدة
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
-class CustomersExport implements FromCollection, WithHeadings
+class CustomersExport extends DefaultValueBinder implements FromCollection, WithHeadings, WithCustomValueBinder
 {
     protected $request;
 
     public function __construct($request)
     {
         $this->request = $request;
+    }
+
+    public function bindValue(Cell $cell, $value = null)
+    {
+        if (is_numeric($value) && strlen((string) $value) >= 7) {
+            $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
+            return true;
+        }
+        return parent::bindValue($cell, $value);
     }
 
     public function collection()

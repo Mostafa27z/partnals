@@ -82,6 +82,11 @@
 
 
         {{-- Results --}}
+        @if($hasSearch)
+            <div class="mb-4 text-gray-600 dark:text-gray-400">
+                {{ __('messages.total_lines') }}: {{ $totalCount }}
+            </div>
+        @endif
         @if(!$hasSearch)
             <div class="p-12 text-center bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50">
                 <div class="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center mx-auto mb-5">

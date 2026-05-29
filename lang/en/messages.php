@@ -5,7 +5,8 @@ return [
     'delete_lines' => 'Delete Lines',
     'for_sale' => 'Lines for Sale',
     'trashed' => 'Trash',
-    'new_line' => 'New Line',
+    'total_lines' => 'Total Lines',
+
     'upload_excel' => 'Upload Excel File',
     'export_all' => 'Export All',
     'phone_number' => 'Phone Number',
@@ -574,4 +575,10 @@ return [
     'delete plan' => 'Delete Plan',
     'delete customer' => 'Delete Customer',
     'delete line' => 'Delete Line',
+    'delete_plan_title' => 'Delete Plan',
+    'delete_plan_warning' => 'Before deleting the plan ":name" (associated with :count lines), what would you like to do with its associated lines?',
+    'reassign_lines' => 'Change lines on this plan to another selected plan',
+    'just_delete_plan' => 'Just remove the plan without removing lines (lines will have no plan)',
+    'select_replacement_plan' => 'Select a replacement plan',
+    'confirm_delete' => 'Yes, Delete',
 ];

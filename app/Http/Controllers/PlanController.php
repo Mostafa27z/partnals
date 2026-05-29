@@ -10,8 +10,9 @@ class PlanController extends Controller
    public function index(Request $request)
 {
     $plans = Plan::filter($request)->paginate(10)->appends($request->query());
+    $allPlans = Plan::orderBy('name')->get();
 
-    return view('admin.plans.index', compact('plans'));
+    return view('admin.plans.index', compact('plans', 'allPlans'));
 }
 
 public function trashed()
@@ -91,9 +92,14 @@ public function show(Plan $plan)
 {
     return view('admin.plans.show', compact('plan'));
 }
-public function destroy(Plan $plan)
+public function destroy(Request $request, Plan $plan)
     {
         abort_unless(auth()->user()->hasPermission('delete plan'), 403);
+        
+        if ($request->input('action') === 'reassign' && $request->filled('reassign_plan_id')) {
+            $plan->lines()->update(['plan_id' => $request->input('reassign_plan_id')]);
+        }
+        
         $plan->delete();
 
         return redirect()->route('plans.index')->with('success', 'تم حذف النظام بنجاح');

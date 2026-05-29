@@ -100,6 +100,11 @@ class Line extends Model
         return $this->belongsTo(Provider::class, 'provider', 'name');
     }
 
+    public function addedBy()
+    {
+        return $this->belongsTo(User::class, 'added_by');
+    }
+
     public static function expectedProviders(): array
     {
         return [

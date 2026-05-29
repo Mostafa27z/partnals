@@ -12,7 +12,7 @@
         <tbody class="text-gray-800 dark:text-gray-100">
             @foreach($requests as $r)
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                    <td class="px-4 py-2 border dark:border-gray-600 text-right">{{ $r->line->phone_number ?? '-' }}</td>
+                    <td class="px-4 py-2 border dark:border-gray-600 text-right" style="mso-number-format:'\@'">{{ $r->line->phone_number ?? '-' }}</td>
                     <td class="px-4 py-2 border dark:border-gray-600 text-right">{{ __($r->request_type) }}</td>
                     <td class="px-4 py-2 border dark:border-gray-600 text-right">{{ $r->line->provider ?? '-' }}</td>
                     <td class="px-4 py-2 border dark:border-gray-600 text-right">

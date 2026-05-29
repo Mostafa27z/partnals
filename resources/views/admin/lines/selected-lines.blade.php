@@ -38,9 +38,9 @@
     <tbody>
         @foreach($lines as $line)
             <tr>
-                <td>{{ $line->phone_number }}</td>
+                <td style="mso-number-format:'\@'">{{ $line->phone_number }}</td>
                 <td>{{ $line->provider }}</td>
-                <td>{{ $line->serial_number }}</td>
+                <td style="mso-number-format:'\@'">{{ $line->serial_number }}</td>
                 <td>{{ $line->plan->name ?? '-' }}</td>
                 <td>{{ $line->attached_at ? $line->attached_at->format('Y-m-d H:i') : '-' }}</td>
                 <td>{{ $line->distributor->name ?? '-' }}</td>
@@ -49,7 +49,7 @@
                 <td>{{ $line->buy_price }}</td>
                 <td>{{ $line->is_sold ? 'نعم' : 'لا' }}</td>
                 <td>{{ $line->system_type }}</td>
-                <td>{{ $line->second_phone }}</td>
+                <td style="mso-number-format:'\@'">{{ $line->second_phone }}</td>
                 <td>{{ $line->offer_name }}</td>
                 <td>{{ $line->branch_name }}</td>
                 <td>{{ $line->employee_name }}</td>
@@ -63,12 +63,12 @@
                 <td>{{ $line->created_at ? $line->created_at->format('Y-m-d H:i') : '-' }}</td>
                 <td>{{ $line->updated_at ? $line->updated_at->format('Y-m-d H:i') : '-' }}</td>
                 <td>{{ $line->customer->full_name ?? '-' }}</td>
-                <td>{{ $line->customer->national_id ?? '-' }}</td>
+                <td style="mso-number-format:'\@'">{{ $line->customer->national_id ?? '-' }}</td>
                 <td>{{ $line->customer->email ?? '-' }}</td>
                 <td>{{ $line->customer->birth_date ?? '-' }}</td>
                 <td>{{ $line->customer->address ?? '-' }}</td>
-                <td>{{ $line->customer->contact_number ?? '-' }}</td>
-                <td>{{ $line->customer->whatsapp_number ?? '-' }}</td>
+                <td style="mso-number-format:'\@'">{{ $line->customer->contact_number ?? '-' }}</td>
+                <td style="mso-number-format:'\@'">{{ $line->customer->whatsapp_number ?? '-' }}</td>
                 <td>{{ $line->customer->created_at ? $line->customer->created_at->format('Y-m-d H:i') : '-' }}</td>
             </tr>
         @endforeach

@@ -564,7 +564,21 @@ private function applyFilters($query, Request $request)
 
 public function show(Line $line)
 {
-    return view('admin.lines.show', compact('line'));
+    $user = auth()->user();
+    $isDistributor = $user->role && $user->role->name === 'موزع';
+
+    if ($isDistributor && $line->distributor_id !== $user->id) {
+        abort(403, 'غير مصرح لك بمشاهدة هذا الخط.');
+    }
+
+    $line->load(['addedBy', 'customer', 'plan', 'providerData']);
+
+    $requests = $line->requests()
+        ->with(['requestedBy', 'doneBy', 'resellDetails', 'changePlan', 'changeChip', 'pause', 'resume', 'changeDistributor', 'changeDate'])
+        ->latest()
+        ->paginate(15);
+
+    return view('admin.lines.show', compact('line', 'requests'));
 }
 
     public function editStandalone(Line $line)

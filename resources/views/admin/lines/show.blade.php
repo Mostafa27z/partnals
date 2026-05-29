@@ -8,7 +8,25 @@
         </h2>  
     </x-slot>  
 
-    <div class="py-8 max-w-5xl mx-auto sm:px-6 lg:px-8">  
+    <div class="py-8 max-w-5xl mx-auto sm:px-6 lg:px-8">
+    <!-- Quick Request & Pay Buttons (mirroring All view) -->
+    <div class="flex gap-3 mb-4">
+        <a href="{{ route('invoices.create', $line) }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/25">💳 {{ __('messages.pay') }}</a>
+        <form method="GET" onsubmit="return redirectToCreateRequest(event)" class="inline">
+            <select id="request-type" class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 mr-2" required>
+                <option value="">-- {{ __('messages.select_type') }} --</option>
+                <option value="resell">{{ __('messages.resell') }}</option>
+                <option value="change-plan">{{ __('messages.change_plan') }}</option>
+                <option value="change-chip">{{ __('messages.change_chip') }}</option>
+                <option value="pause">{{ __('messages.pause') }}</option>
+                <option value="resume">{{ __('messages.resume') }}</option>
+                <option value="change-date">{{ __('messages.change_date') }}</option>
+                <option value="change-distributor">{{ __('messages.change_distributor') }}</option>
+                <option value="stop-line">{{ __('messages.stop_line') }}</option>
+            </select>
+            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/25">{{ __('messages.create_request') }}</button>
+        </form>
+    </div>  
         <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 space-y-8">  
             
             <!-- Details Grid -->
@@ -153,6 +171,53 @@
             </div>
 
             <!-- Back Button -->
+            <!-- Requests Table -->
+            <div class="pt-6">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50">
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">{{ __('messages.requests_for_line') ?? 'Requests' }}</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+                            <thead class="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 text-sm font-semibold">
+                                <tr>
+                                    <th class="p-3">{{ __('messages.type') }}</th>
+                                    <th class="p-3">{{ __('messages.status') }}</th>
+                                    <th class="p-3">{{ __('messages.request_date') }}</th>
+                                    <th class="p-3">{{ __('messages.requested_by') }}</th>
+                                    <th class="p-3">{{ __('messages.notes') }}</th>
+                                    <th class="p-3">{{ __('messages.details') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach($requests ?? collect() as $req)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700/50">
+                                        <td class="p-3">{{ __('messages.request_type_'.$req->request_type) ?? $req->request_type }}</td>
+                                        <td class="p-3">
+                                            <span class="px-3 py-1 rounded-full text-xs font-bold 
+                                                @if($req->status == 'pending') bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400
+                                                @elseif($req->status == 'inprogress') bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+                                                @elseif($req->status == 'done') bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400
+                                                @elseif($req->status == 'cancelled') bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400
+                                                @endif">
+                                                {{ __('messages.status_'.$req->status) ?? $req->status }}
+                                            </span>
+                                        </td>
+                                        <td class="p-3 text-gray-600 dark:text-gray-400 font-medium">{{ $req->created_at->format('Y-m-d') }}</td>
+                                        <td class="p-3">{{ $req->requestedBy->name ?? '-' }}</td>
+                                        <td class="p-3">{{ \Illuminate\Support\Str::limit($req->notes ?? ($req->resellDetails->comment ?? ''), 80) }}</td>
+                                        <td class="p-3 flex items-center justify-center gap-2">
+                                            <a href="{{ route('requests.show', $req->id) }}" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline transition-all">{{ __('messages.view') }}</a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4">
+                        {{ $requests->links() ?? '' }}
+                    </div>
+                </div>
+            </div>
             @if($line->customer)  
                 <div class="pt-4">  
                     <a href="{{ route('customers.show', $line->customer) }}"  
@@ -163,4 +228,32 @@
             @endif  
         </div>  
     </div>  
+@push('scripts')
+<script>
+    function redirectToCreateRequest(event) {
+        event.preventDefault();
+        const type = document.getElementById('request-type').value;
+        if (!type) {
+            alert("❌ {{ __('messages.select_request_type_first') }}");
+            return false;
+        }
+        const lineId = {{ $line->id }};
+        const baseUrl = {
+            'resell': '/admin/requests/resell/' + lineId,
+            'change-plan': '/admin/requests/change-plan/' + lineId,
+            'change-chip': '/admin/requests/change-chip/' + lineId,
+            'pause': '/admin/requests/pause/' + lineId,
+            'resume': '/admin/requests/resume/' + lineId + '/create',
+            'change-date': '/admin/requests/change-date/' + lineId,
+            'change-distributor': '/admin/requests/change-distributor/' + lineId,
+            'stop-line': '/admin/requests/stop/' + lineId,
+        };
+        if (baseUrl[type]) {
+            window.location.href = baseUrl[type];
+        } else {
+            alert("❌ {{ __('messages.request_type_not_supported') }}");
+        }
+    }
+</script>
+@endpush
 </x-app-layout>
