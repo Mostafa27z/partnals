@@ -48,7 +48,7 @@ class Line extends Model
                 if ($line->last_invoice_date) {
                     try {
                         $lastInvoice = Carbon::parse($line->last_invoice_date);
-                        $expiryDate = $lastInvoice->copy()->addMonth();
+                        $expiryDate = $lastInvoice->copy();
                         if (Carbon::now()->startOfDay()->gte($expiryDate->startOfDay())) {
                             $line->status = 'inactive';
                         } else {
@@ -103,6 +103,11 @@ class Line extends Model
     public function addedBy()
     {
         return $this->belongsTo(User::class, 'added_by');
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
     }
 
     public static function expectedProviders(): array

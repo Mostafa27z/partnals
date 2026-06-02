@@ -29,9 +29,7 @@ class OperatorPriceImport implements ToCollection, WithStartRow
                 $phoneNumber = '0' . $phoneNumber;
             }
 
-            $month = str_pad($row[1], 2, '0', STR_PAD_LEFT);
-            $year = $row[2];
-            $operatorPrice = (float) $row[3];
+            $operatorPrice = (float) ($row[1] ?? 0);
 
             $line = Line::where('phone_number', $phoneNumber)->first();
 
@@ -40,11 +38,13 @@ class OperatorPriceImport implements ToCollection, WithStartRow
                 continue;
             }
 
-            try {
-                $invoiceMonth = Carbon::create($year, $month, 1)->startOfMonth();
-            } catch (\Exception $e) {
-                $this->addError($row, 'تاريخ غير صالح');
-                continue;
+            $latestInvoice = Invoice::where('line_id', $line->id)->where('is_paid', true)->orderBy('invoice_month', 'desc')->first();
+            if ($latestInvoice) {
+                $invoiceMonth = Carbon::parse($latestInvoice->invoice_month)->copy()->addMonth()->startOfMonth();
+            } else if ($line->attached_at) {
+                $invoiceMonth = Carbon::parse($line->attached_at)->startOfMonth();
+            } else {
+                $invoiceMonth = now()->startOfMonth();
             }
 
             $invoice = Invoice::where('line_id', $line->id)
@@ -95,8 +95,6 @@ class OperatorPriceImport implements ToCollection, WithStartRow
         $this->errorsList[] = [
             $row[0] ?? '',
             $row[1] ?? '',
-            $row[2] ?? '',
-            $row[3] ?? '',
             $errorMessage
         ];
     }

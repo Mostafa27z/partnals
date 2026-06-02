@@ -47,19 +47,14 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        if ($user->role && $user->role->name === 'admin') {
-            return redirect()->route('users.index')->with('error', __('messages.cannot_edit_admin') ?? 'Cannot edit admin user');
-        }
-
+        // Allow editing of admin users; removal of admin check
         $roles = Role::all();
         return view('admin.users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user)
     {
-        if ($user->role && $user->role->name === 'admin') {
-            return redirect()->route('users.index')->with('error', __('messages.cannot_edit_admin') ?? 'Cannot edit admin user');
-        }
+
 
         $request->validate([
             'name'     => 'required|string|max:255',

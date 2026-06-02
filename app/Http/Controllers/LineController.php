@@ -328,13 +328,17 @@ private function applyFilters($query, Request $request)
         $query->where('phone_number', 'like', '%' . $request->phone . '%');
     }
 
-    if ($request->filled('distributor_id')) {
-        // If the user is a distributor, they can only filter by their own ID anyway
-        // but we enforce it here just in case.
-        if (auth()->user()->role?->name === 'موزع') {
-            $query->where('distributor_id', auth()->id());
-        } else {
-            $query->where('distributor_id', $request->distributor_id);
+    if ($request->has('distributor_id')) {
+        if ($request->distributor_id === 'none') {
+            $query->whereNull('distributor_id');
+        } elseif ($request->filled('distributor_id')) {
+            // If the user is a distributor, they can only filter by their own ID anyway
+            // but we enforce it here just in case.
+            if (auth()->user()->role?->name === 'موزع') {
+                $query->where('distributor_id', auth()->id());
+            } else {
+                $query->where('distributor_id', $request->distributor_id);
+            }
         }
     }
 
@@ -794,21 +798,30 @@ public function restore($id)
     $user = auth()->user();
     $isDistributor = $user->role && $user->role->name === 'موزع';
 
-    $query = Line::with('customer');
+    $plans = \App\Models\Plan::select('id', 'name')->get();
+    $distributors = \App\Models\User::whereHas('role', function($q) {
+        $q->where('name', 'موزع');
+    })->when($isDistributor, function($q) use ($user) {
+        $q->where('id', $user->id);
+    })->select('id', 'name')->get();
+
+    $query = Line::with(['customer', 'plan', 'distributor']);
 
     if ($isDistributor) {
         $query->where('distributor_id', $user->id);
     }
     
+    $query = $this->applyFilters($query, $request);
+
     // البحث برقم الهاتف
     if ($request->filled('search')) {
         $search = $request->input('search');
         $query->where('phone_number', 'LIKE', "%{$search}%");
     }
 
-    $lines = $query->paginate(20)->withQueryString();
+    $lines = $query->latest()->paginate(20)->withQueryString();
 
-    return view('admin.lines.for-sale', compact('lines'));
+    return view('admin.lines.for-sale', compact('lines', 'plans', 'distributors'));
 }
 
     public function markForSale(Request $request)
@@ -845,6 +858,51 @@ public function restore($id)
         }
 
         return back()->with('success', '✅ تم تحديث حالة البيع للخطوط بنجاح.');
+    }
+
+    public function importForSale(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx',
+        ]);
+
+        $import = new \App\Imports\ForSaleLinesImport();
+        \Maatwebsite\Excel\Facades\Excel::import($import, $request->file('file'));
+
+        if (count($import->errorsList) > 0) {
+            array_unshift($import->errorsList, [
+                'رقم الهاتف', 'سعر الشراء', 'سعر البيع', 'الخطأ (Errors)'
+            ]);
+
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\InvoiceErrorsExport($import->errorsList),
+                'for_sale_import_errors_' . now()->format('Ymd_His') . '.xlsx'
+            );
+        }
+
+        return back()->with('success', '✅ تم استيراد وتحديث الخطوط المعروضة للبيع بنجاح.');
+    }
+
+    public function downloadForSaleSample()
+    {
+        $sampleData = [
+            ['رقم الهاتف', 'سعر الشراء', 'سعر البيع'],
+            ['01012345678', '150.00', '200.00'],
+        ];
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\InvoiceErrorsExport($sampleData),
+            'for_sale_lines_template.xlsx'
+        );
+    }
+
+    // Export all lines marked for sale as Excel
+    public function exportForSale()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\ForSaleLinesExport(),
+            'lines_for_sale.xlsx'
+        );
     }
 
 

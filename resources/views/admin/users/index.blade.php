@@ -80,15 +80,15 @@
                                     <td class="px-8 py-6">
                                         <div class="flex items-center justify-start gap-4">
                                             @php
-                                                $isProtected = ($user->role && $user->role->name === 'admin') || ($user->id === auth()->id());
+                                                $cannotDelete = ($user->role && $user->role->name === 'admin') || ($user->id === auth()->id());
                                             @endphp
 
-                                            @if(!$isProtected)
-                                                <a href="{{ route('users.edit', $user) }}" class="flex items-center gap-2 px-4 py-2 text-sm font-black text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-all active:scale-95">
-                                                    <span>📝</span>
-                                                    <span>{{ __('messages.edit') }}</span>
-                                                </a>
-                                                
+                                            <a href="{{ route('users.edit', $user) }}" class="flex items-center gap-2 px-4 py-2 text-sm font-black text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-all active:scale-95">
+                                                <span>📝</span>
+                                                <span>{{ __('messages.edit') }}</span>
+                                            </a>
+
+                                            @if(!$cannotDelete)
                                                 <button onclick="confirmDeletion('{{ $user->id }}', '{{ $user->role->name ?? '' }}', {{ $user->lines->count() }})" 
                                                         class="flex items-center gap-2 px-4 py-2 text-sm font-black text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all active:scale-95">
                                                     <span>🗑️</span>

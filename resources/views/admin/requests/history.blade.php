@@ -7,7 +7,13 @@
 
     <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8" dir="rtl">
         <!-- Filter Form -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div class="text-sm font-bold text-gray-700 dark:text-gray-200">{{ __('messages.requests_count', ['count' => $requests->total()]) }}</div>
+            <button type="button" onclick="toggleFilters('filters-panel-history')" class="inline-flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                {{ __('messages.filter_toggle') }}
+            </button>
+        </div>
+        <div id="filters-panel-history" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
             <form method="GET" action="{{ route('requests.history') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <div>
                     <label class="block text-xs font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">{{ __('messages.phone_number') }}</label>
@@ -167,14 +173,21 @@
             </div>
         </div>
     </div>
-</x-app-layout>
 
-@push('scripts')
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        document.getElementById('filter_nid')?.addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 14);
+    @push('scripts')
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById('filter_nid')?.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 14);
+            });
         });
-    });
-</script>
-@endpush
+
+        function toggleFilters(id) {
+            const panel = document.getElementById(id);
+            if (panel) {
+                panel.classList.toggle('hidden');
+            }
+        }
+    </script>
+    @endpush
+</x-app-layout>

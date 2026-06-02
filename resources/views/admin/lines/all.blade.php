@@ -59,6 +59,7 @@
                 @if(auth()->user()->role->name !== 'موزع')
                 <select name="distributor_id" class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 w-full sm:w-40 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
                     <option value="">-- {{ __('messages.distributor') }} --</option>
+                    <option value="none" {{ request('distributor_id') === 'none' ? 'selected' : '' }}>{{ __('messages.no_distributor') ?? 'No Distributor' }}</option>
                     @foreach($distributors as $distributor)
                         <option value="{{ $distributor->id }}" {{ request('distributor_id') == $distributor->id ? 'selected' : '' }}>
                             {{ $distributor->name }}

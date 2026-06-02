@@ -1473,8 +1473,14 @@ class RequestController extends Controller
     {
         $data = RequestResumeLine::where('request_id', $request->id)->first();
         if ($data) {
+            $currentLast = $request->line->last_invoice_date
+                ? \Carbon\Carbon::parse($request->line->last_invoice_date)
+                : \Carbon\Carbon::today();
+            $newLast = $currentLast->copy()->addMonth();
+
             $request->line->update([
                 'status' => 'active',
+                'last_invoice_date' => $newLast,
             ]);
         }
     }
@@ -1495,9 +1501,15 @@ class RequestController extends Controller
             }
         }
 
+        $currentLast = $request->line->last_invoice_date
+            ? \Carbon\Carbon::parse($request->line->last_invoice_date)
+            : \Carbon\Carbon::today();
+        $newLast = $currentLast->copy()->addMonth();
+
         $updateData = [
             'customer_id' => $customer?->id,
             'attached_at' => now(),
+            'last_invoice_date' => $newLast,
         ];
 
         if ($data->new_serial) {

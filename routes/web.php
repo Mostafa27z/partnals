@@ -177,7 +177,8 @@ Route::middleware(['auth', 'condition.is.active:manage invoices'])->group(functi
 Route::get('/lines/{line}', [LineController::class, 'show'])->name('lines.show');
 
     Route::get('/customers/{customer}/invoices', [InvoiceController::class, 'customerInvoices'])->name('customers.invoices');
-    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index'); Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+    Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
     Route::post('/invoices/import', [InvoiceController::class, 'import'])->name('invoices.import');
     Route::post('/invoices/import-operator', [InvoiceController::class, 'importOperatorPrice'])->name('invoices.import-operator');
     Route::post('/invoices/import-customer', [InvoiceController::class, 'importCustomerPrice'])->name('invoices.import-customer');
@@ -297,7 +298,10 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::middleware('condition.is.active:manage lines')->group(function () {
         Route::get('/change-logs', [ChangeLogController::class, 'index'])->name('change-logs.index'); 
         Route::get('/lines/for-sale', [LineController::class, 'forSaleList'])->name('lines.for-sale');
-        Route::post('/lines/mark-for-sale', [LineController::class, 'markForSale'])->name('lines.mark-for-sale');
+        Route::post('/lines/for-sale/import', [LineController::class, 'importForSale'])->name('lines.for-sale.import');
+        Route::get('/lines/for-sale/sample', [LineController::class, 'downloadForSaleSample'])->name('lines.for-sale.sample');
+        Route::post('/lines/for-sale', [LineController::class, 'markForSale'])->name('lines.mark-for-sale');
+        Route::get('/lines/for-sale/export', [LineController::class, 'exportForSale'])->name('lines.for-sale.export');
     });
     
     // Accounting Routes
@@ -306,6 +310,11 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::post('/accounting/capital', [\App\Http\Controllers\AccountingController::class, 'storeCapital'])->name('accounting.capital.store');
         Route::post('/accounting/expense', [\App\Http\Controllers\AccountingController::class, 'storeExpense'])->name('accounting.expense.store');
         Route::post('/accounting/direct-sale', [\App\Http\Controllers\AccountingController::class, 'storeDirectSale'])->name('accounting.direct-sale.store');
+        Route::put('/accounting/sale-price', [\App\Http\Controllers\AccountingController::class, 'updateSalePrices'])->name('accounting.sale-price.update');
+        Route::get('/accounting/export/completed-sales', [\App\Http\Controllers\AccountingController::class, 'exportCompletedSales'])->name('accounting.completed-sales.export');
+        Route::get('/accounting/export/paid-invoices', [\App\Http\Controllers\AccountingController::class, 'exportPaidInvoices'])->name('accounting.paid-invoices.export');
+        Route::get('/accounting/export/expenses', [\App\Http\Controllers\AccountingController::class, 'exportExpenses'])->name('accounting.expenses.export');
+        Route::get('/accounting/export/capitals', [\App\Http\Controllers\AccountingController::class, 'exportCapitals'])->name('accounting.capitals.export');
     });
 
     // HR Routes

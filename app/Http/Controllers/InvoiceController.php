@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\RequestResumeLine;
 use Carbon\Carbon;
  use App\Models\Plan;
+ use Illuminate\Support\Facades\DB;
 class InvoiceController extends Controller
 {
    
@@ -122,7 +123,6 @@ class InvoiceController extends Controller
         ->exists();
 
     if (
-        $line->status === 'inactive' &&
         $lastInvoiceMonth &&
         $lastInvoiceMonth->greaterThan(now()) &&
         !$resumeExists
@@ -183,8 +183,8 @@ if ($request->filled('customer_id')) {
     $query->whereIn('customer_id', $request->customer_id);
 }
 
+    $total = (clone $query)->sum('amount');
     $invoices = $query->latest('invoice_month')->paginate(20);
-    $total = $query->sum('amount');
 
     $plans = Plan::all();
     $users = \App\Models\User::all();
@@ -222,8 +222,8 @@ if ($request->filled('customer_id')) {
         $query->whereDate('invoice_month', '<=', $request->to); 
     } 
  
+    $total = (clone $query)->sum('amount'); 
     $invoices = $query->with(['line', 'user'])->latest('invoice_month')->paginate(10); 
-    $total = $query->sum('amount'); 
     $plans = Plan::select('id', 'name')->get(); // أو فقط Plan::all()
 
     return view('admin.invoices.customer', compact('customer', 'invoices', 'total', 'plans')); 
@@ -259,8 +259,8 @@ public function lineInvoices(Request $request, Line $line)
         $query->whereDate('invoice_month', '<=', $request->to);
     }
 
+    $total = (clone $query)->sum('amount');
     $invoices = $query->latest('invoice_month')->paginate(20);
-    $total = $query->sum('amount');
     $plans = Plan::all(); // ✅ إضافة هذا السطر
 
     return view('admin.invoices.by-line', compact('line', 'invoices', 'total', 'plans'));
@@ -273,20 +273,20 @@ public function lineInvoices(Request $request, Line $line)
         
         if ($type === 'operator') {
             $sampleData = [
-                ['رقم الهاتف', 'الشهر', 'السنة', 'سعر المشغل'],
-                ['25899911', '04', '2026', '124.80']
+                ['رقم الهاتف', 'سعر المشغل'],
+                ['01012345678', '124.80']
             ];
             $fileName = 'operator_price_sample.xlsx';
         } elseif ($type === 'customer') {
             $sampleData = [
-                ['رقم الهاتف', 'الشهر', 'السنة', 'سعر العميل'],
-                ['25899911', '04', '2026', '156.00']
+                ['رقم الهاتف', 'سعر العميل'],
+                ['01012345678', '156.00']
             ];
             $fileName = 'customer_price_sample.xlsx';
         } else {
             $sampleData = [
-                ['رقم الهاتف', 'شهر البداية', 'السنة', 'عدد الشهور', 'المبلغ المدفوع الكلي', 'التكلفة الكلية'],
-                ['25899911', '04', '2026', '4', '624.00', '499.20']
+                ['رقم الهاتف', 'عدد الشهور', 'المبلغ المدفوع الكلي', 'التكلفة الكلية'],
+                ['01012345678', '4', '624.00', '499.20']
             ];
             $fileName = 'invoices_import_sample.xlsx';
         }
@@ -308,7 +308,7 @@ public function lineInvoices(Request $request, Line $line)
 
         if (count($import->errorsList) > 0) {
             array_unshift($import->errorsList, [
-                'رقم الهاتف', 'شهر البداية', 'السنة', 'عدد الشهور', 'المبلغ المدفوع الكلي', 'التكلفة الكلية', 'الخطأ (Errors)'
+                'رقم الهاتف', 'عدد الشهور', 'المبلغ المدفوع الكلي', 'التكلفة الكلية', 'الخطأ (Errors)'
             ]);
             
             return \Maatwebsite\Excel\Facades\Excel::download(
@@ -331,7 +331,7 @@ public function lineInvoices(Request $request, Line $line)
 
         if (count($import->errorsList) > 0) {
             array_unshift($import->errorsList, [
-                'رقم الهاتف', 'الشهر', 'السنة', 'سعر المشغل', 'الخطأ (Errors)'
+                'رقم الهاتف', 'سعر المشغل', 'الخطأ (Errors)'
             ]);
             
             return \Maatwebsite\Excel\Facades\Excel::download(
@@ -354,7 +354,7 @@ public function lineInvoices(Request $request, Line $line)
 
         if (count($import->errorsList) > 0) {
             array_unshift($import->errorsList, [
-                'رقم الهاتف', 'الشهر', 'السنة', 'سعر العميل', 'الخطأ (Errors)'
+                'رقم الهاتف', 'سعر العميل', 'الخطأ (Errors)'
             ]);
             
             return \Maatwebsite\Excel\Facades\Excel::download(
@@ -365,4 +365,63 @@ public function lineInvoices(Request $request, Line $line)
 
         return back()->with('success', 'تم استيراد سعر العميل بنجاح!');
     }
+
+    public function show(Invoice $invoice)
+    {
+        // Load related data for display
+        $invoice->load(['line.customer', 'user']);
+        return view('admin.invoices.show', compact('invoice'));
+    }
+
+
+    public function destroy(Invoice $invoice)
+{
+    DB::transaction(function () use ($invoice) {
+
+        $line = $invoice->line;
+
+        if (!$line) {
+            $invoice->delete();
+            return;
+        }
+
+        // Save deleted invoice month before deleting it
+        $deletedMonth = Carbon::parse($invoice->invoice_month)->startOfMonth();
+
+        // Delete invoice
+        $invoice->delete();
+
+        // Get invoices after the deleted month
+        $followingInvoices = $line->invoices()
+            ->where('invoice_month', '>', $deletedMonth)
+            ->orderBy('invoice_month', 'asc')
+            ->get();
+
+        // Shift each invoice back by one month
+        foreach ($followingInvoices as $inv) {
+            $inv->update([
+                'invoice_month' => Carbon::parse($inv->invoice_month)
+                    ->subMonth()
+                    ->startOfMonth()
+                    ->format('Y-m-d'),
+            ]);
+        }
+
+        // Update last_invoice_date
+        $lastInvoice = $line->invoices()
+            ->orderByDesc('invoice_month')
+            ->first();
+
+        $line->update([
+            'last_invoice_date' => $lastInvoice?->invoice_month,
+        ]);
+    });
+
+    return back()->with(
+        'success',
+        'تم حذف الفاتورة وترحيل الفواتير اللاحقة وتحديث تاريخ آخر فاتورة بنجاح.'
+    );
 }
+
+}
+

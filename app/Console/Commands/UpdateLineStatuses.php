@@ -39,7 +39,7 @@ class UpdateLineStatuses extends Command
         foreach ($lines as $line) {
             try {
                 $lastInvoice = Carbon::parse($line->last_invoice_date);
-                $expiryDate = $lastInvoice->copy()->addMonth();
+                $expiryDate = $lastInvoice->copy();
                 $oldStatus = $line->status;
 
                 // إذا وصلنا أو تجاوزنا تاريخ انتهاء الصلاحية (بعد مرور شهر)، يصبح غير نشط

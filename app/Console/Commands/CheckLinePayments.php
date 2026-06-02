@@ -36,7 +36,6 @@ public function handle()
             */
             $triggerDate = $lastInvoiceDate
                 ->copy()
-                ->addMonth()
                 ->subDay();
 
             // إذا لم يمر الوقت المطلوب بعد
@@ -85,8 +84,7 @@ public function handle()
 
         try {
 
-            $expiryDate = Carbon::parse($line->last_invoice_date)
-                ->addMonth();
+            $expiryDate = Carbon::parse($line->last_invoice_date);
 
             if ($today->gte($expiryDate)) {
 

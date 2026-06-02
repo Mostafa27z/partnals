@@ -7,6 +7,13 @@
 
     <!-- Filter Form -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6" dir="rtl">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div class="text-sm font-bold text-gray-700 dark:text-gray-200">{{ __('messages.requests_count', ['count' => $requests->total()]) }}</div>
+            <button type="button" onclick="toggleFilters('filters-panel-all')" class="inline-flex items-center gap-2 self-start bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                {{ __('messages.filter_toggle') }}
+            </button>
+        </div>
+        <div id="filters-panel-all">
         <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <input type="text" name="phone" value="{{ request('phone') }}" placeholder="{{ __('messages.phone_number') }}" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring focus:ring-blue-200" />
             <input type="text" name="nid" id="filter_nid" value="{{ request('nid') }}" placeholder="{{ __('messages.national_id') }}" maxlength="14" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring focus:ring-blue-200" />
@@ -31,6 +38,7 @@
                 </button>
             </div>
         </form>
+        </div>
     </div>
 
     <!-- Bulk Actions -->
@@ -187,6 +195,13 @@
     <script>
         function toggleAll(source) {
             document.querySelectorAll('input[name="selected_requests[]"]').forEach(cb => cb.checked = source.checked);
+        }
+
+        function toggleFilters(id) {
+            const panel = document.getElementById(id);
+            if (panel) {
+                panel.classList.toggle('hidden');
+            }
         }
 
         function toggleEdit(id) {

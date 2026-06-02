@@ -32,11 +32,9 @@ class InvoicesImport implements ToCollection, WithStartRow
                 $phoneNumber = '0' . $phoneNumber;
             }
 
-            $startMonth = str_pad($row[1], 2, '0', STR_PAD_LEFT);
-            $year = $row[2];
-            $numsOfMonths = (int) $row[3];
-            $totalAmount = (float) $row[4];
-            $totalCost = (float) $row[5];
+            $numsOfMonths = (int) ($row[1] ?? 0);
+            $totalAmount = (float) ($row[2] ?? 0);
+            $totalCost = (float) ($row[3] ?? 0);
 
             $line = Line::where('phone_number', $phoneNumber)->first();
 
@@ -50,28 +48,15 @@ class InvoicesImport implements ToCollection, WithStartRow
                 continue;
             }
 
-            try {
-                $requestedStartDate = Carbon::create($year, $startMonth, 1)->startOfMonth();
-            } catch (\Exception $e) {
-                $this->addError($row, 'تاريخ البداية (الشهر/السنة) غير صالح');
-                continue;
-            }
-
             // Expected Start Date Validation
             $latestInvoice = Invoice::where('line_id', $line->id)->where('is_paid', true)->orderBy('invoice_month', 'desc')->first();
 
             if ($latestInvoice) {
-                $expectedStart = Carbon::parse($latestInvoice->invoice_month)->copy()->addMonth()->startOfMonth();
+                $requestedStartDate = Carbon::parse($latestInvoice->invoice_month)->copy()->addMonth()->startOfMonth();
             } else if ($line->attached_at) {
-                $expectedStart = Carbon::parse($line->attached_at)->startOfMonth();
+                $requestedStartDate = Carbon::parse($line->attached_at)->startOfMonth();
             } else {
-                $this->addError($row, 'الخط غير مربوط بعميل ولا توجد فواتير سابقة');
-                continue;
-            }
-
-            if ($requestedStartDate->gt($expectedStart)) {
-                $this->addError($row, 'توجد شهور سابقة غير مدفوعة (فجوة). متوقع: ' . $expectedStart->format('Y-m'));
-                continue;
+                $requestedStartDate = now()->startOfMonth();
             }
 
             // Calculations
@@ -123,6 +108,28 @@ class InvoicesImport implements ToCollection, WithStartRow
                     $updateData['last_invoice_date'] = $maxProcessedMonth;
                 }
                 $line->update($updateData);
+
+                // Check and create resume request if new last invoice date is in the future
+                $resumeExists = \App\Models\Request::where('line_id', $line->id)
+                    ->where('request_type', 'resume')
+                    ->whereDate('created_at', now()->toDateString())
+                    ->exists();
+
+                if ($maxProcessedMonth->greaterThan(now()) && !$resumeExists) {
+                    $resumeRequest = \App\Models\Request::create([
+                        'line_id'      => $line->id,
+                        'customer_id'  => $line->customer_id,
+                        'request_type' => 'resume',
+                        'status'       => 'pending',
+                        'requested_by' => Auth::id() ?? 1,
+                    ]);
+
+                    \App\Models\RequestResumeLine::create([
+                        'request_id' => $resumeRequest->id,
+                        'reason'     => 'تم دفع الفاتورة',
+                        'comment'    => 'تم إنشاء الطلب بواسطة النظام تلقائياً عبر استيراد الإكسيل',
+                    ]);
+                }
             }
         }
     }
@@ -134,8 +141,6 @@ class InvoicesImport implements ToCollection, WithStartRow
             $row[1] ?? '',
             $row[2] ?? '',
             $row[3] ?? '',
-            $row[4] ?? '',
-            $row[5] ?? '',
             $errorMessage
         ];
         $this->errorsList[] = $errorRow;

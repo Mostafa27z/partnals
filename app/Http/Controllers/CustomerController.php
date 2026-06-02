@@ -163,7 +163,10 @@ class CustomerController extends Controller
 public function searchByNationalId(Request $request)
 {
     $query = $request->get('q', '');
-    return Customer::where('national_id', 'like', "%$query%")
+    return Customer::where(function ($q2) use ($query) {
+            $q2->where('national_id', 'like', "%$query%")
+               ->orWhere('full_name', 'like', "%$query%");
+        })
         ->select('id', 'full_name', 'national_id')
         ->limit(20)
         ->get();

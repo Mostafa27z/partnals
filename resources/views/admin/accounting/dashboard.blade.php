@@ -55,18 +55,27 @@
                 <div class="text-gray-500 dark:text-gray-400 text-sm font-semibold mb-1">{{ __('messages.period_net_profit') }}</div>
                 <div class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ number_format($netProfit, 2) }} {{ __('messages.currency') }}</div>
                 <div class="text-xs text-gray-400 mt-2">{{ __('messages.net_profit_desc') }}</div>
+                <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                    {{ __('messages.net_profit_equation') ?? 'Net Profit = Invoice Profits + Sales Revenue - Line Purchase Cost - Expenses - Salaries - Advances' }}
+                </div>
             </div>
 
             {{-- إيرادات الفواتير --}}
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-emerald-400">
                 <div class="text-gray-500 dark:text-gray-400 text-sm font-semibold mb-1">{{ __('messages.invoice_revenues') }}</div>
                 <div class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ number_format($invoiceProfits, 2) }} {{ __('messages.currency') }}</div>
+                <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                    {{ __('messages.invoice_revenue_equation') ?? 'Invoice Revenues = sum of paid invoice profits in selected period' }}
+                </div>
             </div>
 
             {{-- رأس المال --}}
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-blue-500">
                 <div class="text-gray-500 dark:text-gray-400 text-sm font-semibold mb-1">{{ __('messages.total_capital') }}</div>
                 <div class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ number_format($totalCapital, 2) }} {{ __('messages.currency') }}</div>
+                <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                    {{ __('messages.total_capital_equation') ?? 'Total Capital = sum of all capital entries' }}
+                </div>
             </div>
 
             {{-- إجمالي المصروفات للفترة --}}
@@ -83,37 +92,51 @@
                         <span class="font-bold">{{ number_format($linesPurchaseCost, 2) }} {{ __('messages.currency') }}</span>
                     </div>
                 </div>
+                <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                    {{ __('messages.total_period_expenses_equation') ?? 'Total Period Expenses = Misc Expenses + Line Purchase Cost' }}
+                </div>
             </div>
 
             {{-- إجمالي الرواتب --}}
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-yellow-500">
                 <div class="text-gray-500 dark:text-gray-400 text-sm font-semibold mb-1">{{ __('messages.total_period_salaries') }}</div>
                 <div class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ number_format($salaries, 2) }} {{ __('messages.currency') }}</div>
+                <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                    {{ __('messages.total_period_salaries_equation') ?? 'Total Period Salaries = sum of salary payments in selected period' }}
+                </div>
             </div>
 
             {{-- إجمالي السلف --}}
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-purple-500">
                 <div class="text-gray-500 dark:text-gray-400 text-sm font-semibold mb-1">{{ __('messages.total_period_advances') }}</div>
                 <div class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ number_format($totalAdvances, 2) }} {{ __('messages.currency') }}</div>
+                <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                    {{ __('messages.total_period_advances_equation') ?? 'Total Period Advances = sum of advances in selected period' }}
+                </div>
             </div>
 
             {{-- عدد العمليات المكتملة --}}
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-indigo-400">
+            <!-- <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-indigo-400">
                 <div class="text-gray-500 dark:text-gray-400 text-sm font-semibold mb-1">العمليات المكتملة</div>
                 <div class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ $completedRequestsCount + $directSalesCount }}</div>
                 <div class="mt-2 text-[10px] text-gray-500 flex justify-between">
                     <span>طلبات: {{ $completedRequestsCount }} | مباشر: {{ $directSalesCount }}</span>
                 </div>
-            </div>
+            </div> -->
         </div>
 
 
 
         {{-- الخطوط المباعة بيع نهائي في هذه الفترة --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-700 mb-8">
-            <div class="bg-gray-100 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+            <div class="bg-gray-100 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <h3 class="font-bold text-gray-800 dark:text-gray-200">{{ __('messages.completed_line_sales') }}</h3>
-                <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">{{ __('messages.total_profit_item') }} {{ number_format($soldLinesList->sum('calculated_profit'), 2) }} {{ __('messages.currency') }}</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">{{ __('messages.total_profit_item') }} {{ number_format($soldLinesList->sum('calculated_profit'), 2) }} {{ __('messages.currency') }}</span>
+                    <a href="{{ route('accounting.completed-sales.export', request()->query()) }}" class="inline-flex items-center gap-2 border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full px-3 py-1 hover:bg-indigo-100 transition">
+                        ⬇️ {{ __('messages.Export to Excel') }}
+                    </a>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-center text-gray-500 dark:text-gray-400">
@@ -130,7 +153,15 @@
                     <tbody>
                         @forelse($soldLinesList as $soldLine)
                         <tr class="border-b dark:border-gray-700">
-                            <td class="p-3 font-mono text-gray-900 dark:text-gray-200">{{ $soldLine->phone_number }}</td>
+                            <td class="p-3 font-mono text-gray-900 dark:text-gray-200">
+                                {{ $soldLine->phone_number }}
+                                <form id="edit-sale-form-{{ $loop->index }}" method="POST" action="{{ route('accounting.sale-price.update') }}" class="hidden">
+                                    @csrf
+                                    @method('PUT')
+                                    <input type="hidden" name="sale_source" value="{{ $soldLine->sale_source ?? 'direct' }}">
+                                    <input type="hidden" name="sale_source_id" value="{{ $soldLine->sale_source_id ?? '' }}">
+                                </form>
+                            </td>
                             <td class="p-3">
                                 @if(isset($soldLine->is_direct) && $soldLine->is_direct)
                                     <span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-[10px] font-black">مباشر</span>
@@ -139,9 +170,20 @@
                                 @endif
                             </td>
                             <td class="p-3">{{ \Carbon\Carbon::parse($soldLine->display_date ?? $soldLine->updated_at)->format('Y-m-d') }}</td>
-                            <td class="p-3 text-red-500 font-bold">-{{ number_format($soldLine->display_buy_price ?? $soldLine->buy_price, 2) }}</td>
-                            <td class="p-3 text-green-600 font-bold">+{{ number_format($soldLine->display_sale_price ?? $soldLine->sale_price, 2) }}</td>
-                            <td class="p-3 text-indigo-600 font-bold">{{ number_format($soldLine->calculated_profit, 2) }}</td>
+                            <td class="p-3 text-red-500 font-bold">
+                                <input form="edit-sale-form-{{ $loop->index }}" type="number" step="0.01" min="0" name="buy_price" value="{{ $soldLine->display_buy_price ?? $soldLine->buy_price }}" class="w-full bg-transparent text-right border border-red-200 rounded px-2 py-1 text-sm text-red-600" />
+                            </td>
+                            <td class="p-3 text-green-600 font-bold">
+                                <input form="edit-sale-form-{{ $loop->index }}" type="number" step="0.01" min="0" name="sale_price" value="{{ $soldLine->display_sale_price ?? $soldLine->sale_price }}" class="w-full bg-transparent text-right border border-green-200 rounded px-2 py-1 text-sm text-green-600" />
+                            </td>
+                            <td class="p-3 text-indigo-600 font-bold">
+                                <div class="flex flex-col gap-2 items-center">
+                                    <span>{{ number_format($soldLine->calculated_profit, 2) }}</span>
+                                    <button form="edit-sale-form-{{ $loop->index }}" type="submit" class="inline-flex items-center justify-center px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-[11px] font-black hover:bg-indigo-700 transition">
+                                        {{ __('messages.save') }}
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                         @empty
                         <tr>
@@ -159,9 +201,14 @@
 
         {{-- تفاصيل الفواتير المحصلة في هذه الفترة --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-700 mb-8">
-            <div class="bg-gray-100 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+            <div class="bg-gray-100 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <h3 class="font-bold text-gray-800 dark:text-gray-200">{{ __('messages.paid_invoices_breakdown') }}</h3>
-                <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">{{ __('messages.total_profit_item') }} {{ number_format($invoiceProfits, 2) }} {{ __('messages.currency') }}</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">{{ __('messages.total_profit_item') }} {{ number_format($invoiceProfits, 2) }} {{ __('messages.currency') }}</span>
+                    <a href="{{ route('accounting.paid-invoices.export', request()->query()) }}" class="inline-flex items-center gap-2 border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full px-3 py-1 hover:bg-indigo-100 transition">
+                        ⬇️ {{ __('messages.Export to Excel') }}
+                    </a>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-center text-gray-500 dark:text-gray-400">
@@ -219,11 +266,8 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">اختر العميل</label>
-                        <select name="customer_id" required class="w-full border p-2 rounded-xl text-gray-900 font-bold text-sm">
-                            <option value="">-- اختر عميل --</option>
-                            @foreach($allCustomers as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->full_name }}</option>
-                            @endforeach
+                        <select id="customer_id_select" name="customer_id" required class="w-full border p-2 rounded-xl text-gray-900 font-bold text-sm">
+                            <option value="">-- {{ __('messages.search_customer_name_id') ?? 'Search customer by name or national id' }} --</option>
                         </select>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -307,8 +351,11 @@
             
             {{-- جدول آخر المصروفات --}}
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                <div class="bg-gray-100 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600">
+                <div class="bg-gray-100 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between gap-3">
                     <h3 class="font-bold text-gray-800 dark:text-gray-200">{{ __('messages.recent_expenses') }}</h3>
+                    <a href="{{ route('accounting.expenses.export', request()->query()) }}" class="inline-flex items-center gap-2 border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full px-3 py-1 hover:bg-indigo-100 transition">
+                        ⬇️ {{ __('messages.Export to Excel') }}
+                    </a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
@@ -316,6 +363,7 @@
                             <tr>
                                 <th class="p-3">{{ __('messages.date') }}</th>
                                 <th class="p-3">{{ __('messages.amount') }}</th>
+                                <th class="p-3">{{ __('messages.expense_details') }}</th>
                                 <th class="p-3">{{ __('messages.category_classification') }}</th>
                                 <th class="p-3">{{ __('messages.added_by') }}</th>
                             </tr>
@@ -327,6 +375,7 @@
                                 <td class="p-3 font-bold {{ $exp->amount >= 0 ? 'text-red-500' : 'text-emerald-500' }}">
                                     {{ $exp->amount >= 0 ? '-' : '+' }}{{ number_format(abs($exp->amount), 2) }}
                                 </td>
+                                <td class="p-3 text-left">{{ $exp->description ?: '-' }}</td>
                                 <td class="p-3">{{ $exp->category }}</td>
                                 <td class="p-3">{{ $exp->user->name ?? '-' }}</td>
                             </tr>
@@ -343,8 +392,11 @@
 
             {{-- جدول إيداعات رأس المال --}}
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                <div class="bg-gray-100 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600">
+                <div class="bg-gray-100 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between gap-3">
                     <h3 class="font-bold text-gray-800 dark:text-gray-200">{{ __('messages.capital_deposits_log') }}</h3>
+                    <a href="{{ route('accounting.capitals.export', request()->query()) }}" class="inline-flex items-center gap-2 border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full px-3 py-1 hover:bg-indigo-100 transition">
+                        ⬇️ {{ __('messages.Export to Excel') }}
+                    </a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
@@ -378,4 +430,43 @@
         </div>
 
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            $('#customer_id_select').select2({
+                placeholder: '{{ __('messages.search_customer_name_id') }}',
+                allowClear: true,
+                width: '100%',
+                minimumInputLength: 1,
+                ajax: {
+                    url: '{{ route('ajax.customers.search') }}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.map(function (customer) {
+                                return {
+                                    id: customer.id,
+                                    text: customer.full_name + ' | ' + customer.national_id
+                                };
+                            })
+                        };
+                    }
+                },
+                templateResult: function (customer) {
+                    return customer.loading ? customer.text : $('<span>').text(customer.text);
+                },
+                templateSelection: function (customer) {
+                    return customer.text || customer.id;
+                }
+            });
+        });
+    </script>
+    @endpush
 </x-app-layout>

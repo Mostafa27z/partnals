@@ -77,111 +77,121 @@
             </form>
         </div>
     </div>
+{{-- Filter Form --}}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+    <div class="text-sm font-bold text-gray-700 dark:text-gray-200">
+        {{ __('messages.invoices_count', ['count' => $invoices->total()]) }}
+    </div>
+    <button type="button" onclick="toggleFilters('invoice-filters-panel')" class="inline-flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+        {{ __('messages.filter_toggle') }}
+    </button>
+</div>
 
-    {{-- Filter Form --}}
-    <form method="GET" action="{{ route('invoices.index') }}"
-          class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50"
-          dir="rtl">
+<div id="invoice-filters-panel" class="hidden bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 mb-8" dir="rtl">
+    <form method="GET" action="{{ route('invoices.index') }}" class="w-full">
 
-        {{-- Provider --}}
-        <div>
-            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">{{ __('messages.Provider') }}</label>
-            <select name="provider[]" multiple
-                    class="block w-full px-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
-                @foreach(['Vodafone', 'Etisalat', 'Orange', 'WE'] as $p)
-                    <option value="{{ $p }}" {{ in_array($p, request('provider', [])) ? 'selected' : '' }}>{{ $p }}</option>
-                @endforeach
-            </select>
-        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {{-- Provider --}}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.Provider') }}</label>
+                <select name="provider[]" multiple
+                        class="block w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm font-medium">
+                    @foreach(['Vodafone', 'Etisalat', 'Orange', 'WE'] as $p)
+                        <option value="{{ $p }}" {{ in_array($p, request('provider', [])) ? 'selected' : '' }}>{{ $p }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-        {{-- Line Type --}}
-        <div>
-            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">{{ __('messages.Line Type') }}</label>
-            <select name="line_type[]" multiple
-                    class="block w-full px-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
-                <option value="prepaid" {{ in_array('prepaid', request('line_type', [])) ? 'selected' : '' }}>
-                    {{ __('messages.Prepaid') }}
-                </option>
-                <option value="postpaid" {{ in_array('postpaid', request('line_type', [])) ? 'selected' : '' }}>
-                    {{ __('messages.Postpaid') }}
-                </option>
-            </select>
-        </div>
-
-        {{-- Plan --}}
-        <div>
-            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">{{ __('messages.Plan') }}</label>
-            <select name="plan_id[]" multiple
-                    class="block w-full px-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
-                @foreach($plans as $plan)
-                    <option value="{{ $plan->id }}" {{ in_array($plan->id, request('plan_id', [])) ? 'selected' : '' }}>
-                        {{ $plan->name }}
+            {{-- Line Type --}}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.Line Type') }}</label>
+                <select name="line_type[]" multiple
+                        class="block w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm font-medium">
+                    <option value="prepaid" {{ in_array('prepaid', request('line_type', [])) ? 'selected' : '' }}>
+                        {{ __('messages.Prepaid') }}
                     </option>
-                @endforeach
-            </select>
-        </div>
-
-        {{-- Payment Status --}}
-        <div>
-            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">{{ __('messages.Payment Status') }}</label>
-            <select name="is_paid[]" multiple
-                    class="block w-full px-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
-                <option value="1" {{ in_array('1', request('is_paid', [])) ? 'selected' : '' }}>
-                    {{ __('messages.Paid') }}
-                </option>
-                <option value="0" {{ in_array('0', request('is_paid', [])) ? 'selected' : '' }}>
-                    {{ __('messages.Unpaid') }}
-                </option>
-            </select>
-        </div>
-
-        {{-- Billed By --}}
-        <div>
-            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">{{ __('messages.Paid By') }}</label>
-            <select name="paid_by[]" multiple
-                    class="block w-full px-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
-                @foreach($users as $user)
-                    <option value="{{ $user->id }}" {{ in_array($user->id, request('paid_by', [])) ? 'selected' : '' }}>
-                        {{ $user->name }}
+                    <option value="postpaid" {{ in_array('postpaid', request('line_type', [])) ? 'selected' : '' }}>
+                        {{ __('messages.Postpaid') }}
                     </option>
-                @endforeach
-            </select>
-        </div>
+                </select>
+            </div>
 
-        {{-- Customer --}}
-        <div>
-            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">{{ __('messages.Customer') }}</label>
-            <select name="customer_id[]" multiple
-                    class="block w-full px-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
-                @foreach($customers as $customer)
-                    <option value="{{ $customer->id }}" {{ in_array($customer->id, request('customer_id', [])) ? 'selected' : '' }}>
-                        {{ $customer->full_name }}
+            {{-- Plan --}}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.Plan') }}</label>
+                <select name="plan_id[]" multiple
+                        class="block w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm font-medium">
+                    @foreach($plans as $plan)
+                        <option value="{{ $plan->id }}" {{ in_array($plan->id, request('plan_id', [])) ? 'selected' : '' }}>
+                            {{ $plan->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Payment Status --}}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.Payment Status') }}</label>
+                <select name="is_paid[]" multiple
+                        class="block w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm font-medium">
+                    <option value="1" {{ in_array('1', request('is_paid', [])) ? 'selected' : '' }}>
+                        {{ __('messages.Paid') }}
                     </option>
-                @endforeach
-            </select>
-        </div>
+                    <option value="0" {{ in_array('0', request('is_paid', [])) ? 'selected' : '' }}>
+                        {{ __('messages.Unpaid') }}
+                    </option>
+                </select>
+            </div>
 
-        {{-- Date From --}}
-        <div>
-            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">{{ __('messages.From Date') }}</label>
-            <input type="date" name="from" value="{{ request('from') }}"
-                   class="block w-full px-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
-        </div>
+            {{-- Paid By --}}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.Paid By') }}</label>
+                <select name="paid_by[]" multiple
+                        class="block w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm font-medium">
+                    @foreach($users as $user)
+                        <option value="{{ $user->id }}" {{ in_array($user->id, request('paid_by', [])) ? 'selected' : '' }}>
+                            {{ $user->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
-        {{-- Date To --}}
-        <div>
-            <label class="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">{{ __('messages.To Date') }}</label>
-            <input type="date" name="to" value="{{ request('to') }}"
-                   class="block w-full px-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
+            {{-- Customer --}}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.Customer') }}</label>
+                <select name="customer_id[]" multiple
+                        class="block w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm font-medium">
+                    @foreach($customers as $customer)
+                        <option value="{{ $customer->id }}" {{ in_array($customer->id, request('customer_id', [])) ? 'selected' : '' }}>
+                            {{ $customer->full_name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Date From --}}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.From Date') }}</label>
+                <input type="date" name="from" value="{{ request('from') }}"
+                       class="block w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm font-medium">
+            </div>
+
+            {{-- Date To --}}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.To Date') }}</label>
+                <input type="date" name="to" value="{{ request('to') }}"
+                       class="block w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm font-medium">
+            </div>
         </div>
 
         {{-- Filter Button --}}
-        <div class="md:col-span-4 flex justify-end mt-4">
-            <button class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/25">
+        <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-500/25 active:scale-95">
                 🔍 {{ __('messages.Filter') }}
             </button>
         </div>
     </form>
+</div>
 
     {{-- Invoices Table --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden" dir="rtl">
@@ -190,6 +200,7 @@
                 <thead>
                     <tr class="bg-gray-50/80 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Customer') }}</th>
+                        <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Phone') }}</th>
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Month') }}</th>
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">👤 سعر العميل</th>
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">📡 سعر المشغل</th>
@@ -197,12 +208,14 @@
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Paid') }}</th>
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Payment Date') }}</th>
                         <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.Paid By') }}</th>
+                        <th class="px-4 py-4 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @foreach($invoices as $invoice)
                         <tr class="hover:bg-gray-50 dark:bg-gray-700/50 transition">
-                            <td class="px-4 py-3 border">{{ $invoice->customer->full_name ?? '-' }}</td>
+                            <td class="px-4 py-3 border">{{ $invoice->customer->full_name ?? ($invoice->line->customer->full_name ?? '-') }}</td>
+                            <td class="px-4 py-3 border">{{ $invoice->line->phone_number ?? '-' }}</td>
                             <td class="px-4 py-3 border">{{ \Carbon\Carbon::parse($invoice->invoice_month)->translatedFormat('F Y') }}</td>
                             <td class="px-4 py-3 border text-green-600 font-bold">{{ number_format($invoice->amount, 2) }}</td>
                             <td class="px-4 py-3 border text-amber-600 font-bold">{{ number_format($invoice->operator_price, 2) }}</td>
@@ -220,6 +233,15 @@
                             </td>
                             <td class="px-4 py-3 border">{{ $invoice->payment_date ? \Carbon\Carbon::parse($invoice->payment_date)->format('Y-m-d H:i:s') : '-' }}</td>
                             <td class="px-4 py-3 border">{{ $invoice->user?->name ?? '-' }}</td>
+                            <td class="px-4 py-3 border">
+                                <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف الفاتورة؟ سيتم ترحيل الفواتير التالية شهراً للوراء وتحديث تاريخ الفاتورة الأخير للخط.')" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                                        🗑️ {{ __('messages.delete') }}
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -230,4 +252,15 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        function toggleFilters(id) {
+            const panel = document.getElementById(id);
+            if (panel) {
+                panel.classList.toggle('hidden');
+            }
+        }
+    </script>
+    @endpush
 </x-app-layout>

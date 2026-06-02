@@ -10,9 +10,11 @@ use App\Models\Salary;
 use App\Models\Advance;
 use App\Models\Invoice;
 use App\Models\DirectSale;
+use App\Models\RequestResell;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AccountingController extends Controller
 {
@@ -83,6 +85,8 @@ class AccountingController extends Controller
                 $soldLine->calculated_profit = $profit; // Now represents true profit Margin
                 $soldLine->display_buy_price = $buyPrice;
                 $soldLine->display_sale_price = $salePrice;
+                $soldLine->sale_source = 'resell';
+                $soldLine->sale_source_id = $resell->id;
                 // Update dates to match the resell completion date
                 $soldLine->display_date = $resell->request->updated_at;
                 $soldLinesList->push($soldLine);
@@ -113,6 +117,8 @@ class AccountingController extends Controller
                 $soldLine->calculated_profit = (float)$sale->profit;
                 $soldLine->display_buy_price = (float)$sale->buy_price;
                 $soldLine->display_sale_price = (float)$sale->sale_price;
+                $soldLine->sale_source = 'direct';
+                $soldLine->sale_source_id = $sale->id;
                 $soldLine->display_date = $sale->sale_date;
                 $soldLine->is_direct = true;
                 $soldLinesList->push($soldLine);
@@ -205,6 +211,265 @@ class AccountingController extends Controller
 
         return redirect()->back()->with('success', 'تم تسجيل المصروف بنجاح.');
     }
+
+    public function updateSalePrices(Request $request)
+    {
+        $validated = $request->validate([
+            'sale_source' => 'required|in:resell,direct',
+            'sale_source_id' => 'required|integer',
+            'buy_price' => 'required|numeric|min:0',
+            'sale_price' => 'required|numeric|min:0',
+        ]);
+
+        if ($validated['sale_source'] === 'direct') {
+            $sale = DirectSale::findOrFail($validated['sale_source_id']);
+            $sale->update([
+                'buy_price' => $validated['buy_price'],
+                'sale_price' => $validated['sale_price'],
+                'profit' => $validated['sale_price'] - $validated['buy_price'],
+            ]);
+
+            if ($sale->line) {
+                $sale->line->update(['sale_price' => $validated['sale_price']]);
+            }
+        } else {
+            $resell = RequestResell::findOrFail($validated['sale_source_id']);
+            $resell->update([
+                'buy_price' => $validated['buy_price'],
+                'sale_price' => $validated['sale_price'],
+            ]);
+
+            if ($resell->request && $resell->request->line) {
+                $resell->request->line->update(['sale_price' => $validated['sale_price']]);
+            }
+        }
+
+        return redirect()->back()->with('success', '✅ تم تحديث سعر الشراء والبيع بنجاح.');
+    }
+
+    public function exportCompletedSales(Request $request)
+    {
+        $fromMonth = $request->input('from_month', now()->month);
+        $fromYear  = $request->input('from_year', now()->year);
+        $toMonth   = $request->input('to_month', now()->month);
+        $toYear    = $request->input('to_year', now()->year);
+
+        $startDate = Carbon::create($fromYear, $fromMonth, 1)->startOfMonth();
+        $endDate   = Carbon::create($toYear, $toMonth, 1)->endOfMonth();
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $rows = collect();
+
+        $completedResells = RequestResell::where('is_sold', true)
+            ->whereHas('request', function ($q) use ($startDate, $endDate) {
+                $q->where('status', 'done')
+                  ->whereBetween('updated_at', [$startDate, $endDate]);
+            })
+            ->with('request.line')
+            ->get();
+
+        foreach ($completedResells as $resell) {
+            $line = $resell->request->line;
+            if (!$line) {
+                continue;
+            }
+
+            $rows->push([
+                'phone_number' => $line->phone_number,
+                'type' => 'Request Resell',
+                'date' => optional($resell->request->updated_at)->format('Y-m-d'),
+                'source' => 'Resell',
+                'buy_price' => $resell->buy_price,
+                'sale_price' => $resell->sale_price,
+                'profit' => $resell->sale_price - $resell->buy_price,
+            ]);
+        }
+
+        $directSales = DirectSale::whereBetween('sale_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->with('line')
+            ->get();
+
+        foreach ($directSales as $sale) {
+            $rows->push([
+                'phone_number' => $sale->line->phone_number ?? 'N/A',
+                'type' => 'Direct Sale',
+                'date' => $sale->sale_date,
+                'source' => 'Direct Sale',
+                'buy_price' => $sale->buy_price,
+                'sale_price' => $sale->sale_price,
+                'profit' => $sale->sale_price - $sale->buy_price,
+            ]);
+        }
+
+        return Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+            private $rows;
+
+            public function __construct($rows)
+            {
+                $this->rows = $rows;
+            }
+
+            public function collection()
+            {
+                return $this->rows;
+            }
+
+            public function headings(): array
+            {
+                return ['Phone Number', 'Type', 'Date', 'Source', 'Buy Price', 'Sale Price', 'Net Profit'];
+            }
+        }, "completed-sales-{$startDate->format('Ymd')}-{$endDate->format('Ymd')}.xlsx");
+    }
+
+    public function exportPaidInvoices(Request $request)
+    {
+        $fromMonth = $request->input('from_month', now()->month);
+        $fromYear  = $request->input('from_year', now()->year);
+        $toMonth   = $request->input('to_month', now()->month);
+        $toYear    = $request->input('to_year', now()->year);
+
+        $startDate = Carbon::create($fromYear, $fromMonth, 1)->startOfMonth();
+        $endDate   = Carbon::create($toYear, $toMonth, 1)->endOfMonth();
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $invoices = Invoice::where('is_paid', true)
+            ->whereBetween('payment_date', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
+            ->with(['line', 'line.plan'])
+            ->latest('payment_date')
+            ->get();
+
+        $rows = $invoices->map(function ($invoice) {
+            return [
+                'phone_number' => $invoice->line->phone_number ?? 'N/A',
+                'plan_name' => $invoice->line->plan->name ?? 'N/A',
+                'service_month' => $invoice->invoice_month ? Carbon::parse($invoice->invoice_month)->format('Y-m') : 'N/A',
+                'payment_date' => $invoice->payment_date ? Carbon::parse($invoice->payment_date)->format('Y-m-d H:i:s') : 'N/A',
+                'amount' => $invoice->amount,
+                'profit' => $invoice->calculated_profit,
+            ];
+        });
+
+        return Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+            private $rows;
+
+            public function __construct($rows)
+            {
+                $this->rows = $rows;
+            }
+
+            public function collection()
+            {
+                return $this->rows;
+            }
+
+            public function headings(): array
+            {
+                return ['Phone Number', 'Plan', 'Service Month', 'Payment Date', 'Amount', 'Profit'];
+            }
+        }, "paid-invoices-{$startDate->format('Ymd')}-{$endDate->format('Ymd')}.xlsx");
+    }
+
+    public function exportExpenses(Request $request)
+    {
+        $fromMonth = $request->input('from_month', now()->month);
+        $fromYear  = $request->input('from_year', now()->year);
+        $toMonth   = $request->input('to_month', now()->month);
+        $toYear    = $request->input('to_year', now()->year);
+
+        $startDate = Carbon::create($fromYear, $fromMonth, 1)->startOfMonth();
+        $endDate   = Carbon::create($toYear, $toMonth, 1)->endOfMonth();
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $expenses = Expense::with('user')
+            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->orderBy('date', 'desc')
+            ->get();
+
+        $rows = $expenses->map(function ($expense) {
+            return [
+                'date' => $expense->date,
+                'amount' => $expense->amount,
+                'category' => $expense->category,
+                'description' => $expense->description,
+                'added_by' => $expense->user->name ?? 'N/A',
+            ];
+        });
+
+        return Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+            private $rows;
+
+            public function __construct($rows)
+            {
+                $this->rows = $rows;
+            }
+
+            public function collection()
+            {
+                return $this->rows;
+            }
+
+            public function headings(): array
+            {
+                return ['Date', 'Amount', 'Category', 'Description', 'Added By'];
+            }
+        }, "expenses-{$startDate->format('Ymd')}-{$endDate->format('Ymd')}.xlsx");
+    }
+
+    public function exportCapitals(Request $request)
+    {
+        $fromMonth = $request->input('from_month', now()->month);
+        $fromYear  = $request->input('from_year', now()->year);
+        $toMonth   = $request->input('to_month', now()->month);
+        $toYear    = $request->input('to_year', now()->year);
+
+        $startDate = Carbon::create($fromYear, $fromMonth, 1)->startOfMonth();
+        $endDate   = Carbon::create($toYear, $toMonth, 1)->endOfMonth();
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $capitals = Capital::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->orderBy('date', 'desc')
+            ->get();
+
+        $rows = $capitals->map(function ($capital) {
+            return [
+                'date' => $capital->date,
+                'amount' => $capital->amount,
+                'description' => $capital->description,
+            ];
+        });
+
+        return Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+            private $rows;
+
+            public function __construct($rows)
+            {
+                $this->rows = $rows;
+            }
+
+            public function collection()
+            {
+                return $this->rows;
+            }
+
+            public function headings(): array
+            {
+                return ['Date', 'Amount', 'Description'];
+            }
+        }, "capital-deposits-{$startDate->format('Ymd')}-{$endDate->format('Ymd')}.xlsx");
+    }
+
     public function storeDirectSale(Request $request)
     {
         $request->validate([

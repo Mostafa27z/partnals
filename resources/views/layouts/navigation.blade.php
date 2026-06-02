@@ -86,12 +86,12 @@
                                     <span>{{ __('messages.manage_roles') }}</span>
                                 </span>
                             </x-dropdown-link>
-                            <x-dropdown-link :href="route('change-logs.index')" class="rounded-xl">
+                            <!-- <x-dropdown-link :href="route('change-logs.index')" class="rounded-xl">
                                 <span class="flex items-center gap-3">
                                     <span class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">📝</span>
                                     <span>{{ __('messages.change_log') }}</span>
                                 </span>
-                            </x-dropdown-link>
+                            </x-dropdown-link> -->
                             <x-dropdown-link :href="route('lines.bulk-distributors')" class="rounded-xl">
                                 <span class="flex items-center gap-3">
                                     <span class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">🤝</span>

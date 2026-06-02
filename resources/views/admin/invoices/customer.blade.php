@@ -84,6 +84,7 @@
                         <th class="px-6 py-3">{{ __('messages.Paid') }}</th>
                         <th class="px-6 py-3">{{ __('messages.Payment Date') }}</th>
                         <th class="px-6 py-3">{{ __('messages.Paid By') }}</th>
+                        <th class="px-6 py-3">{{ __('messages.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -100,10 +101,19 @@
                             </td>
                             <td class="px-6 py-3">{{ $invoice->payment_date ? \Carbon\Carbon::parse($invoice->payment_date)->format('Y-m-d H:i:s') : '-' }}</td>
                             <td class="px-6 py-3">{{ $invoice->user?->name ?? '-' }}</td>
+                            <td class="px-6 py-3">
+                                <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف الفاتورة؟ سيتم ترحيل الفواتير التالية شهراً للوراء وتحديث تاريخ الفاتورة الأخير للخط.')" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                                        🗑️ {{ __('messages.delete') }}
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-6 text-gray-500 dark:text-gray-400">{{ __('messages.No invoices found.') }}</td>
+                            <td colspan="6" class="py-6 text-gray-500 dark:text-gray-400">{{ __('messages.No invoices found.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>
