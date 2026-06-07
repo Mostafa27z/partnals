@@ -89,7 +89,7 @@
                     <div class="w-px h-10 bg-gray-200 dark:bg-gray-700"></div>
                     <div class="text-center">
                         <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                            {{ $lines->count() > 0 ? number_format($lines->min('sale_price'), 0) : 0 }}
+                            {{ $lines->count() > 0 ? number_format($lines->min('sale_price'), 0) : '0' }}
                         </p>
                         <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{{ __('messages.starting_from') }}</p>
                     </div>
@@ -192,7 +192,7 @@
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('messages.sale_price') }}</span>
                                     <span class="text-xl font-black text-indigo-600 dark:text-indigo-400">
-                                        {{ number_format($line->sale_price, 0) }}
+                                        {{ $line->sale_price ? number_format($line->sale_price, 0) : '-' }}
                                         <span class="text-sm font-bold">{{ __('messages.currency') }}</span>
                                     </span>
                                 </div>

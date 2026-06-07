@@ -170,10 +170,23 @@
                 </div>
             </div>
 
-            <!-- Back Button -->
-            <!-- Requests Table -->
-            <div class="pt-6">
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50">
+            <!-- Requests Table with Toggle Button -->
+            <div x-data="{ showRequests: false }" class="pt-6">
+                <!-- Toggle Button - FIXED FOR JSON FILES -->
+                <div class="mb-4 flex items-center gap-2">
+                    <button 
+                        @click="showRequests = !showRequests"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/25 active:scale-95">
+                        <span x-show="!showRequests">👁️ {{ __('show_requests') }}</span>
+                        <span x-show="showRequests">👁️‍🗨️ {{ __('hide_requests') }}</span>
+                    </button>
+                    <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        (<span x-text="'{{ count($requests ?? []) }}'"></span> {{ __('requests') ?? 'requests' }})
+                    </span>
+                </div>
+
+                <!-- Requests Table -->
+                <div x-show="showRequests" x-transition class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50">
                     <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">{{ __('messages.requests_for_line') ?? 'Requests' }}</h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
@@ -188,7 +201,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                @foreach($requests ?? collect() as $req)
+                                @forelse($requests ?? collect() as $req)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700/50">
                                         <td class="p-3">{{ __('messages.request_type_'.$req->request_type) ?? $req->request_type }}</td>
                                         <td class="p-3">
@@ -208,7 +221,13 @@
                                             <a href="{{ route('requests.show', $req->id) }}" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline transition-all">{{ __('messages.view') }}</a>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="p-6 text-center text-gray-500 dark:text-gray-400">
+                                            {{ __('messages.no_requests_found') ?? 'No requests found' }}
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -218,6 +237,7 @@
                     </div>
                 </div>
             </div>
+
             @if($line->customer)  
                 <div class="pt-4">  
                     <a href="{{ route('customers.show', $line->customer) }}"  

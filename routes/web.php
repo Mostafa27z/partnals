@@ -43,8 +43,7 @@ Route::get('/for-sale', function (\Illuminate\Http\Request $request) {
     $query = \App\Models\Line::withoutGlobalScope('distributor')
         ->with('plan')
         ->where('for_sale', true)
-        ->where('is_sold', false)
-        ->whereNotNull('sale_price');
+        ->where('is_sold', false);
 
     if ($request->filled('provider')) {
         $query->where('provider', $request->provider);
@@ -141,6 +140,10 @@ Route::middleware(['auth', 'condition.is.active:manage customers'])->prefix('adm
     Route::get('export-customers', [CustomerController::class, 'export'])->name('customers.export');
     Route::get('ajax/customers/search', [CustomerController::class, 'searchByNationalId'])->name('ajax.customers.search');
     Route::resource('customers', CustomerController::class);
+    Route::get('/customers/{customer}/add-line', [CustomerController::class, 'addLine'])
+    ->name('customers.addline');
+    Route::post('/customers/{customer}/add-line', [CustomerController::class, 'storeLine'])
+    ->name('customers.storeline');
 });
 // use App\Http\Controllers\PlanController;
 

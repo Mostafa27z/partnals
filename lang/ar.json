@@ -270,5 +270,9 @@
     "manage requests": "إدارة الطلبات",
     "manage users": "إدارة المستخدمين",
     "manage accounting": "إدارة المحاسبة",
-    "manage hr": "إدارة الموارد البشرية"
+    "manage hr": "إدارة الموارد البشرية",
+    "show_requests": "عرض الطلبات",
+    "hide_requests": "إخفاء الطلبات",
+    "no":"لا",
+    "yes":"نعم"
 }

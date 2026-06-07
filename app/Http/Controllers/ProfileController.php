@@ -26,15 +26,39 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        try {
+            $user = $request->user();
+            $emailChanged = false;
+            $oldEmail = $user->email;
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+            // Fill user data
+            $user->fill($request->validated());
+
+            // Check if email was changed
+            // if ($user->isDirty('email')) {
+            //     $emailChanged = true;
+            //     $user->email_verified_at = null;
+            // }
+
+            $user->save();
+
+            $message = __('Profile updated successfully!');
+            if ($emailChanged) {
+                $message = __('Profile updated successfully!');
+            }
+
+            return Redirect::route('profile.edit')->with([
+                'status' => 'profile-updated',
+                'message' => $message,
+                'type' => 'success'
+            ]);
+        } catch (\Exception $e) {
+            return Redirect::route('profile.edit')->with([
+                'status' => 'profile-error',
+                'message' => __('Failed to update profile. Please try again.'),
+                'type' => 'error'
+            ]);
         }
-
-        $request->user()->save();
-
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
     /**
@@ -42,19 +66,31 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
-        ]);
+        try {
+            $request->validateWithBag('userDeletion', [
+                'password' => ['required', 'current_password'],
+            ]);
 
-        $user = $request->user();
+            $user = $request->user();
 
-        Auth::logout();
+            Auth::logout();
 
-        $user->delete();
+            $user->delete();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-        return Redirect::to('/');
+            return Redirect::to('/')->with([
+                'status' => 'account-deleted',
+                'message' => __('Account deleted successfully.'),
+                'type' => 'success'
+            ]);
+        } catch (\Exception $e) {
+            return Redirect::route('profile.edit')->with([
+                'status' => 'delete-error',
+                'message' => __('Failed to delete account. Please try again.'),
+                'type' => 'error'
+            ]);
+        }
     }
 }

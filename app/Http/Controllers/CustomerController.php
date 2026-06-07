@@ -193,5 +193,33 @@ public function forceDelete($id)
 
     return redirect()->route('customers.trashed')->with('success', '🗑️ تم حذف العميل نهائياً');
 }
+public function addLine(Customer $customer)
+{
+    $lines = Line::query()
+        
+        ->orderBy('phone_number')
+        ->get();
 
+    return view('admin.customers.add-line', compact(
+        'customer',
+        'lines'
+    ));
+}
+public function storeLine(Request $request, Customer $customer)
+{
+    $request->validate([
+        'line_id' => ['required', 'exists:lines,id'],
+    ]);
+
+    $line = Line::findOrFail($request->line_id);
+
+    $line->update([
+        'customer_id' => $customer->id,
+        'attached_at' => now(),
+    ]);
+
+    return redirect()
+        ->route('customers.show', $customer)
+        ->with('success', __('messages.line_attached_successfully'));
+}
 }

@@ -41,10 +41,10 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <a href="{{ route('lines.create', ['customer_id' => $customer->id]) }}"
-                           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition duration-150">
-                            + {{ __('messages.add_line') }}
-                        </a>
+                        <a href="{{ route('customers.addline', $customer) }}"
+   class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition duration-150">
+    + {{ __('messages.add_line') }}
+</a>
                     </div>
                 </div>
 

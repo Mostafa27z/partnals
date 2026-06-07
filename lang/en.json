@@ -285,5 +285,9 @@
     "manage requests": "Manage Requests",
     "manage users": "Manage Users",
     "manage accounting": "Manage Accounting",
-    "manage hr": "Manage HR"
+    "manage hr": "Manage HR",
+    "show_requests": "Show Requests",
+    "hide_requests": "Hide Requests",
+    "no":"no",
+    "yes":"yes"
 }
