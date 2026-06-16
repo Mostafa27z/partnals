@@ -12,6 +12,13 @@ use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 class ForSaleLinesExport extends DefaultValueBinder implements FromCollection, WithHeadings, WithCustomValueBinder
 {
+    protected $filters;
+
+    public function __construct(array $filters = [])
+    {
+        $this->filters = $filters;
+    }
+
     public function bindValue(Cell $cell, $value = null)
     {
         if (is_numeric($value) && strlen((string) $value) >= 7) {
@@ -23,10 +30,19 @@ class ForSaleLinesExport extends DefaultValueBinder implements FromCollection, W
 
     public function collection()
     {
-        return Line::with(['customer', 'plan', 'distributor'])
+        $query = Line::with(['customer', 'plan', 'distributor'])
             ->where('for_sale', true)
-            ->where('is_sold', false)
-            ->get()
+            ->where('is_sold', false);
+
+        if (!empty($this->filters['provider'])) {
+            $query->where('provider', $this->filters['provider']);
+        }
+
+        if (!empty($this->filters['plan_id'])) {
+            $query->where('plan_id', $this->filters['plan_id']);
+        }
+
+        return $query->orderBy('sale_price')->get()
             ->map(function ($line) {
                 return [
                     'رقم الهاتف' => $line->phone_number,

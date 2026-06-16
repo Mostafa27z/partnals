@@ -206,6 +206,8 @@ return [
     'Unpaid' => 'Unpaid',
     'From Date' => 'From Date',
     'To Date' => 'To Date',
+    'last_invoice_from' => 'Last Invoice From',
+    'last_invoice_to' => 'Last Invoice To',
     'Filter' => 'Filter',
     'Amount' => 'Amount',
     'Notes' => 'Notes',

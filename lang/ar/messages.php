@@ -424,6 +424,8 @@ return [
     'Unpaid' => 'غير مدفوع',
     'From Date' => 'من تاريخ',
     'To Date' => 'إلى تاريخ',
+    'last_invoice_from' => 'من تاريخ آخر فاتورة',
+    'last_invoice_to' => 'إلى تاريخ آخر فاتورة',
     'Filter' => 'فلترة',
     'Amount' => 'المبلغ',
     'Notes' => 'ملاحظات',

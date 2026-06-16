@@ -39,6 +39,8 @@ Route::middleware(['auth', 'condition.is.active:manage permissions'])->group(fun
     Route::post('/admin/permissions/update', [PermissionController::class, 'update'])->name('permissions.update');
 });
 
+Route::get('/for-sale/export', [LineController::class, 'exportForSale'])->name('public.for-sale.export');
+
 Route::get('/for-sale', function (\Illuminate\Http\Request $request) {
     $query = \App\Models\Line::withoutGlobalScope('distributor')
         ->with('plan')
@@ -61,7 +63,9 @@ Route::get('/for-sale', function (\Illuminate\Http\Request $request) {
         ->distinct()
         ->pluck('provider');
 
-    $plans = \App\Models\Plan::whereHas('lines', function($q) {
+    $plans = \App\Models\Plan::when($request->filled('provider'), function ($q) use ($request) {
+        $q->where('provider', $request->provider);
+    })->whereHas('lines', function($q) {
         $q->withoutGlobalScope('distributor')
           ->where('for_sale', true)
           ->where('is_sold', false);
@@ -107,7 +111,17 @@ Route::get('/home', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 Route::get('/ajax/plans/by-provider', function (\Illuminate\Http\Request $request) {
     $provider = $request->q;
-    return \App\Models\Plan::where('provider', $provider)->select('id', 'name')->get();
+    $query = \App\Models\Plan::whereHas('lines', function ($q) {
+        $q->withoutGlobalScope('distributor')
+          ->where('for_sale', true)
+          ->where('is_sold', false);
+    });
+
+    if ($provider) {
+        $query->where('provider', $provider);
+    }
+
+    return $query->select('id', 'name')->get();
 });
 
 Route::middleware(['auth', 'condition.is.active:manage dashboard'])->group(function () {

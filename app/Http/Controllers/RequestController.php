@@ -831,9 +831,12 @@ class RequestController extends Controller
             'sale_price'   => $request->sale_price,
         ]);
 
+        $lineUpdateData = ['for_sale' => false];
         if ($request->filled('sale_price')) {
-            $line->update(['sale_price' => $request->sale_price]);
+            $lineUpdateData['sale_price'] = $request->sale_price;
         }
+
+        $line->update($lineUpdateData);
 
         return back()->with('success', '✅ تم إنشاء طلب إعادة البيع بنجاح.');
     }

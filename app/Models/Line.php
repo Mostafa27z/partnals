@@ -45,6 +45,8 @@ class Line extends Model
             }
 
             if ($line->isDirty('last_invoice_date')) {
+                $line->for_sale = false;
+
                 if ($line->last_invoice_date) {
                     try {
                         $lastInvoice = Carbon::parse($line->last_invoice_date);
@@ -58,6 +60,10 @@ class Line extends Model
                         // Keep current status if parsing fails
                     }
                 }
+            }
+
+            if ($line->isDirty('status') && $line->status === 'active') {
+                $line->for_sale = false;
             }
         });
     }

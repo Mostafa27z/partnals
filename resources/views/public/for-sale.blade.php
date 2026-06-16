@@ -101,7 +101,7 @@
                 <form action="{{ route('public.for-sale') }}" method="GET" class="bg-white/80 dark:bg-gray-800/60 p-4 rounded-3xl border border-white dark:border-gray-700/30 shadow-xl backdrop-blur-md flex flex-wrap items-end gap-4 max-w-4xl mx-auto">
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5 px-1">{{ __('messages.provider') }}</label>
-                        <select name="provider" class="w-full h-12 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl px-4 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 transition-all text-gray-900 dark:text-white">
+                        <select id="provider-select" name="provider" class="w-full h-12 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl px-4 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 transition-all text-gray-900 dark:text-white">
                             <option value="">{{ __('messages.all_providers') }}</option>
                             @foreach($providers as $p)
                                 <option value="{{ $p }}" {{ request('provider') == $p ? 'selected' : '' }}>{{ $p }}</option>
@@ -110,7 +110,7 @@
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5 px-1">{{ __('messages.plan') }}</label>
-                        <select name="plan_id" class="w-full h-12 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl px-4 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 transition-all text-gray-900 dark:text-white">
+                        <select id="plan-select" name="plan_id" class="w-full h-12 bg-gray-50 dark:bg-gray-900/50 border-none rounded-2xl px-4 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 transition-all text-gray-900 dark:text-white">
                             <option value="">{{ __('messages.all_plans') }}</option>
                             @foreach($plans as $p)
                                 <option value="{{ $p->id }}" {{ request('plan_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
@@ -120,6 +120,9 @@
                     <button type="submit" class="h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-indigo-600/25 active:scale-95">
                         🔍 {{ __('messages.search') }}
                     </button>
+                    <a id="export-link" data-base-url="{{ route('public.for-sale.export') }}" href="{{ route('public.for-sale.export', request()->only(['provider', 'plan_id'])) }}" class="h-12 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-emerald-600/25 active:scale-95">
+                        ⬇️ تصدير إكسل
+                    </a>
                     @if(request()->anyFilled(['provider', 'plan_id']))
                         <a href="{{ route('public.for-sale') }}" class="h-12 w-12 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl font-black text-sm flex items-center justify-center transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600">
                             ✖️
@@ -128,6 +131,51 @@
                 </form>
             </div>
         </div>
+    <script>
+        const providerSelect = document.getElementById('provider-select');
+        const planSelect = document.getElementById('plan-select');
+        const exportLink = document.getElementById('export-link');
+
+        const updateExportHref = () => {
+            if (!exportLink) return;
+
+            const params = new URLSearchParams();
+            if (providerSelect?.value) {
+                params.set('provider', providerSelect.value);
+            }
+            if (planSelect?.value) {
+                params.set('plan_id', planSelect.value);
+            }
+
+            exportLink.href = exportLink.dataset.baseUrl + (params.toString() ? `?${params.toString()}` : '');
+        };
+
+        providerSelect?.addEventListener('change', async function () {
+            const provider = this.value;
+            const params = new URLSearchParams();
+            if (provider) params.set('q', provider);
+
+            const response = await fetch(`/ajax/plans/by-provider?${params.toString()}`);
+            if (!response.ok) {
+                return;
+            }
+
+            const plans = await response.json();
+            planSelect.innerHTML = '<option value="">{{ __('messages.all_plans') }}</option>';
+
+            plans.forEach(plan => {
+                const option = document.createElement('option');
+                option.value = plan.id;
+                option.textContent = plan.name;
+                planSelect.appendChild(option);
+            });
+
+            planSelect.value = '';
+            updateExportHref();
+        });
+
+        planSelect?.addEventListener('change', updateExportHref);
+    </script>
 
         {{-- Lines Grid --}}
         <div class="max-w-5xl mx-auto px-6 pb-20">

@@ -194,7 +194,7 @@ public function importProcess(Request $request)
         $q->where('id', $user->id);
     })->select('id', 'name')->get();
 
-    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid']);
+    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid', 'last_invoice_from', 'last_invoice_to']);
 
     if (!$hasSearch) {
         $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
@@ -231,7 +231,7 @@ public function bulkDistributorsIndex(Request $request)
         $q->where('id', $user->id);
     })->select('id', 'name')->get();
 
-    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid']);
+    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid', 'last_invoice_from', 'last_invoice_to']);
 
     if (!$hasSearch) {
         $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
@@ -265,7 +265,7 @@ public function deleteIndex(Request $request)
         $q->where('id', $user->id);
     })->select('id', 'name')->get();
 
-    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid']);
+    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid', 'last_invoice_from', 'last_invoice_to']);
 
     if (!$hasSearch) {
         $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
@@ -348,6 +348,14 @@ private function applyFilters($query, Request $request)
 
     if ($request->filled('plan_id')) {
         $query->where('plan_id', $request->plan_id);
+    }
+
+    if ($request->filled('last_invoice_from')) {
+        $query->whereDate('last_invoice_date', '>=', $request->last_invoice_from);
+    }
+
+    if ($request->filled('last_invoice_to')) {
+        $query->whereDate('last_invoice_date', '<=', $request->last_invoice_to);
     }
 
     if ($request->filled('gcode')) {
@@ -897,11 +905,13 @@ public function restore($id)
     }
 
     // Export all lines marked for sale as Excel
-    public function exportForSale()
+    public function exportForSale(Request $request)
     {
+        $filters = $request->only(['provider', 'plan_id']);
+
         return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\ForSaleLinesExport(),
-            'lines_for_sale.xlsx'
+            new \App\Exports\ForSaleLinesExport($filters),
+            'lines_for_sale_' . now()->format('Ymd_His') . '.xlsx'
         );
     }
 
