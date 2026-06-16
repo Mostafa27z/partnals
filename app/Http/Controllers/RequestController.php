@@ -769,7 +769,7 @@ class RequestController extends Controller
 
         \App\Models\RequestChangeDate::create([
             'request_id'   => $requestModel->id,
-            'current_date' => $line->last_invoice_date,
+            'current_date' => $line->last_invoice_date ?? now()->toDateString(),
             'new_date'     => $validated['new_date'],
             'reason'       => $validated['reason'],
         ]);
