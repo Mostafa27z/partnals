@@ -182,6 +182,8 @@ Route::prefix('admin/lines')->middleware(['auth', 'condition.is.active:manage li
     Route::post('/bulk-update-distributor', [LineController::class, 'bulkUpdateDistributor'])->name('lines.bulk-update-distributor');
 });
 
+Route::get('/check-expired', [LineController::class, 'expireExpiredLines'])->name('lines.expired.check');
+
 Route::prefix('admin')->middleware(['auth', 'condition.is.active:manage lines'])->group(function () {
     Route::resource('providers', ProviderController::class);
 });

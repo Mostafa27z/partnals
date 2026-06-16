@@ -915,5 +915,22 @@ public function restore($id)
         );
     }
 
+    public function expireExpiredLines()
+    {
+        $today = now()->startOfDay();
+        $expiredLines = Line::whereNotNull('last_invoice_date')
+            ->whereDate('last_invoice_date', '<=', $today)
+            ->where('status', '!=', 'inactive')
+            ->get();
 
+        $updatedCount = 0;
+
+        foreach ($expiredLines as $line) {
+            $line->status = 'inactive';
+            $line->save();
+            $updatedCount++;
+        }
+
+        return redirect()->route('lines.all')->with('success', "✅ تم تحديث $updatedCount خط إلى غير نشط.");
+    }
 }
