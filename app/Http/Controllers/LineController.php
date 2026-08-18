@@ -194,11 +194,43 @@ public function importProcess(Request $request)
         $q->where('id', $user->id);
     })->select('id', 'name')->get();
 
-    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid', 'last_invoice_from', 'last_invoice_to']);
+    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid', 'last_invoice_from', 'last_invoice_to', 'customer_name']);
 
     if (!$hasSearch) {
         $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
         return view('admin.lines.all', compact('lines', 'plans', 'distributors', 'hasSearch'));
+    }
+
+    $searchErrors = [];
+    $searchWarnings = [];
+
+    $phone = $request->filled('phone') ? trim($request->input('phone')) : null;
+    $nid = $request->filled('nid') ? trim($request->input('nid')) : null;
+
+    if ($phone !== null) {
+        if (!preg_match('/^[0-9]+$/', $phone)) {
+            $searchErrors[] = 'الرجاء التأكد من الرقم، يجب أن يحتوي على أرقام فقط';
+        } elseif (strlen($phone) < 11) {
+            $searchWarnings[] = 'الرجاء التأكد من الرقم، يجب أن يكون مكوناً من 11 رقماً (ربما نسيت رقماً)';
+        } elseif (strlen($phone) > 11) {
+            $searchErrors[] = 'الرجاء التأكد من الرقم، لا يمكن أن يزيد عن 11 رقماً';
+        }
+    }
+
+    if ($nid !== null) {
+        if (!preg_match('/^[0-9]+$/', $nid)) {
+            $searchErrors[] = 'الرجاء التأكد من الرقم القومي، يجب أن يحتوي على أرقام فقط';
+        } elseif (strlen($nid) < 14) {
+            $searchWarnings[] = 'الرجاء التأكد من الرقم القومي، يجب أن يكون مكوناً من 14 رقماً (ربما نسيت رقماً)';
+        } elseif (strlen($nid) > 14) {
+            $searchErrors[] = 'الرجاء التأكد من الرقم القومي، لا يمكن أن يزيد عن 14 رقماً';
+        }
+    }
+
+    if (!empty($searchErrors)) {
+        $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+        $totalCount = 0;
+        return view('admin.lines.all', compact('lines', 'plans', 'distributors', 'hasSearch', 'totalCount', 'searchErrors', 'searchWarnings'));
     }
 
     $query = Line::with(['customer', 'plan', 'distributor']);
@@ -209,10 +241,19 @@ public function importProcess(Request $request)
 
     $query = $this->applyFilters($query, $request);
 
-    $totalCount = $query->count();
-    $lines = $query->latest()->paginate(20);
+    // Apply leftJoin & order alphabetically by customer name
+    $query->leftJoin('customers', 'lines.customer_id', '=', 'customers.id')
+          ->orderBy('customers.full_name', 'asc')
+          ->select('lines.*');
 
-    return view('admin.lines.all', compact('lines', 'plans', 'distributors', 'hasSearch', 'totalCount'));
+    $totalCount = $query->count();
+    $lines = $query->paginate(20)->withQueryString();
+
+    if ($lines->total() === 1) {
+        return redirect()->route('lines.show', $lines->first()->id);
+    }
+
+    return view('admin.lines.all', compact('lines', 'plans', 'distributors', 'hasSearch', 'totalCount', 'searchWarnings'));
 }
 
 public function bulkDistributorsIndex(Request $request) 
@@ -231,7 +272,7 @@ public function bulkDistributorsIndex(Request $request)
         $q->where('id', $user->id);
     })->select('id', 'name')->get();
 
-    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid', 'last_invoice_from', 'last_invoice_to']);
+    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid', 'last_invoice_from', 'last_invoice_to', 'customer_name']);
 
     if (!$hasSearch) {
         $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
@@ -265,11 +306,43 @@ public function deleteIndex(Request $request)
         $q->where('id', $user->id);
     })->select('id', 'name')->get();
 
-    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid', 'last_invoice_from', 'last_invoice_to']);
+    $hasSearch = $request->hasAny(['phone', 'distributor_id', 'provider', 'plan_id', 'gcode', 'nid', 'last_invoice_from', 'last_invoice_to', 'customer_name']);
 
     if (!$hasSearch) {
         $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
         return view('admin.lines.delete', compact('lines', 'plans', 'distributors', 'hasSearch'));
+    }
+
+    $searchErrors = [];
+    $searchWarnings = [];
+
+    $phone = $request->filled('phone') ? trim($request->input('phone')) : null;
+    $nid = $request->filled('nid') ? trim($request->input('nid')) : null;
+
+    if ($phone !== null) {
+        if (!preg_match('/^[0-9]+$/', $phone)) {
+            $searchErrors[] = 'الرجاء التأكد من الرقم، يجب أن يحتوي على أرقام فقط';
+        } elseif (strlen($phone) < 11) {
+            $searchWarnings[] = 'الرجاء التأكد من الرقم، يجب أن يكون مكوناً من 11 رقماً (ربما نسيت رقماً)';
+        } elseif (strlen($phone) > 11) {
+            $searchErrors[] = 'الرجاء التأكد من الرقم، لا يمكن أن يزيد عن 11 رقماً';
+        }
+    }
+
+    if ($nid !== null) {
+        if (!preg_match('/^[0-9]+$/', $nid)) {
+            $searchErrors[] = 'الرجاء التأكد من الرقم القومي، يجب أن يحتوي على أرقام فقط';
+        } elseif (strlen($nid) < 14) {
+            $searchWarnings[] = 'الرجاء التأكد من الرقم القومي، يجب أن يكون مكوناً من 14 رقماً (ربما نسيت رقماً)';
+        } elseif (strlen($nid) > 14) {
+            $searchErrors[] = 'الرجاء التأكد من الرقم القومي، لا يمكن أن يزيد عن 14 رقماً';
+        }
+    }
+
+    if (!empty($searchErrors)) {
+        $lines = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+        $totalCount = 0;
+        return view('admin.lines.delete', compact('lines', 'plans', 'distributors', 'hasSearch', 'totalCount', 'searchErrors', 'searchWarnings'));
     }
 
     $query = Line::with(['customer', 'plan', 'distributor']);
@@ -280,10 +353,19 @@ public function deleteIndex(Request $request)
 
     $query = $this->applyFilters($query, $request);
 
-    $totalCount = $query->count();
-    $lines = $query->latest()->paginate(20);
+    // Apply leftJoin & order alphabetically by customer name
+    $query->leftJoin('customers', 'lines.customer_id', '=', 'customers.id')
+          ->orderBy('customers.full_name', 'asc')
+          ->select('lines.*');
 
-    return view('admin.lines.delete', compact('lines', 'plans', 'distributors', 'hasSearch', 'totalCount'));
+    $totalCount = $query->count();
+    $lines = $query->paginate(20)->withQueryString();
+
+    if ($lines->total() === 1) {
+        return redirect()->route('lines.show', $lines->first()->id);
+    }
+
+    return view('admin.lines.delete', compact('lines', 'plans', 'distributors', 'hasSearch', 'totalCount', 'searchWarnings'));
 }
 
 public function bulkUpdateDistributor(Request $request)
@@ -365,6 +447,12 @@ private function applyFilters($query, Request $request)
     if ($request->filled('nid')) {
         $query->whereHas('customer', function ($q) use ($request) {
             $q->where('national_id', 'like', '%' . $request->nid . '%');
+        });
+    }
+
+    if ($request->filled('customer_name')) {
+        $query->whereHas('customer', function ($q) use ($request) {
+            $q->where('full_name', 'like', '%' . $request->customer_name . '%');
         });
     }
 
@@ -591,6 +679,36 @@ public function show(Line $line)
         ->paginate(15);
 
     return view('admin.lines.show', compact('line', 'requests'));
+}
+
+public function updateCustomerData(Request $request, Line $line)
+{
+    $customer = $line->customer;
+    if ($customer) {
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'national_id' => 'required|string|size:14|unique:customers,national_id,' . $customer->id,
+            'contact_number' => 'nullable|string|max:11',
+            'whatsapp_number' => 'nullable|string|max:11',
+            'address' => 'nullable|string|max:255',
+            'birth_date' => 'nullable|date',
+        ]);
+
+        $customer->update([
+            'full_name' => $request->full_name,
+            'national_id' => $request->national_id,
+            'contact_number' => $request->contact_number,
+            'whatsapp_number' => $request->whatsapp_number,
+            'address' => $request->address,
+            'birth_date' => $request->birth_date,
+        ]);
+    }
+
+    $line->update([
+        'notes' => $request->notes,
+    ]);
+
+    return back()->with('success', '✅ تم تحديث بيانات العميل والملاحظات بنجاح.');
 }
 
     public function editStandalone(Line $line)
@@ -907,7 +1025,7 @@ public function restore($id)
     // Export all lines marked for sale as Excel
     public function exportForSale(Request $request)
     {
-        $filters = $request->only(['provider', 'plan_id']);
+        $filters = $request->only(['providers', 'plans']);
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\ForSaleLinesExport($filters),

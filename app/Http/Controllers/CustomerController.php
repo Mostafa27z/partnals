@@ -16,24 +16,31 @@ class CustomerController extends Controller
         $user = auth()->user();
         $isDistributor = $user->role && $user->role->name === 'موزع';
 
-        $query = Customer::filter($request);
+        $query = Line::withoutGlobalScope('distributor')
+            ->with(['customer', 'distributor'])
+            ->join('customers', 'lines.customer_id', '=', 'customers.id')
+            ->select('lines.*')
+            ->orderBy('customers.full_name', 'asc');
 
         if ($isDistributor) {
-            // Only show customers that have at least one line belonging to this distributor
-            $query->whereHas('lines', function($q) use ($user) {
-                $q->where('distributor_id', $user->id);
-            });
-            // And only load those specific lines
-            $query->with(['lines' => function($q) use ($user) {
-                $q->where('distributor_id', $user->id);
-            }]);
-        } else {
-            $query->with('lines');
+            $query->where('lines.distributor_id', $user->id);
         }
 
-        $customers = $query->paginate(10);
+        if ($request->filled('name')) {
+            $query->where('customers.full_name', 'like', '%' . $request->name . '%');
+        }
 
-        return view('admin.customers.index', compact('customers'));
+        if ($request->filled('national_id')) {
+            $query->where('customers.national_id', 'like', '%' . $request->national_id . '%');
+        }
+
+        if ($request->filled('phone_number')) {
+            $query->where('lines.phone_number', 'like', '%' . $request->phone_number . '%');
+        }
+
+        $lines = $query->paginate(10);
+
+        return view('admin.customers.index', compact('lines'));
     }
 
     public function create()

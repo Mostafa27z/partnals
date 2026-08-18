@@ -42,36 +42,7 @@ Route::middleware(['auth', 'condition.is.active:manage permissions'])->group(fun
 Route::get('/for-sale/export', [LineController::class, 'exportForSale'])->name('public.for-sale.export');
 
 Route::get('/for-sale', function (\Illuminate\Http\Request $request) {
-    $query = \App\Models\Line::withoutGlobalScope('distributor')
-        ->with('plan')
-        ->where('for_sale', true)
-        ->where('is_sold', false);
-
-    if ($request->filled('provider')) {
-        $query->where('provider', $request->provider);
-    }
-
-    if ($request->filled('plan_id')) {
-        $query->where('plan_id', $request->plan_id);
-    }
-
-    $lines = $query->orderBy('sale_price')->get();
-    
-    $providers = \App\Models\Line::withoutGlobalScope('distributor')
-        ->where('for_sale', true)
-        ->where('is_sold', false)
-        ->distinct()
-        ->pluck('provider');
-
-    $plans = \App\Models\Plan::when($request->filled('provider'), function ($q) use ($request) {
-        $q->where('provider', $request->provider);
-    })->whereHas('lines', function($q) {
-        $q->withoutGlobalScope('distributor')
-          ->where('for_sale', true)
-          ->where('is_sold', false);
-    })->get();
-
-    return view('public.for-sale', compact('lines', 'providers', 'plans'));
+    return redirect()->route('dashboard', $request->all());
 })->name('public.for-sale');
 
 Route::get('home', function () {
@@ -82,7 +53,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
+Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
     $user = auth()->user();
     $isDistributor = $user->role && $user->role->name === 'موزع';
 
@@ -104,7 +75,135 @@ Route::get('/dashboard', function () {
             $q->where('distributor_id', $user->id);
         })->count();
 
-    return view('dashboard', compact('activeCustomersCount', 'pendingRequestsCount', 'newLinesCount'));
+    // Search logic
+    $searchErrors = [];
+    $searchWarnings = [];
+    $searchResults = null;
+    $hasDashboardSearch = false;
+
+    if ($request->hasAny(['phone', 'nid', 'customer_name'])) {
+        $hasDashboardSearch = true;
+        $query = \App\Models\Line::with(['customer', 'plan', 'distributor']);
+
+        if ($isDistributor) {
+            $query->where('distributor_id', $user->id);
+        }
+
+        $phone = $request->filled('phone') ? trim($request->input('phone')) : null;
+        $nid = $request->filled('nid') ? trim($request->input('nid')) : null;
+        $customerName = $request->filled('customer_name') ? trim($request->input('customer_name')) : null;
+
+        // Validation checks
+        if ($phone !== null) {
+            if (!preg_match('/^[0-9]+$/', $phone)) {
+                $searchErrors[] = 'الرجاء التأكد من الرقم، يجب أن يحتوي على أرقام فقط';
+            } elseif (strlen($phone) < 11) {
+                $searchWarnings[] = 'الرجاء التأكد من الرقم، يجب أن يكون مكوناً من 11 رقماً (ربما نسيت رقماً)';
+            } elseif (strlen($phone) > 11) {
+                $searchErrors[] = 'الرجاء التأكد من الرقم، لا يمكن أن يزيد عن 11 رقماً';
+            }
+        }
+
+        if ($nid !== null) {
+            if (!preg_match('/^[0-9]+$/', $nid)) {
+                $searchErrors[] = 'الرجاء التأكد من الرقم القومي، يجب أن يحتوي على أرقام فقط';
+            } elseif (strlen($nid) < 14) {
+                $searchWarnings[] = 'الرجاء التأكد من الرقم القومي، يجب أن يكون مكوناً من 14 رقماً (ربما نسيت رقماً)';
+            } elseif (strlen($nid) > 14) {
+                $searchErrors[] = 'الرجاء التأكد من الرقم القومي، لا يمكن أن يزيد عن 14 رقماً';
+            }
+        }
+
+        // If no validation errors prevent search, perform the query
+        if (empty($searchErrors)) {
+            if ($phone !== null) {
+                $query->where('phone_number', 'like', '%' . $phone . '%');
+            }
+
+            if ($nid !== null) {
+                $query->whereHas('customer', function ($q) use ($nid) {
+                    $q->where('national_id', 'like', '%' . $nid . '%');
+                });
+            }
+
+            if ($customerName !== null) {
+                $query->whereHas('customer', function ($q) use ($customerName) {
+                    $q->where('full_name', 'like', '%' . $customerName . '%');
+                });
+            }
+
+            $searchResults = $query->leftJoin('customers', 'lines.customer_id', '=', 'customers.id')
+                ->orderBy('customers.full_name', 'asc')
+                ->select('lines.*')
+                ->paginate(10)->withQueryString();
+
+            if ($searchResults->total() === 1) {
+                return redirect()->route('lines.show', $searchResults->first()->id);
+            }
+
+            if ($phone !== null && $searchResults->isEmpty()) {
+                $searchErrors[] = 'الرقم غير موجود';
+            }
+        }
+    }
+
+    // For Sale Lines logic
+    $forSaleQuery = \App\Models\Line::withoutGlobalScope('distributor')
+        ->with('plan')
+        ->where('for_sale', true)
+        ->where('is_sold', false);
+
+    // Apply multi-select filters
+    $selectedProviders = $request->input('providers', []);
+    if (!empty($selectedProviders)) {
+        $forSaleQuery->whereIn('provider', $selectedProviders);
+    }
+
+    $selectedPlans = $request->input('plans', []);
+    if (!empty($selectedPlans)) {
+        $forSaleQuery->whereIn('plan_id', $selectedPlans);
+    }
+
+    $forSaleLines = $forSaleQuery->orderBy('sale_price')->get();
+
+    // Stats
+    $totalForSaleCount = \App\Models\Line::withoutGlobalScope('distributor')
+        ->where('for_sale', true)
+        ->where('is_sold', false)
+        ->count();
+
+    $minSalePrice = \App\Models\Line::withoutGlobalScope('distributor')
+        ->where('for_sale', true)
+        ->where('is_sold', false)
+        ->min('sale_price');
+
+    $allProviders = \App\Models\Line::withoutGlobalScope('distributor')
+        ->where('for_sale', true)
+        ->where('is_sold', false)
+        ->distinct()
+        ->pluck('provider')
+        ->toArray();
+
+    $allPlans = \App\Models\Plan::whereHas('lines', function($q) {
+        $q->withoutGlobalScope('distributor')
+          ->where('for_sale', true)
+          ->where('is_sold', false);
+    })->get();
+
+    return view('dashboard', compact(
+        'activeCustomersCount',
+        'pendingRequestsCount',
+        'newLinesCount',
+        'searchErrors',
+        'searchWarnings',
+        'searchResults',
+        'hasDashboardSearch',
+        'forSaleLines',
+        'totalForSaleCount',
+        'minSalePrice',
+        'allProviders',
+        'allPlans'
+    ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 Route::get('/home', function () {
     return view('dashboard');
@@ -194,6 +293,7 @@ Route::middleware(['auth', 'condition.is.active:manage invoices'])->group(functi
     Route::get('lines/{line}/pay', [InvoiceController::class, 'create'])->name('invoices.create');
     Route::post('lines/{line}/pay', [InvoiceController::class, 'store'])->name('invoices.store');
 Route::get('/lines/{line}', [LineController::class, 'show'])->name('lines.show');
+Route::post('/lines/{line}/update-customer', [LineController::class, 'updateCustomerData'])->name('lines.update-customer');
 
     Route::get('/customers/{customer}/invoices', [InvoiceController::class, 'customerInvoices'])->name('customers.invoices');
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index'); Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');

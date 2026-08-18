@@ -34,12 +34,14 @@ class ForSaleLinesExport extends DefaultValueBinder implements FromCollection, W
             ->where('for_sale', true)
             ->where('is_sold', false);
 
-        if (!empty($this->filters['provider'])) {
-            $query->where('provider', $this->filters['provider']);
+        $selectedProviders = $this->filters['providers'] ?? [];
+        if (!empty($selectedProviders)) {
+            $query->whereIn('provider', $selectedProviders);
         }
 
-        if (!empty($this->filters['plan_id'])) {
-            $query->where('plan_id', $this->filters['plan_id']);
+        $selectedPlans = $this->filters['plans'] ?? [];
+        if (!empty($selectedPlans)) {
+            $query->whereIn('plan_id', $selectedPlans);
         }
 
         return $query->orderBy('sale_price')->get()

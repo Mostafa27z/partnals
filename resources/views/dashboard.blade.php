@@ -10,31 +10,121 @@
         </div>
     </x-slot>
 
-    <div class="space-y-10">
-        {{-- Welcome Hero Section --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-[2.5rem] p-1 shadow-2xl">
-            <div class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-            <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-indigo-400/20 rounded-full blur-3xl"></div>
-            
-            <div class="relative bg-white/5 backdrop-blur-sm rounded-[2.2rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 border border-white/10">
-                <div class="max-w-xl text-center md:text-start rtl:md:text-right">
-                    <span class="inline-block px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-white text-[10px] font-black uppercase tracking-widest mb-6">
-                        {{ __('messages.partner_management_system') }} • {{ __('messages.version') }} 2.1
-                    </span>
-                    <h3 class="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">
-                        {{ __('messages.welcome_to_env') }}
-                    </h3>
-                    <p class="text-indigo-100 text-lg leading-relaxed opacity-90 font-medium">
-                        {{ __('messages.dashboard_desc') }}
-                    </p>
+    <div class="space-y-10" dir="rtl">
+        {{-- Search Section --}}
+        <div class="p-6 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700/50">
+            <h3 class="text-lg font-black text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                🔍 {{ __('messages.search') ?? 'البحث' }}
+            </h3>
+            <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap gap-4 items-end">
+                <!-- Phone (الرقم) -->
+                <div class="w-full md:flex-1 min-w-[200px]">
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">الرقم (الهاتف)</label>
+                    <input type="text" name="phone" value="{{ request('phone') }}" placeholder="مثال: 01012345678" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition placeholder:text-gray-400 text-sm" />
                 </div>
-                <div class="flex-shrink-0">
-                    <div class="w-32 h-32 md:w-40 md:h-40 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 flex items-center justify-center text-6xl shadow-2xl">
-                        🚀
+                <!-- National ID (الرقم القومي) -->
+                <div class="w-full md:flex-1 min-w-[200px]">
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">الرقم القومي</label>
+                    <input type="text" name="nid" value="{{ request('nid') }}" placeholder="14 رقم" maxlength="14" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition placeholder:text-gray-400 text-sm" />
+                </div>
+                <!-- Customer Name (اسم العميل) -->
+                <div class="w-full md:flex-1 min-w-[200px]">
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">اسم العميل</label>
+                    <input type="text" name="customer_name" value="{{ request('customer_name') }}" placeholder="الاسم الكامل" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition placeholder:text-gray-400 text-sm" />
+                </div>
+                
+                <div class="w-full md:w-auto">
+                    <button type="submit" class="w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/25 cursor-pointer">
+                        🔍 بحث
+                    </button>
+                </div>
+            </form>
+
+            {{-- Validation / Search Errors --}}
+            @if(isset($searchErrors) && !empty($searchErrors))
+                @foreach($searchErrors as $error)
+                    <div class="mt-4 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/30 text-rose-700 dark:text-rose-300 rounded-xl flex items-center gap-3 font-bold">
+                        <span class="text-lg">⚠️</span>
+                        {{ $error }}
+                    </div>
+                @endforeach
+            @endif
+
+            {{-- Input Length Warning --}}
+            @if(isset($searchWarnings) && !empty($searchWarnings))
+                @foreach($searchWarnings as $warning)
+                    <div class="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 text-amber-700 dark:text-amber-300 rounded-xl flex items-center gap-3 font-bold">
+                        <span class="text-lg">⚠️</span>
+                        {{ $warning }}
+                    </div>
+                @endforeach
+            @endif
+        </div>
+
+        {{-- Search Results --}}
+        @if(isset($hasDashboardSearch) && $hasDashboardSearch)
+            @if(isset($searchResults) && $searchResults->isNotEmpty())
+                <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <h4 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">نتائج البحث</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-center text-sm">
+                            <thead>
+                                <tr class="bg-gray-50/80 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
+                                    <th class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.phone_number') }}</th>
+                                    <th class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.national_id') }}</th>
+                                    <th class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.customer_name') }}</th>
+                                    <th class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">الموزع</th>
+                                    <th colspan="3" class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('messages.actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
+                                @foreach($searchResults as $line)
+                                    <tr class="hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors duration-200">
+                                        <td class="px-4 py-3.5 font-mono font-bold text-gray-800 dark:text-gray-200">{{ $line->phone_number }}</td>
+                                        <td class="px-4 py-3.5 text-gray-600 dark:text-gray-400">{{ $line->customer->national_id ?? '-' }}</td>
+                                        <td class="px-4 py-3.5 font-medium text-gray-700 dark:text-gray-300">{{ $line->customer->full_name ?? '-' }}</td>
+                                        <td class="px-4 py-3.5">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400">
+                                                {{ $line->distributor?->name ?? '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-1.5 py-3.5 whitespace-nowrap">
+                                            <a href="{{ route('lines.show', $line->id) }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 font-bold text-xs hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all">
+                                                👁️ {{ __('messages.view') }}
+                                            </a>
+                                        </td>
+                                        <td class="px-1.5 py-3.5 whitespace-nowrap">
+                                            <a href="{{ route('lines.edit', $line->id) }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold text-xs hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all">
+                                                ✏️ {{ __('messages.edit') }}
+                                            </a>
+                                        </td>
+                                        <td class="px-1.5 py-3.5 whitespace-nowrap">
+                                            @if($line->plan)
+                                                <a href="{{ route('invoices.create', $line) }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-bold text-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all">
+                                                    💳 {{ __('messages.pay') }}
+                                                </a>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    {{-- Pagination --}}
+                    <div class="p-5 border-t border-gray-100 dark:border-gray-700">
+                        {{ $searchResults->appends(request()->query())->links() }}
                     </div>
                 </div>
-            </div>
-        </div>
+            @elseif(empty($searchErrors))
+                @if(empty($searchWarnings))
+                    <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm text-center text-gray-500 dark:text-gray-400 font-bold">
+                        لا توجد نتائج بحث مطابقة.
+                    </div>
+                @endif
+            @endif
+        @endif
+
+
 
         {{-- Quick Stats Grid --}}
         <!-- <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -92,31 +182,159 @@
             </div>
         </div>
 
-        {{-- Main Sections --}}
-        <div class="grid lg:grid-cols-2 gap-8">
-            <div class="space-y-8">
-
-            <div class="space-y-8">
-                {{-- Side Card: Tips --}}
-                <!-- <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-[2.5rem] p-8 border border-indigo-100 dark:border-indigo-800/50">
-                    <div class="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-2xl mb-6">
-                        💡
-                    </div>
-                    <h4 class="text-lg font-black text-indigo-900 dark:text-indigo-100 mb-2">نصيحة اليوم</h4>
-                    <p class="text-indigo-700 dark:text-indigo-300 text-sm leading-relaxed font-medium">
-                        استخدم اختصارات لوحة المفاتيح للوصول السريع إلى الطلبات الجديدة وتوفير الوقت!
-                    </p>
-                </div> -->
-
-                {{-- Side Card: Support --}}
-                <!-- <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] p-8 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <h4 class="text-lg font-black text-gray-800 dark:text-white mb-4">هل تحتاج مساعدة؟</h4>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">نحن هنا لمساعدتك في أي استفسار يخص النظام.</p>
-                    <button class="w-full py-3.5 bg-gray-900 dark:bg-indigo-600 text-white rounded-2xl text-sm font-black shadow-lg transition-all active:scale-95">
-                        فتح تذكرة دعم
-                    </button>
-                </div> -->
+        {{-- Section: Lines For Sale --}}
+        <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] p-6 md:p-8 border border-gray-100 dark:border-gray-700/50 shadow-sm space-y-8">
+            <div>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                    📱 {{ __('messages.for_sale_public_title') }}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">{{ __('messages.for_sale_public_desc') }}</p>
             </div>
+
+            {{-- Stats Bar --}}
+            <div class="flex flex-wrap gap-6 p-5 rounded-2xl bg-gray-50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-700/50">
+                <div class="text-start">
+                    <p class="text-2xl font-black text-indigo-600 dark:text-indigo-400">{{ $totalForSaleCount }}</p>
+                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{{ __('messages.lines_available') }}</p>
+                </div>
+                <div class="w-px h-10 bg-gray-200 dark:bg-gray-700"></div>
+                <div class="text-start">
+                    <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                        {{ $totalForSaleCount > 0 ? number_format($minSalePrice, 0) : '0' }}
+                    </p>
+                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{{ __('messages.starting_from') }}</p>
+                </div>
+            </div>
+
+            {{-- Filters Form --}}
+            <form action="{{ route('dashboard') }}" method="GET" class="space-y-6">
+                @if(request('phone')) <input type="hidden" name="phone" value="{{ request('phone') }}"> @endif
+                @if(request('nid')) <input type="hidden" name="nid" value="{{ request('nid') }}"> @endif
+                @if(request('customer_name')) <input type="hidden" name="customer_name" value="{{ request('customer_name') }}"> @endif
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Providers Multi-select -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">{{ __('messages.providers') ?? 'المشغلين' }}</label>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($allProviders as $p)
+                                @php
+                                    $isChecked = in_array($p, request('providers', []));
+                                @endphp
+                                <label class="cursor-pointer select-none">
+                                    <input type="checkbox" name="providers[]" value="{{ $p }}" class="hidden peer" {{ $isChecked ? 'checked' : '' }}>
+                                    <span class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300 transition-all peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 dark:bg-gray-800 dark:peer-checked:bg-indigo-600">
+                                        {{ $p }}
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Plans Multi-select -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">{{ __('messages.plans') ?? 'الأنظمة' }}</label>
+                        <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-3 border border-gray-100 dark:border-gray-700/50 rounded-2xl bg-gray-50 dark:bg-gray-900/20">
+                            @foreach($allPlans as $plan)
+                                @php
+                                    $isChecked = in_array($plan->id, request('plans', []));
+                                @endphp
+                                <label class="cursor-pointer select-none">
+                                    <input type="checkbox" name="plans[]" value="{{ $plan->id }}" class="hidden peer" {{ $isChecked ? 'checked' : '' }}>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 transition-all peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 dark:bg-gray-800 dark:peer-checked:bg-indigo-600">
+                                        {{ $plan->name }} ({{ $plan->provider }})
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <button type="submit" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-indigo-600/25 active:scale-95 cursor-pointer">
+                        🔍 {{ __('messages.search') }}
+                    </button>
+                    <a href="{{ route('public.for-sale.export', request()->only(['providers', 'plans'])) }}" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-emerald-600/25 active:scale-95">
+                        ⬇️ تصدير إكسل
+                    </a>
+                    @if(request()->anyFilled(['providers', 'plans']))
+                        <a href="{{ route('dashboard') }}" class="w-12 h-12 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl font-black text-sm flex items-center justify-center transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600">
+                            ✖️
+                        </a>
+                    @endif
+                </div>
+            </form>
+
+            {{-- Lines Grid --}}
+            @if($forSaleLines->isEmpty())
+                <div class="text-center py-20 bg-gray-50 dark:bg-gray-900/20 rounded-3xl">
+                    <div class="w-24 h-24 mx-auto bg-gray-100 dark:bg-gray-800 rounded-3xl flex items-center justify-center text-5xl mb-6">📭</div>
+                    <h3 class="text-xl font-bold text-gray-500 dark:text-gray-400">{{ __('messages.no_lines_for_sale') }}</h3>
+                    <p class="text-gray-400 dark:text-gray-500 mt-2">{{ __('messages.check_back_later') }}</p>
+                </div>
+            @else
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach($forSaleLines as $line)
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700/50 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
+                            {{-- Card Header --}}
+                            <div class="p-5 pb-4 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    @php
+                                        $providerColors = [
+                                            'Vodafone' => ['from' => '#e11d48', 'to' => '#f43f5e', 'bg' => 'bg-red-50 dark:bg-red-900/20', 'text' => 'text-red-600 dark:text-red-400'],
+                                            'Etisalat' => ['from' => '#059669', 'to' => '#10b981', 'bg' => 'bg-emerald-50 dark:bg-emerald-900/20', 'text' => 'text-emerald-600 dark:text-emerald-400'],
+                                            'Orange'   => ['from' => '#ea580c', 'to' => '#f97316', 'bg' => 'bg-orange-50 dark:bg-orange-900/20', 'text' => 'text-orange-600 dark:text-orange-400'],
+                                            'WE'       => ['from' => '#7c3aed', 'to' => '#8b5cf6', 'bg' => 'bg-violet-50 dark:bg-violet-900/20', 'text' => 'text-violet-600 dark:text-violet-400'],
+                                        ];
+                                        $pc = $providerColors[$line->provider] ?? ['from' => '#6366f1', 'to' => '#818cf8', 'bg' => 'bg-indigo-50 dark:bg-indigo-900/20', 'text' => 'text-indigo-600 dark:text-indigo-400'];
+                                    @endphp
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl {{ $pc['bg'] }} {{ $pc['text'] }} text-xs font-black uppercase tracking-wider">
+                                        <span class="w-1.5 h-1.5 rounded-full" style="background: {{ $pc['from'] }}"></span>
+                                        {{ $line->provider }}
+                                    </span>
+                                </div>
+
+                                {{-- Phone Number --}}
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-700/50 flex items-center justify-center text-lg shrink-0">
+                                        📞
+                                    </div>
+                                    <div>
+                                        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">{{ __('messages.phone_number') }}</p>
+                                        <p class="text-base font-black text-gray-900 dark:text-white font-mono tracking-wide" dir="ltr">
+                                            {{ $line->phone_number }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {{-- Plan Details --}}
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-lg shrink-0">
+                                        📜
+                                    </div>
+                                    <div>
+                                        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">{{ __('messages.plan') }}</p>
+                                        <p class="text-sm font-black text-gray-700 dark:text-gray-300 line-clamp-1">
+                                            {{ $line->plan?->name ?? '-' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Price Footer --}}
+                            <div class="px-5 py-4 bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 border-t border-gray-100 dark:border-gray-700/50">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('messages.sale_price') }}</span>
+                                    <span class="text-lg font-black text-indigo-600 dark:text-indigo-400">
+                                        {{ $line->sale_price ? number_format($line->sale_price, 0) : '-' }}
+                                        <span class="text-xs font-bold">{{ __('messages.currency') }}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </div>
 

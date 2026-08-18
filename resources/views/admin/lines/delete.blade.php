@@ -30,7 +30,8 @@
         <div class="mb-6 p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50">
             <form method="GET" action="{{ route('lines.delete-index') }}" class="flex flex-wrap gap-3 items-end">
                 <input type="text" name="phone" value="{{ request('phone') }}" placeholder="{{ __('messages.phone_number') }}" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 w-full sm:w-40 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition placeholder:text-gray-400 text-sm" />
-                <input type="text" name="nid" value="{{ request('nid') }}" placeholder="{{ __('messages.national_id') }}" class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 w-full sm:w-40 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition placeholder:text-gray-400 text-sm" />
+                <input type="text" name="customer_name" value="{{ request('customer_name') }}" placeholder="{{ __('messages.customer_name') }}" class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 w-full sm:w-40 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition placeholder:text-gray-400 text-sm" />
+                <input type="text" name="nid" value="{{ request('nid') }}" placeholder="{{ __('messages.national_id') }}" maxlength="14" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 w-full sm:w-40 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition placeholder:text-gray-400 text-sm" />
                 <input type="text" name="provider" value="{{ request('provider') }}" placeholder="{{ __('messages.provider') }}" class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 w-full sm:w-40 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition placeholder:text-gray-400 text-sm" />
                 @if(auth()->user()->role->name !== 'موزع')
                 <select name="distributor_id" class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 w-full sm:w-40 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition text-sm">
@@ -54,6 +55,26 @@
                     🔍 {{ __('messages.search') }}
                 </button>
             </form>
+
+            {{-- Validation Errors --}}
+            @if(isset($searchErrors) && !empty($searchErrors))
+                @foreach($searchErrors as $error)
+                    <div class="mt-4 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/30 text-rose-700 dark:text-rose-300 rounded-xl flex items-center gap-3 font-bold">
+                        <span class="text-lg">⚠️</span>
+                        {{ $error }}
+                    </div>
+                @endforeach
+            @endif
+
+            {{-- Input Warnings --}}
+            @if(isset($searchWarnings) && !empty($searchWarnings))
+                @foreach($searchWarnings as $warning)
+                    <div class="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 text-amber-700 dark:text-amber-300 rounded-xl flex items-center gap-3 font-bold">
+                        <span class="text-lg">⚠️</span>
+                        {{ $warning }}
+                    </div>
+                @endforeach
+            @endif
         </div>
 
         {{-- Results --}}
