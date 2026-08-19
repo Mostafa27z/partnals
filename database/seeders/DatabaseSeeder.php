@@ -10,11 +10,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([
-            RolesTableSeeder::class,
-            PermissionsTableSeeder::class,
-            RealArabicDataSeeder::class,
-        ]);
+        // $this->call([
+        //     RolesTableSeeder::class,
+        //     PermissionsTableSeeder::class,
+        //     RealArabicDataSeeder::class,
+        // ]);
 
         // إنشاء Admin فقط إذا لم يكن موجوداً
         User::firstOrCreate(
