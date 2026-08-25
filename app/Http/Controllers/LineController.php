@@ -704,8 +704,10 @@ public function updateCustomerData(Request $request, Line $line)
         ]);
     }
 
+    $notesArray = $request->input('notes', []);
+
     $line->update([
-        'notes' => $request->notes,
+        'notes' => implode("\n\n", array_filter(array_map('trim', $notesArray))),
     ]);
 
     return back()->with('success', '✅ تم تحديث بيانات العميل والملاحظات بنجاح.');

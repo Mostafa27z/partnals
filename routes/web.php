@@ -177,18 +177,9 @@ Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
         ->where('is_sold', false)
         ->min('sale_price');
 
-    $allProviders = \App\Models\Line::withoutGlobalScope('distributor')
-        ->where('for_sale', true)
-        ->where('is_sold', false)
-        ->distinct()
-        ->pluck('provider')
-        ->toArray();
+    $allProviders = \App\Models\Provider::pluck('name')->toArray();
 
-    $allPlans = \App\Models\Plan::whereHas('lines', function($q) {
-        $q->withoutGlobalScope('distributor')
-          ->where('for_sale', true)
-          ->where('is_sold', false);
-    })->get();
+    $allPlans = \App\Models\Plan::orderBy('name')->get();
 
     return view('dashboard', compact(
         'activeCustomersCount',

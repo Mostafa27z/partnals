@@ -130,10 +130,21 @@
                 </div>
 
                 <!-- ملاحظات (أكثر من خانة) -->
+                @php
+                    $notesList = array_filter(explode("\n\n", $line->notes ?? ''));
+                @endphp
                 <div class="bg-gray-50/80 dark:bg-gray-900/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 transition-colors col-span-1 sm:col-span-2 lg:col-span-3">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">ملاحظات</p>
-                    <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200/60 dark:border-gray-700/50 text-gray-800 dark:text-gray-200 min-h-[80px] whitespace-pre-line">
-                        {{ $line->notes ?? '-' }}
+                    <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">ملاحظات</p>
+                    <div class="space-y-3">
+                        @forelse($notesList as $note)
+                            <div class="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200/60 dark:border-gray-700/50 text-gray-800 dark:text-gray-200 text-sm whitespace-pre-line break-all break-words shadow-sm">
+                                {{ $note }}
+                            </div>
+                        @empty
+                            <div class="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200/60 dark:border-gray-700/50 text-gray-400 text-center text-sm shadow-sm">
+                                لا توجد ملاحظات
+                            </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
@@ -221,11 +232,25 @@
                                             <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">رقم واتساب</label>
                                             <input type="text" name="whatsapp_number" value="{{ old('whatsapp_number', $line->customer->whatsapp_number) }}" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
                                         </div>
-                                        <!-- ملاحظات -->
-                                        <div class="col-span-1 md:col-span-2">
-                                            <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">الملاحظات</label>
-                                            <textarea name="notes" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">{{ old('notes', $line->notes) }}</textarea>
-                                        </div>
+                                         <!-- الملاحظات -->
+                                         <div class="col-span-1 md:col-span-2 space-y-2">
+                                             <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">الملاحظات</label>
+                                             <div id="notes-list-container" class="space-y-2 max-h-60 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900/20 custom-scrollbar">
+                                                 @if(count($notesList) > 0)
+                                                     @foreach($notesList as $idx => $note)
+                                                         <div class="flex items-start justify-between gap-3 p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 text-xs shadow-sm w-full min-w-0">
+                                                             <textarea name="notes[]" rows="2" class="w-full p-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-1 focus:ring-indigo-500 text-xs break-all break-words resize-none min-w-0 flex-1">{{ $note }}</textarea>
+                                                             <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 font-bold shrink-0 self-center">حذف</button>
+                                                         </div>
+                                                     @endforeach
+                                                 @else
+                                                     <p class="no-notes-message text-xs text-gray-400 p-2">لا توجد ملاحظات حالية.</p>
+                                                 @endif
+                                             </div>
+                                             <button type="button" onclick="addExtraNote()" class="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer">
+                                                 ➕ إضافة ملاحظة إضافية
+                                             </button>
+                                         </div>
                                     </div>
                                 </div>
 
@@ -343,6 +368,25 @@
         } else {
             alert("❌ {{ __('messages.request_type_not_supported') }}");
         }
+    }
+
+    function addExtraNote() {
+        const container = document.getElementById('notes-list-container');
+        const newNoteHtml = `
+            <div class="flex items-start justify-between gap-3 p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 text-xs shadow-sm w-full min-w-0">
+                <textarea name="notes[]" rows="2" class="w-full p-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-1 focus:ring-indigo-500 text-xs break-all break-words resize-none min-w-0 flex-1" placeholder="اكتب الملاحظة الإضافية هنا..."></textarea>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 font-bold shrink-0 self-center">حذف</button>
+            </div>
+        `;
+        
+        const noNotesMessage = container.querySelector('.no-notes-message');
+        if (noNotesMessage) {
+            noNotesMessage.remove();
+        }
+        
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newNoteHtml.trim();
+        container.appendChild(tempDiv.firstChild);
     }
 </script>
 @endpush

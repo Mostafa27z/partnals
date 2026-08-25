@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-slot name="header">
+    {{-- <x-slot name="header">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h2 class="font-black text-3xl text-gray-900 dark:text-white leading-tight">
@@ -8,7 +8,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">{{ __('messages.welcome_back') }}، {{ Auth::user()->name }}</p>
             </div>
         </div>
-    </x-slot>
+    </x-slot> --}}
 
     <div class="space-y-10" dir="rtl">
         {{-- Search Section --}}
@@ -152,113 +152,98 @@
             @endforeach
         </div> -->
 
-        {{-- For Sale Link Card --}}
-        <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-2xl">
-                        🏷️
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ __('messages.for_sale_public_title') }}</h4>
-                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ __('messages.copy_for_sale_link') }}</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <input id="for-sale-url" type="text" readonly
-                        value="{{ route('public.for-sale') }}"
-                        class="flex-1 sm:w-72 px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-600 dark:text-gray-300 font-mono truncate focus:outline-none" dir="ltr">
-                    <button onclick="navigator.clipboard.writeText(document.getElementById('for-sale-url').value).then(() => { const btn = this; btn.innerHTML = '✅'; setTimeout(() => btn.innerHTML = '📋', 1500); })"
-                        class="shrink-0 w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/40 flex items-center justify-center text-lg hover:scale-110 transition-all cursor-pointer"
-                        title="{{ __('messages.copy_for_sale_link') }}">
-                        📋
-                    </button>
-                    <a href="{{ route('public.for-sale') }}"
-                        class="shrink-0 w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800/40 flex items-center justify-center text-lg hover:scale-110 transition-all"
-                        title="{{ __('messages.view') }}">
-                        🔗
-                    </a>
-                </div>
-            </div>
-        </div>
+        
 
         {{-- Section: Lines For Sale --}}
         <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] p-6 md:p-8 border border-gray-100 dark:border-gray-700/50 shadow-sm space-y-8">
-            <div>
-                <h3 class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-                    📱 {{ __('messages.for_sale_public_title') }}
-                </h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">{{ __('messages.for_sale_public_desc') }}</p>
-            </div>
-
-            {{-- Stats Bar --}}
-            <div class="flex flex-wrap gap-6 p-5 rounded-2xl bg-gray-50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-700/50">
-                <div class="text-start">
-                    <p class="text-2xl font-black text-indigo-600 dark:text-indigo-400">{{ $totalForSaleCount }}</p>
-                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{{ __('messages.lines_available') }}</p>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                    <h3 class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                        📱 {{ __('messages.for_sale_public_title') }}
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">{{ __('messages.for_sale_public_desc') }}</p>
                 </div>
-                <div class="w-px h-10 bg-gray-200 dark:bg-gray-700"></div>
-                <div class="text-start">
-                    <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                        {{ $totalForSaleCount > 0 ? number_format($minSalePrice, 0) : '0' }}
-                    </p>
-                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{{ __('messages.starting_from') }}</p>
+
+                {{-- Stats Bar --}}
+                <div class="flex items-center gap-6 p-5 rounded-2xl bg-gray-50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-700/50">
+                    <div class="text-start">
+                        <p class="text-2xl font-black text-indigo-600 dark:text-indigo-400">{{ $totalForSaleCount }}</p>
+                        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{{ __('messages.lines_available') }}</p>
+                    </div>
+                    <div class="w-px h-10 bg-gray-200 dark:bg-gray-700"></div>
+                    <div class="text-start">
+                        <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                            {{ $totalForSaleCount > 0 ? number_format($minSalePrice, 0) : '0' }}
+                        </p>
+                        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{{ __('messages.starting_from') }}</p>
+                    </div>
                 </div>
             </div>
 
             {{-- Filters Form --}}
-            <form action="{{ route('dashboard') }}" method="GET" class="space-y-6">
+            <form action="{{ route('dashboard') }}" method="GET" class="flex flex-wrap gap-4 items-end">
                 @if(request('phone')) <input type="hidden" name="phone" value="{{ request('phone') }}"> @endif
                 @if(request('nid')) <input type="hidden" name="nid" value="{{ request('nid') }}"> @endif
                 @if(request('customer_name')) <input type="hidden" name="customer_name" value="{{ request('customer_name') }}"> @endif
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Providers Multi-select -->
-                    <div>
-                        <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">{{ __('messages.providers') ?? 'المشغلين' }}</label>
-                        <div class="flex flex-wrap gap-2">
+                <!-- Providers Multi-select -->
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">{{ __('messages.providers') ?? 'المشغلين' }}</label>
+                    <div class="relative inline-block w-full text-right" id="providers-select-container">
+                        <button type="button" id="providers-btn" class="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 font-bold text-sm transition-all focus:ring-2 focus:ring-indigo-500">
+                            <span id="providers-btn-text">كل المشغلين</span>
+                            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div id="providers-dropdown" class="hidden absolute right-0 z-50 mt-2 w-full max-h-60 overflow-y-auto rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl p-3 space-y-1">
                             @foreach($allProviders as $p)
                                 @php
                                     $isChecked = in_array($p, request('providers', []));
                                 @endphp
-                                <label class="cursor-pointer select-none">
-                                    <input type="checkbox" name="providers[]" value="{{ $p }}" class="hidden peer" {{ $isChecked ? 'checked' : '' }}>
-                                    <span class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300 transition-all peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 dark:bg-gray-800 dark:peer-checked:bg-indigo-600">
-                                        {{ $p }}
-                                    </span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <!-- Plans Multi-select -->
-                    <div>
-                        <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">{{ __('messages.plans') ?? 'الأنظمة' }}</label>
-                        <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-3 border border-gray-100 dark:border-gray-700/50 rounded-2xl bg-gray-50 dark:bg-gray-900/20">
-                            @foreach($allPlans as $plan)
-                                @php
-                                    $isChecked = in_array($plan->id, request('plans', []));
-                                @endphp
-                                <label class="cursor-pointer select-none">
-                                    <input type="checkbox" name="plans[]" value="{{ $plan->id }}" class="hidden peer" {{ $isChecked ? 'checked' : '' }}>
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 transition-all peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 dark:bg-gray-800 dark:peer-checked:bg-indigo-600">
-                                        {{ $plan->name }} ({{ $plan->provider }})
-                                    </span>
+                                <label class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition select-none">
+                                    <input type="checkbox" name="providers[]" value="{{ $p }}" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700" {{ $isChecked ? 'checked' : '' }}>
+                                    <span class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ $p }}</span>
                                 </label>
                             @endforeach
                         </div>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-3">
+                <!-- Plans Multi-select -->
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">{{ __('messages.plans') ?? 'الأنظمة' }}</label>
+                    <div class="relative inline-block w-full text-right" id="plans-select-container">
+                        <button type="button" id="plans-btn" class="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 font-bold text-sm transition-all focus:ring-2 focus:ring-indigo-500">
+                            <span id="plans-btn-text">كل الأنظمة</span>
+                            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div id="plans-dropdown" class="hidden absolute right-0 z-50 mt-2 w-full rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl p-3 space-y-2">
+                            <div class="px-2 pb-1">
+                                <input type="text" id="plans-search" placeholder="ابحث عن نظام..." class="w-full px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition placeholder:text-gray-400 text-xs" />
+                            </div>
+                            <div class="max-h-48 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                                @foreach($allPlans as $plan)
+                                    @php
+                                        $isChecked = in_array($plan->id, request('plans', []));
+                                    @endphp
+                                    <label class="plan-option-label flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition select-none" data-name="{{ strtolower($plan->name) }}" data-provider="{{ strtolower($plan->provider) }}">
+                                        <input type="checkbox" name="plans[]" value="{{ $plan->id }}" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700" {{ $isChecked ? 'checked' : '' }}>
+                                        <span class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ $plan->name }} ({{ $plan->provider }})</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 w-full md:w-auto">
                     <button type="submit" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-indigo-600/25 active:scale-95 cursor-pointer">
                         🔍 {{ __('messages.search') }}
                     </button>
-                    <a href="{{ route('public.for-sale.export', request()->only(['providers', 'plans'])) }}" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-emerald-600/25 active:scale-95">
+                    <a href="{{ route('public.for-sale.export', request()->only(['providers', 'plans'])) }}" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-emerald-600/25 active:scale-95 whitespace-nowrap">
                         ⬇️ تصدير إكسل
                     </a>
                     @if(request()->anyFilled(['providers', 'plans']))
-                        <a href="{{ route('dashboard') }}" class="w-12 h-12 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl font-black text-sm flex items-center justify-center transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600">
+                        <a href="{{ route('dashboard') }}" class="w-12 h-12 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl font-black text-sm flex items-center justify-center transition-all hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 shrink-0">
                             ✖️
                         </a>
                     @endif
@@ -345,6 +330,103 @@
             AOS.init({
                 duration: 600,
                 once: true
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                // Providers Dropdown
+                const providersBtn = document.getElementById('providers-btn');
+                const providersDropdown = document.getElementById('providers-dropdown');
+                const providersBtnText = document.getElementById('providers-btn-text');
+                const providersCheckboxes = document.querySelectorAll('#providers-dropdown input[type="checkbox"]');
+
+                function updateProvidersLabel() {
+                    const selected = Array.from(providersCheckboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.nextElementSibling.textContent.trim());
+                    
+                    if (selected.length === 0) {
+                        providersBtnText.textContent = "كل المشغلين";
+                    } else {
+                        providersBtnText.textContent = selected.join(', ');
+                    }
+                }
+
+                providersBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    providersDropdown.classList.toggle('hidden');
+                    plansDropdown.classList.add('hidden');
+                });
+
+                providersCheckboxes.forEach(cb => {
+                    cb.addEventListener('change', updateProvidersLabel);
+                });
+
+                // Plans Dropdown
+                const plansBtn = document.getElementById('plans-btn');
+                const plansDropdown = document.getElementById('plans-dropdown');
+                const plansBtnText = document.getElementById('plans-btn-text');
+                const plansCheckboxes = document.querySelectorAll('#plans-dropdown input[type="checkbox"]');
+                const plansSearch = document.getElementById('plans-search');
+                const planOptionLabels = document.querySelectorAll('.plan-option-label');
+
+                function updatePlansLabel() {
+                    const selected = Array.from(plansCheckboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.nextElementSibling.textContent.trim());
+                    
+                    if (selected.length === 0) {
+                        plansBtnText.textContent = "كل الأنظمة";
+                    } else if (selected.length <= 2) {
+                        plansBtnText.textContent = selected.join(', ');
+                    } else {
+                        plansBtnText.textContent = `${selected.length} أنظمة مختارة`;
+                    }
+                }
+
+                plansBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    plansDropdown.classList.toggle('hidden');
+                    providersDropdown.classList.add('hidden');
+                    if (!plansDropdown.classList.contains('hidden')) {
+                        plansSearch.focus();
+                    }
+                });
+
+                plansCheckboxes.forEach(cb => {
+                    cb.addEventListener('change', updatePlansLabel);
+                });
+
+                // Search plans
+                plansSearch.addEventListener('input', function () {
+                    const query = plansSearch.value.toLowerCase().trim();
+                    planOptionLabels.forEach(label => {
+                        const name = label.getAttribute('data-name');
+                        const provider = label.getAttribute('data-provider');
+                        if (name.includes(query) || provider.includes(query)) {
+                            label.style.display = 'flex';
+                        } else {
+                            label.style.display = 'none';
+                        }
+                    });
+                });
+
+                // Prevent closing when clicking inside dropdowns
+                providersDropdown.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+                plansDropdown.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+
+                // Close when clicking outside
+                document.addEventListener('click', function () {
+                    providersDropdown.classList.add('hidden');
+                    plansDropdown.classList.add('hidden');
+                });
+
+                // Run updates on load
+                updateProvidersLabel();
+                updatePlansLabel();
             });
         </script>
     @endpush
