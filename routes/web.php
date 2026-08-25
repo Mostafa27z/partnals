@@ -285,6 +285,7 @@ Route::middleware(['auth', 'condition.is.active:manage invoices'])->group(functi
     Route::post('lines/{line}/pay', [InvoiceController::class, 'store'])->name('invoices.store');
 Route::get('/lines/{line}', [LineController::class, 'show'])->name('lines.show');
 Route::post('/lines/{line}/update-customer', [LineController::class, 'updateCustomerData'])->name('lines.update-customer');
+Route::post('/lines/{line}/attach-customer', [LineController::class, 'attachCustomer'])->name('lines.attach-customer');
 
     Route::get('/customers/{customer}/invoices', [InvoiceController::class, 'customerInvoices'])->name('customers.invoices');
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index'); Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');

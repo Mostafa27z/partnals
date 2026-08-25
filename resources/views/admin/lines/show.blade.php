@@ -150,7 +150,7 @@
             </div>
 
             <!-- Pay & Request Buttons & Update Actions Section -->
-            <div x-data="{ showUpdateModal: false }" class="pt-6 border-t border-gray-100 dark:border-gray-700/50 flex flex-wrap gap-4 items-center">
+            <div x-data="{ showUpdateModal: false, showAttachModal: false }" class="pt-6 border-t border-gray-100 dark:border-gray-700/50 flex flex-wrap gap-4 items-center">
                 <!-- زر الدفع -->
                 <a href="{{ route('invoices.create', $line) }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-black text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/25 active:scale-95">
                     💳 {{ __('messages.pay') }}
@@ -179,12 +179,99 @@
                     <button @click="showUpdateModal = true" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-sm transition-all shadow-lg shadow-amber-500/25 active:scale-95 cursor-pointer">
                         ✏️ تحديث بيانات العميل والملاحظات
                     </button>
+                @else
+                    <button @click="showAttachModal = true" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-sm transition-all shadow-lg shadow-amber-500/25 active:scale-95 cursor-pointer">
+                        ➕ ربط أو إضافة عميل جديد
+                    </button>
                 @endif
 
                 <!-- زر تعديل (للخط بالكامل) -->
                 <a href="{{ route('lines.edit', $line->id) }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-black text-sm border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all shadow-sm active:scale-95">
                     ⚙️ تعديل كامل بيانات الخط
                 </a>
+
+                {{-- Attach Customer Modal --}}
+                @if(!$line->customer)
+                    <div id="attach-modal-container" x-show="showAttachModal" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4" x-cloak>
+                        <div class="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 flex flex-col max-h-[90vh]" x-data="{ mode: 'existing' }">
+                            <!-- Header -->
+                            <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700/50 p-6">
+                                <h4 class="text-xl font-black text-gray-800 dark:text-white">➕ ربط أو إضافة عميل جديد</h4>
+                                <button @click="showAttachModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-black">&times;</button>
+                            </div>
+                            
+                            <!-- Form -->
+                            <form action="{{ route('lines.attach-customer', $line) }}" method="POST" class="flex flex-col overflow-hidden">
+                                @csrf
+                                <input type="hidden" name="customer_mode" :value="mode">
+                                
+                                <!-- Mode Selector Tabs -->
+                                <div class="flex border-b border-gray-100 dark:border-gray-700">
+                                    <button type="button" @click="mode = 'existing'" :class="mode === 'existing' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700'" class="flex-1 py-3 text-center font-bold border-b-2 text-sm">
+                                        عميل مسجل حالياً (بحث)
+                                    </button>
+                                    <button type="button" @click="mode = 'new'" :class="mode === 'new' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700'" class="flex-1 py-3 text-center font-bold border-b-2 text-sm">
+                                        إنشاء عميل جديد
+                                    </button>
+                                </div>
+
+                                <!-- Scrollable body -->
+                                <div class="p-6 overflow-y-auto space-y-4 max-h-[60vh] min-h-[300px]">
+                                    <!-- Existing Customer Form -->
+                                    <div x-show="mode === 'existing'" class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">اختر العميل</label>
+                                            <div class="relative">
+                                                <select id="customer-select" name="customer_id" class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                                                    <option value="">-- ابحث بالاسم أو الرقم القومي --</option>
+                                                    @foreach($customers as $c)
+                                                        <option value="{{ $c->id }}">
+                                                            {{ $c->full_name }} - {{ $c->national_id }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- New Customer Form -->
+                                    <div x-show="mode === 'new'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="col-span-1 md:col-span-2">
+                                            <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">الاسم الكامل</label>
+                                            <input type="text" name="full_name" :required="mode === 'new'" placeholder="مثال: محمد احمد" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">الرقم القومي (14 رقم)</label>
+                                            <input type="text" name="national_id" :required="mode === 'new'" maxlength="14" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="14 رقم" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">تاريخ الميلاد</label>
+                                            <input type="date" name="birth_date" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 text-sm">
+                                        </div>
+                                        <div class="col-span-1 md:col-span-2">
+                                            <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">العنوان</label>
+                                            <input type="text" name="address" placeholder="العنوان بالتفصيل" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">رقم تواصل العميل</label>
+                                            <input type="text" name="contact_number" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="مثال: 010xxxxxxx" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">رقم واتساب</label>
+                                            <input type="text" name="whatsapp_number" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="مثال: 010xxxxxxx" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 text-sm">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Footer Actions -->
+                                <div class="flex justify-end gap-3 p-6 border-t border-gray-100 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/50 rounded-b-3xl">
+                                    <button type="button" @click="showAttachModal = false" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-bold rounded-xl text-sm transition active:scale-95 cursor-pointer">إلغاء</button>
+                                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition active:scale-95 shadow-lg shadow-indigo-500/25 cursor-pointer">حفظ وربط العميل</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Update Customer Details Modal --}}
                 @if($line->customer)
@@ -388,6 +475,13 @@
         tempDiv.innerHTML = newNoteHtml.trim();
         container.appendChild(tempDiv.firstChild);
     }
+
+    $(document).ready(function() {
+        $('#customer-select').select2({
+            width: '100%',
+            dropdownParent: $('#attach-modal-container')
+        });
+    });
 </script>
 @endpush
 </x-app-layout>

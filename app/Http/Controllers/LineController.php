@@ -678,7 +678,55 @@ public function show(Line $line)
         ->latest()
         ->paginate(15);
 
-    return view('admin.lines.show', compact('line', 'requests'));
+    $customers = [];
+    if (!$line->customer) {
+        $customers = \App\Models\Customer::orderBy('full_name')->get();
+    }
+
+    return view('admin.lines.show', compact('line', 'requests', 'customers'));
+}
+
+public function attachCustomer(Request $request, Line $line)
+{
+    $mode = $request->input('customer_mode');
+    
+    if ($mode === 'existing') {
+        $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+        ]);
+        
+        $line->update([
+            'customer_id' => $request->customer_id,
+        ]);
+        
+        return back()->with('success', '✅ تم ربط العميل بالخط بنجاح.');
+    } elseif ($mode === 'new') {
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'national_id' => 'required|string|size:14|unique:customers,national_id',
+            'contact_number' => 'nullable|string|max:11',
+            'whatsapp_number' => 'nullable|string|max:11',
+            'address' => 'nullable|string|max:255',
+            'birth_date' => 'nullable|date',
+        ]);
+        
+        $customer = \App\Models\Customer::create([
+            'full_name' => $request->full_name,
+            'national_id' => $request->national_id,
+            'contact_number' => $request->contact_number,
+            'whatsapp_number' => $request->whatsapp_number,
+            'address' => $request->address,
+            'birth_date' => $request->birth_date,
+        ]);
+        
+        $line->update([
+            'customer_id' => $customer->id,
+        ]);
+        
+        return back()->with('success', '✅ تم إنشاء العميل الجديد وربطه بالخط بنجاح.');
+    }
+    
+    return back()->with('error', '❌ إجراء غير صالح.');
 }
 
 public function updateCustomerData(Request $request, Line $line)
